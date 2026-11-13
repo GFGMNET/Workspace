@@ -311,7 +311,7 @@ Live installations never use git; they are updated from **GitHub Releases** (#26
   If anything fails, the old program is put back.
 - **Restart:** `start.bat` / `start.sh` run the server in a loop and start it again on exit code 75. A server started without them starts a new process itself. The page reloads once the new version answers.
 - **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
-- **Releases** are made by `.github/workflows/release.yml` when a tag `vX.Y.Z` is pushed. It checks the tag against `package.json`, runs the tests, zips the program (`git archive`, so no client data) and creates the release with generated notes.
+- **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* releases the version in `package.json` (or push a tag `vX.Y.Z`). It runs the tests, zips the program (`git archive`, so no client data) and creates the release; the notes come from `docs/releases/vX.Y.Z.md` (else generated).
 
 ## 7a. Documentation
 
