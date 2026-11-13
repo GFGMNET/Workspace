@@ -142,7 +142,7 @@ aliases: [todo]          # other keys in project.yaml that mean this feature
 | `instructions` | chat: extra instructions sent with the first message | none |
 | `model` | chat: Claude model alias | CLI default |
 
-Field types: `text`, `longtext`, `number`, `date`, `datetime`, `select` (with `options`), `bool`, `url`, `email`, `tags`, `list`, `keyvalue`. If no type is given, it is guessed from the name (`due` becomes a date, `email` an email, `notes` a longtext, and so on).
+Field types: `text`, `longtext`, `number`, `date`, `datetime`, `select` (with `options`), `bool`, `url`, `email`, `tags`, `list`, `keyvalue`, `link` (with optional `to: <feature>` and `multiple: true`; see section 5a). If no type is given, it is guessed from the name (`due` becomes a date, `email` an email, `notes` a longtext, and so on).
 
 ### Adding features
 
@@ -170,7 +170,22 @@ A feature can combine only the building blocks below. A truly new look (a new bu
 | `diagram` | diagram | `<folder>/<id>.mmd` (first line `%% Title`) | Mermaid text with live preview, SVG download |
 | `chat` | chat | `<folder>/<date>-<title>.json` | Chat with Claude CLI inside the project folder (section 6) |
 
-Records are one YAML file per item, so they are readable, diff-friendly in git, and easy for Claude to edit.
+Records are one YAML file per item, so they are readable, diff-friendly, and easy for Claude to edit.
+
+### 5a. Links between features
+
+The parts of a project can point at each other:
+
+- **In Markdown:** `[[Router]]` links to the item with that title (or id) in *any* feature of the project, looking in the same feature first. `[[devices/router]]` names the feature and id exactly, and `[[Router|the router]]` changes the text shown. A link to a missing title offers to create a page.
+- **In records:** a field of type `link` stores references. Without `to` the value is `feature/id`; with `to: devices` it is just the id. With `multiple: true` it holds a list. The form shows a type-ahead picker, and tables, cards and boards show clickable chips.
+- **Mentioned in:** every page and record shows which pages and records link to it, from `[[…]]` links and link fields.
+
+```yaml
+# record: data/projects/home-lab/tasks/replace-the-old-switch.yaml
+title: Replace the old switch
+status: Doing
+related: [devices/router, wiki/home]
+```
 
 ## 6. Claude CLI integration
 
@@ -214,7 +229,7 @@ This is a stdio JSON-RPC server with no dependencies. Register it once:
 claude mcp add workspace --scope user -- node "<path>/app/mcp.js"
 ```
 
-Tools: `list_projects`, `get_project`, `create_project`, `update_project_yaml`, `list_features`, `save_feature`, `list_items`, `read_item`, `create_item`, `write_item`, `search`.
+Tools: `list_projects`, `get_project`, `create_project`, `update_project_yaml`, `list_features`, `save_feature`, `list_items`, `read_item`, `create_item`, `write_item`, `backlinks`, `search`.
 
 ## 7. The app
 
@@ -230,6 +245,8 @@ Plain Node `http` with no framework. It binds to `127.0.0.1:4321` (override with
 | `GET/PUT/DELETE /api/features[/<key>]` | feature definitions |
 | `GET/POST /api/projects`, `GET /api/projects/<p>` | projects |
 | `GET /api/projects/<p>/overview` | overview tab data |
+| `GET /api/projects/<p>/index` | every linkable item (pages, records, diagrams) |
+| `GET /api/projects/<p>/backlinks?feature=&id=` | "mentioned in" for one item |
 | `POST /api/examples` | add the example projects |
 | `PUT /api/projects/<p>/yaml` | save project.yaml (validated) |
 | `POST/DELETE /api/projects/<p>/features[/<key>]` | add/remove a feature |

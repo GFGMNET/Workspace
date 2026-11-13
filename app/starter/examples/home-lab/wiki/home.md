@@ -4,7 +4,7 @@ The home network: one router, a NAS for backups and an access point in the offic
 
 ## Quick links
 - [[Setup guide]] — how a new laptop gets onto the network
-- Devices are in the **Network devices** tab, the plan is in **Diagrams**
+- Devices are in the **Network devices** tab — e.g. the [[Router]] and the [[NAS]] — the plan is in [[Network]]
 - Open tasks are on the **Tasks** board
 
 ## Rules

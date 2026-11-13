@@ -177,6 +177,19 @@ function confirmBox(text, ok = 'Delete') {
   return new Promise(res => { modal({ title: 'Please confirm', body: `<p style="margin:0 0 6px">${esc(text)}</p>`, ok, danger: true, onOk: () => { res(true); } }); setTimeout(() => {}, 0); const obs = new MutationObserver(() => { if (!$('#overlay .modal-bg')) { obs.disconnect(); res(false); } }); obs.observe($('#overlay'), { childList: true }); });
 }
 
+// ---------- links between features ----------
+// Same rules as the server: "feature/id" or a title/id, same feature first.
+function resolveRef(index, ref, fromFeature) {
+  ref = String(ref || '').trim(); if (!ref || !index) return null;
+  const slash = ref.indexOf('/');
+  if (slash > 0) { const fk = ref.slice(0, slash), rest = ref.slice(slash + 1); const hit = index.find(x => x.feature === fk && (x.id === rest || x.title.toLowerCase() === rest.toLowerCase())); if (hit) return hit; }
+  const low = ref.toLowerCase(); const slug = low.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const order = [...index.filter(x => x.feature === fromFeature), ...index.filter(x => x.feature !== fromFeature)];
+  return order.find(x => x.id === ref) || order.find(x => x.title.toLowerCase() === low) || order.find(x => x.id === slug) || null;
+}
+const linkRefOf = (f, item) => (f.to && item.feature === f.to ? item.id : `${item.feature}/${item.id}`);
+function linkValues(v) { return Array.isArray(v) ? v : v ? [v] : []; }
+
 // ---------- record forms (fields from the feature definition) ----------
 function fieldInput(f, value, ctx = {}) {
   const id = 'f_' + f.name; const v = value ?? '';
@@ -194,11 +207,35 @@ function fieldInput(f, value, ctx = {}) {
     case 'tags': input = `<input ${n} value="${esc(Array.isArray(v) ? v.join(', ') : v)}" placeholder="comma separated">`; break;
     case 'list': input = `<textarea ${n} rows="3" placeholder="one per line">${esc(Array.isArray(v) ? v.join('\n') : v)}</textarea>`; break;
     case 'keyvalue': input = `<textarea ${n} rows="2" placeholder="KEY=value, one per line">${esc(v && typeof v === 'object' ? Object.entries(v).map(([a, b]) => `${a}=${b}`).join('\n') : v)}</textarea>`; break;
+    case 'link': {
+      const opts = (ctx.index || []).filter(x => !f.to || x.feature === f.to).filter(x => !(x.feature === ctx.feature && x.id === ctx.selfId));
+      const vals = linkValues(v);
+      const chip = r => { const hit = resolveRef(ctx.index, f.to && !String(r).includes('/') ? `${f.to}/${r}` : r, f.to || ctx.feature); return `<span class="chip accent" data-ref="${esc(r)}">${esc(hit ? hit.title : r)}${hit && !f.to ? ` <span class="faint">${esc(hit.featureName)}</span>` : ''} <button type="button" class="x" aria-label="Remove ${esc(hit ? hit.title : r)}">×</button></span>`; };
+      input = `<div class="linkpick" data-link="${esc(f.name)}" data-multiple="${f.multiple ? 1 : 0}"><input type="hidden" ${n} value="${esc(JSON.stringify(vals))}">
+        <div class="chips" data-chips>${vals.map(chip).join('')}</div>
+        <input type="search" list="dl_${esc(f.name)}" placeholder="${f.multiple || !vals.length ? 'Type to link a page or item…' : 'Replace…'}" aria-label="${esc(f.label)}" data-pick>
+        <datalist id="dl_${esc(f.name)}">${opts.map(x => `<option value="${esc(x.title)}${f.to ? '' : ' · ' + esc(x.featureName)}" data-ref="${esc(linkRefOf(f, x))}"></option>`).join('')}</datalist></div>`;
+      break;
+    }
     case 'parent': input = `<select ${n}><option value="">— nobody (top) —</option>${(ctx.records || []).filter(r => r.id !== ctx.selfId).map(r => `<option value="${esc(r.id)}" ${r.id === v ? 'selected' : ''}>${esc(r.title)}</option>`).join('')}</select>`; break;
     default: input = `<input ${n} value="${esc(typeof v === 'object' ? JSON.stringify(v) : v)}">`;
   }
   const wide = ['longtext', 'list', 'keyvalue'].includes(f.type);
   return `<div class="field ${wide ? 'wide' : ''}"><label for="${id}">${esc(f.label || f.name)}</label>${input}</div>`;
+}
+function wireLinkPickers(root, fields, ctx) {
+  $$('[data-link]', root).forEach(box => {
+    const f = fields.find(x => x.name === box.dataset.link); const hidden = $('input[type=hidden]', box); const pick = $('[data-pick]', box);
+    const get = () => { try { return JSON.parse(hidden.value || '[]'); } catch { return []; } };
+    const set = vals => { hidden.value = JSON.stringify(vals); $('[data-chips]', box).innerHTML = vals.map(r => { const hit = resolveRef(ctx.index, f.to && !String(r).includes('/') ? `${f.to}/${r}` : r, f.to || ctx.feature); return `<span class="chip accent" data-ref="${esc(r)}">${esc(hit ? hit.title : r)}${hit && !f.to ? ` <span class="faint">${esc(hit.featureName)}</span>` : ''} <button type="button" class="x" aria-label="Remove">×</button></span>`; }).join(''); wire(); };
+    const wire = () => $$('.x', box).forEach(b => b.onclick = () => set(get().filter(r => r !== b.closest('[data-ref]').dataset.ref)));
+    pick.addEventListener('change', () => {
+      const opt = [...$('datalist', box).options].find(o => o.value === pick.value); if (!opt) return;
+      const r = opt.dataset.ref; const cur = get();
+      set(f.multiple ? (cur.includes(r) ? cur : [...cur, r]) : [r]); pick.value = '';
+    });
+    wire();
+  });
 }
 function readFields(form, fields, base = {}) {
   const out = { ...base };
@@ -210,17 +247,20 @@ function readFields(form, fields, base = {}) {
     if (f.type === 'keyvalue') { const o = {}; String(v).split('\n').map(s => s.trim()).filter(Boolean).forEach(l => { const i = l.indexOf('='); if (i > 0) o[l.slice(0, i).trim()] = l.slice(i + 1).trim(); }); v = o; }
     if (f.type === 'number' && v !== '') v = +v;
     if (f.type === 'bool' && !v) v = null;
+    if (f.type === 'link') { let arr = []; try { arr = JSON.parse(v || '[]'); } catch {} v = f.multiple ? arr : (arr[0] || null); }
     out[f.name] = v;
   }
   return out;
 }
 function fmtValue(f, v) {
   if (v == null || v === '') return '';
+  if (f && f.type === 'link' && window.linkChips) return window.linkChips(f, v);
   if (Array.isArray(v)) return v.map(esc).join(', ');
   if (typeof v === 'object') return esc(Object.keys(v).join(', '));
   if (f && f.type === 'url') return `<a href="${esc(/^https?:/i.test(v) ? v : 'https://' + v)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(v)}</a>`;
   if (f && f.type === 'email') return `<a href="mailto:${esc(v)}" onclick="event.stopPropagation()">${esc(v)}</a>`;
   if (f && f.type === 'bool') return v ? '✓' : '';
+  if (f && f.type === 'link' && window.linkChips) return window.linkChips(f, v);
   if (f && f.type === 'date') { const d = new Date(v + 'T00:00:00'); return isNaN(d) ? esc(v) : esc(d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })); }
   return esc(v);
 }

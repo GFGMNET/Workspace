@@ -3,6 +3,7 @@
 const S = { info: null, projects: [], features: [], project: null };
 const App = {
   dirty: false,
+  index: [],
   rerender: () => route(),
   refreshProjects: async () => { try { S.projects = await api('/api/projects'); renderSidebar(); renderTabs(); } catch {} },
   refreshProjectOnly: async () => { if (S.project) { try { S.project = await api(`/api/projects/${enc(S.project.slug)}`); renderTabs(); } catch {} } },
@@ -148,6 +149,7 @@ async function renderProject(tab, sub, query) {
   }
   const over = Object.keys(f.overrides || {}).length ? ` · overridden in project.yaml: ${Object.entries(f.overrides).map(([k, v]) => `<span class="mono">${esc(k)}: ${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join(', ')}` : '';
   $('#fnote').innerHTML = `<div class="note" style="margin-bottom:14px"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} · folder <span class="mono">${esc(f.def.folder)}/</span>${over}</div>`;
+  try { App.index = await api(`/api/projects/${enc(p.slug)}/index`); } catch { App.index = []; }
   const ctx = { p, f, el: body, sub, query, href: (id, suffix = '') => projectHref(f.key, id, suffix) };
   const view = VIEWS[f.def.layout] || VIEWS.pages;
   await view(ctx);
@@ -254,10 +256,14 @@ folder: where content goes in a project (default: the key)
 fields:            # records only
   - name           # plain text
   - name: due
-    type: date     # ${'text | longtext | number | date | datetime | select | bool | url | email | tags | list | keyvalue'}
+    type: date     # ${'text | longtext | number | date | datetime | select | bool | url | email | tags | list | keyvalue | link'}
   - name: status
     type: select
     options: [open, closed]
+  - name: related
+    type: link     # pick pages/records of this project
+    to: devices    # optional: only items of this feature
+    multiple: true
 columns: [To do, Doing, Done]   # kanban
 date_field: date                # calendar (end_field optional)
 parent_field: reports_to        # orgchart

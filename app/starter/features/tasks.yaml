@@ -12,5 +12,8 @@ fields:
   - name: priority
     type: select
     options: [low, normal, high]
+  - name: related
+    type: link          # links to any page/record in the project (add  to: devices  to limit it)
+    multiple: true
   - notes
 new_item: Task

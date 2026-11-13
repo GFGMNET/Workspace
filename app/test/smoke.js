@@ -49,6 +49,11 @@ ok('mcp feature writes .mcp.json', () => {
 });
 ok('skills land in .claude/skills', () => assert(fs.existsSync(path.join(tmp, 'projects', 'test-2', '.claude', 'skills', 'an-skill-md-for-agent', 'SKILL.md'))));
 ok('path traversal is refused', () => assert.throws(() => ws.readItem('test', 'wiki', '../../features/wiki')));
+ok('links: [[Title]] across features + link fields -> mentioned in', () => {
+  const who = ws.backlinks('home-lab', 'devices', 'router').map(b => b.feature + '/' + b.id).sort();
+  assert.deepStrictEqual(who, ['tasks/replace-the-old-switch', 'wiki/home']);
+});
+ok('overview lists upcoming dates and open tasks', () => { const o = ws.projectOverview('home-lab', 100000); assert(o.upcoming.length >= 2 && o.open.length === 2); });
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 
 // MCP server handshake

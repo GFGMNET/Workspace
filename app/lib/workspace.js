@@ -28,7 +28,7 @@ const LAYOUTS = {
   diagram: ['diagram'],
   chat: ['chat'],
 };
-const FIELD_TYPES = ['text', 'longtext', 'number', 'date', 'datetime', 'select', 'bool', 'url', 'email', 'tags', 'list', 'keyvalue'];
+const FIELD_TYPES = ['text', 'longtext', 'number', 'date', 'datetime', 'select', 'bool', 'url', 'email', 'tags', 'list', 'keyvalue', 'link'];
 const META_KEYS = new Set(['name', 'description', 'icon', 'color', 'tags', 'status', 'owner', 'created', 'overview']);
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i;
 
@@ -656,6 +656,61 @@ function search(query, onlySlug) {
   return hits.slice(0, 200);
 }
 
+// ---------- links between features ----------
+// Every linkable item of a project: pages, records and diagrams.
+function projectIndex(slug) {
+  const p = typeof slug === 'string' ? loadProject(slug) : slug;
+  const out = [];
+  for (const f of p.features) {
+    if (f.missing) continue;
+    const s = f.def.stores;
+    try {
+      const items = s === 'markdown' ? listMarkdown(p, f) : s === 'records' ? listRecords(p, f) : s === 'diagram' ? listDiagrams(p, f) : [];
+      for (const it of items) out.push({ feature: f.key, featureName: f.def.name, stores: s, id: it.id, title: it.title });
+    } catch {}
+  }
+  return out;
+}
+// "[[Router]]", "[[devices/router]]" or a link-field value -> index entry (same feature first).
+function resolveRef(index, ref, fromFeature) {
+  ref = String(ref || '').trim(); if (!ref) return null;
+  const slash = ref.indexOf('/');
+  if (slash > 0) { const fk = ref.slice(0, slash), rest = ref.slice(slash + 1); const hit = index.find(x => x.feature === fk && (x.id === rest || x.title.toLowerCase() === rest.toLowerCase())); if (hit) return hit; }
+  const low = ref.toLowerCase();
+  const order = [...index.filter(x => x.feature === fromFeature), ...index.filter(x => x.feature !== fromFeature)];
+  return order.find(x => x.id === ref) || order.find(x => x.title.toLowerCase() === low) || order.find(x => x.id === slugify(ref)) || null;
+}
+const WIKI_RE = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+// Everything in the project that links to one item ("mentioned in").
+function backlinks(slug, feature, id) {
+  const p = loadProject(slug);
+  const index = projectIndex(p);
+  const target = index.find(x => x.feature === feature && x.id === id);
+  if (!target) return [];
+  const hits = new Map();
+  const add = (src, how) => { const k = src.feature + '/' + src.id; if (k !== feature + '/' + id && !hits.has(k)) hits.set(k, { feature: src.feature, featureName: src.featureName, id: src.id, title: src.title, how }); };
+  const scanText = (text, src) => { for (const m of String(text).matchAll(WIKI_RE)) { const r = resolveRef(index, m[1], src.feature); if (r && r.feature === feature && r.id === id) add(src, 'link'); } };
+  for (const f of p.features) {
+    if (f.missing) continue;
+    const s = f.def.stores;
+    try {
+      if (s === 'markdown') for (const it of listMarkdown(p, f)) scanText(readText(safeJoin(p.dir, it.file)), { feature: f.key, featureName: f.def.name, id: it.id, title: it.title });
+      if (s === 'records') {
+        const linkFields = (f.def.fields || []).filter(x => x.type === 'link');
+        for (const r of listRecords(p, f)) {
+          const src = { feature: f.key, featureName: f.def.name, id: r.id, title: r.title };
+          for (const lf of linkFields) {
+            const vals = Array.isArray(r.data[lf.name]) ? r.data[lf.name] : r.data[lf.name] ? [r.data[lf.name]] : [];
+            for (const v of vals) { const ref = lf.to && !String(v).includes('/') ? `${lf.to}/${v}` : v; const hit = resolveRef(index, ref, lf.to || f.key); if (hit && hit.feature === feature && hit.id === id) add(src, lf.label || lf.name); }
+          }
+          for (const v of Object.values(r.data)) if (typeof v === 'string' && v.includes('[[')) scanText(v, src);
+        }
+      }
+    } catch {}
+  }
+  return [...hits.values()].sort((a, b) => a.featureName.localeCompare(b.featureName) || a.title.localeCompare(b.title));
+}
+
 // ---------- project overview ----------
 function projectOverview(slug, days = 30) {
   const p = loadProject(slug);
@@ -738,7 +793,7 @@ function addExamples() {
 }
 
 module.exports = {
-  projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
+  projectIndex, resolveRef, backlinks, projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
   ROOT, FEATURES_DIR, PROJECTS_DIR, STORES, LAYOUTS, FIELD_TYPES, YAML,
   httpError, slugify, normalizeFeature,
   listFeatures, getFeature, saveFeature, deleteFeature,

@@ -18,6 +18,7 @@ const TOOLS = [
   { name: 'read_item', description: 'Read one item: Markdown text for pages and skills, YAML data for records, Mermaid text for diagrams.', inputSchema: S({ project: str(''), feature: str(''), id: str('Item id (file name without extension)') }, ['project', 'feature', 'id']) },
   { name: 'create_item', description: 'Create a new item in a feature. For records pass `data` with the feature\'s fields; for pages/diagrams pass `content` (Markdown / Mermaid).', inputSchema: S({ project: str(''), feature: str(''), title: str(''), content: str('Optional text content'), data: { type: 'object', description: 'Optional record fields' } }, ['project', 'feature', 'title']) },
   { name: 'write_item', description: 'Overwrite an existing item. Pages/diagrams: `content`. Records: `data` (object) or `content` (YAML text).', inputSchema: S({ project: str(''), feature: str(''), id: str(''), content: str(''), data: { type: 'object' } }, ['project', 'feature', 'id']) },
+  { name: 'backlinks', description: 'Which pages and records of a project link to one item ("mentioned in"). Links are [[Title]] or [[feature/id]] in Markdown, or record fields of type link.', inputSchema: S({ project: str(''), feature: str(''), id: str('') }, ['project', 'feature', 'id']) },
   { name: 'search', description: 'Full-text search across all projects (or one).', inputSchema: S({ query: str(''), project: str('Optional project id') }, ['query']) },
 ];
 
@@ -39,6 +40,7 @@ function call(name, a) {
     case 'read_item': return ws.readItem(a.project, a.feature, a.id);
     case 'create_item': return ws.createItem(a.project, a.feature, { title: a.title, content: a.content, data: a.data });
     case 'write_item': { const r = ws.writeItem(a.project, a.feature, a.id, { content: a.content, data: a.data }); return { ok: true, file: r.file }; }
+    case 'backlinks': return ws.backlinks(a.project, a.feature, a.id);
     case 'search': return ws.search(a.query, a.project);
     default: throw new Error('Unknown tool: ' + name);
   }

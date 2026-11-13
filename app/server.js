@@ -81,6 +81,8 @@ const routes = [
   ['POST', /^\/api\/projects$/, async (m, q, req) => projectView(ws.createProject(await json(req)))],
   ['GET', new RegExp(`^${P}$`), (m) => projectView(ws.loadProject(d(m[1])))],
   ['GET', new RegExp(`^${P}/overview$`), (m) => ws.projectOverview(d(m[1]))],
+  ['GET', new RegExp(`^${P}/index$`), (m) => ws.projectIndex(d(m[1]))],
+  ['GET', new RegExp(`^${P}/backlinks$`), (m, q) => ws.backlinks(d(m[1]), q.get('feature') || '', q.get('id') || '')],
   ['PUT', new RegExp(`^${P}/yaml$`), async (m, q, req) => projectView(ws.saveProjectYaml(d(m[1]), (await json(req)).yaml))],
   ['POST', new RegExp(`^${P}/features$`), async (m, q, req) => { const b = await json(req); return projectView(ws.addFeatureToProject(d(m[1]), b.key, b.settings)); }],
   ['DELETE', new RegExp(`^${P}/features/([^/]+)$`), (m) => projectView(ws.removeFeatureFromProject(d(m[1]), d(m[2])))],

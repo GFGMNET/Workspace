@@ -5,6 +5,17 @@ const itemsUrl = (ctx, extra = '') => `/api/projects/${enc(ctx.p.slug)}/f/${enc(
 const fileUrl = (ctx, rel) => `/files/${enc(ctx.p.slug)}/${String(rel).split('/').map(enc).join('/')}`;
 const emptyBox = (ctx, text, btn = true) => `<div class="empty"><div><div class="ic">${featureIcon(ctx.f.def, 34)}</div><p>${esc(text)}</p>${btn ? `<button class="btn primary" type="button" data-new>${icon('plus')} New ${esc(ctx.f.def.new_item.toLowerCase())}</button>` : ''}</div></div>`;
 
+// Link-field values as clickable chips (uses the project index loaded with the project).
+window.linkChips = (f, v) => linkValues(v).map(r => {
+  const ref = f.to && !String(r).includes('/') ? `${f.to}/${r}` : r;
+  const hit = resolveRef(App.index, ref, f.to);
+  return hit ? `<a class="chip accent" href="${projectHref(hit.feature, hit.id)}" onclick="event.stopPropagation()" title="${esc(hit.featureName)}">${esc(hit.title)}</a>` : `<span class="chip warn" title="Not found">${esc(r)}</span>`;
+}).join(' ');
+async function backlinksHtml(ctx, id) {
+  let list = []; try { list = await api(`/api/projects/${enc(ctx.p.slug)}/backlinks?feature=${enc(ctx.f.key)}&id=${enc(id)}`); } catch {}
+  if (!list.length) return '';
+  return `<div class="backlinks"><b>Mentioned in</b><div class="chips">${list.map(b => `<a class="chip" href="${projectHref(b.feature, b.id)}" title="${esc(b.how === 'link' ? 'Links here' : 'Field: ' + b.how)}">${esc(b.title)} <span class="faint">${esc(b.featureName)}</span></a>`).join('')}</div></div>`;
+}
 const dropEditFlag = () => { if (location.hash.includes('?edit=1')) history.replaceState(null, '', location.hash.replace(/\?edit=1$/, '')); };
 function itemList(ctx, items, active, { snippet, filter = true } = {}) {
   return `<div class="ilist"><div class="hd"><b>${esc(ctx.f.def.name)}</b><button class="btn ghost sm" type="button" data-new>${icon('plus', 14)} ${esc(ctx.f.def.new_item)}</button></div>
@@ -59,9 +70,10 @@ async function recordDialog(ctx, rec, preset = {}) {
   const data = rec ? rec.data : { ...preset };
   const fields = def.fields;
   const isMcp = def.for_claude === 'mcp';
+  const fctx = { records, selfId: rec && rec.id, index: App.index, feature: ctx.f.key };
   const m = modal({
     title: rec ? `${rec.title}` : `New ${def.new_item.toLowerCase()} · ${def.name}`, ok: rec ? 'Save' : 'Create', wide: fields.length > 6,
-    body: `<div class="fgrid">${fields.map(f => fieldInput(f, data[f.name], { records, selfId: rec && rec.id })).join('')}</div>
+    body: `<div class="fgrid">${fields.map(f => fieldInput(f, data[f.name], fctx)).join('')}</div><div data-bl></div>
       ${isMcp ? `<p class="faint small" style="margin:0">Local servers use <b>command</b> + <b>args</b> (on Windows, npx often needs command <code>cmd</code> and args <code>/c</code>, <code>npx</code>, …). Remote servers use <b>url</b>. Saved to <code>.mcp.json</code> for Claude CLI.</p>` : ''}
       ${rec ? `<p class="faint small" style="margin:8px 0 0"><span class="mono">${esc(rec.file)}</span></p>` : ''}`,
     extra: rec ? `<button type="button" class="btn ghost danger" data-del>${icon('trash', 14)} Delete</button>` : '',
@@ -73,6 +85,8 @@ async function recordDialog(ctx, rec, preset = {}) {
       else await api(itemsUrl(ctx), { body: { title: out[tf], data: out } });
       toast(rec ? 'Saved' : 'Created'); App.refreshProjects(); App.rerender();
     } });
+  wireLinkPickers(m.el, fields, fctx);
+  if (rec) backlinksHtml(ctx, rec.id).then(h => { const el = $('[data-bl]', m.el); if (el) el.innerHTML = h; });
   const del = $('[data-del]', m.el);
   if (del) del.onclick = async () => {
     if (!confirm(`Delete “${rec.title}”? It is moved to the project's .trash folder.`)) return;
@@ -94,9 +108,8 @@ async function pageView(ctx, pane, id, items) {
   const data = await api(itemsUrl(ctx, '/' + enc(id)));
   const dir = data.file.split('/').slice(0, -1).join('/');
   const base = fileUrl(ctx, dir) + '/';
-  const known = new Map(items.map(i => [i.title.toLowerCase(), i.id]));
   const opts = {
-    base, wikilink: (t, label) => { const hit = known.get(t.toLowerCase()) || (items.find(i => i.id === t) || {}).id; return `<a class="wikilink ${hit ? '' : 'missing'}" href="${hit ? ctx.href(hit) : '#'}" data-wiki="${esc(t)}">${esc(label)}</a>`; },
+    base, wikilink: (t, label) => { const hit = resolveRef(App.index, t, ctx.f.key); return `<a class="wikilink ${hit ? '' : 'missing'}" href="${hit ? projectHref(hit.feature, hit.id) : '#'}" data-wiki="${esc(t)}" ${hit && hit.feature !== ctx.f.key ? `title="${esc(hit.featureName)}"` : ''}>${esc(label)}</a>`; },
     link: (t, h) => { const m = h.match(/^(?:\.\/)?([\w.-]+)\.md$/); if (m && items.some(i => i.id === m[1])) return `<a href="${ctx.href(m[1])}">${t}</a>`; return `<a href="${h}" target="_blank" rel="noopener">${t}</a>`; },
   };
   const view = () => {
@@ -104,8 +117,9 @@ async function pageView(ctx, pane, id, items) {
     pane.innerHTML = `<div class="bar"><span class="path">${esc(data.file)}</span><span class="faint small">${esc(ago(data.modified))}</span>
       <button class="btn sm ghost danger" type="button" data-del>${icon('trash', 14)}</button>
       <button class="btn sm primary" type="button" data-edit>${icon('edit', 14)} Edit</button></div>
-      <div class="body"><article class="md">${md(data.content, opts) || '<p class="faint">Empty page.</p>'}</article></div>`;
+      <div class="body"><article class="md">${md(data.content, opts) || '<p class="faint">Empty page.</p>'}</article><div data-bl></div></div>`;
     hydrateMarkdown(pane);
+    backlinksHtml(ctx, id).then(h => { const el = $('[data-bl]', pane); if (el) el.innerHTML = h; });
     $('[data-edit]', pane).onclick = edit;
     $('[data-del]', pane).onclick = async () => { if (!confirm('Delete this page? It is moved to the project\'s .trash folder.')) return; await api(itemsUrl(ctx, '/' + enc(id)), { method: 'DELETE' }); toast('Moved to .trash'); App.refreshProjects(); location.hash = ctx.href(''); };
     $$('a.wikilink.missing', pane).forEach(a => a.onclick = async e => { e.preventDefault(); const r = await api(itemsUrl(ctx), { body: { title: a.dataset.wiki } }); location.hash = ctx.href(r.id, '?edit=1'); });
