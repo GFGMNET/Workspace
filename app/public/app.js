@@ -85,14 +85,16 @@ function renderHome() {
         <div class="desc">${p.error ? `<span style="color:var(--err)">⚠ ${esc(p.error)}</span>` : esc(p.description)}</div>
         <div class="chips">${p.features.map(f => `<span class="chip ${f.missing ? 'warn' : 'accent'}">${esc(f.name)}${f.missing ? ' (undefined)' : ' · ' + f.count}</span>`).join('')}</div>
         <div class="faint small">${p.modified ? 'Changed ' + esc(ago(p.modified)) : ''}</div></a>`).join('')}
-      <button class="card pcard new" type="button" data-new-project>${icon('plus', 26)}<span>Create a project</span></button></div>
+      <button class="card pcard new" type="button" data-new-project>${icon('plus', 26)}<span>Create a project</span></button>
+      ${!ps.length && S.info.examples ? `<button class="card pcard new" type="button" data-examples>${icon('layers', 26)}<span>Add the example projects</span><span class="faint small">test, test 2 and Home Lab — to look around</span></button>` : ''}</div>
     <div class="grid" style="margin-top:22px;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))">
-      <div class="card"><b>Workspace folder</b><pre class="code" style="margin-top:10px">${esc(S.info.root)}
+      <div class="card"><b>Your data</b><p class="muted small" style="margin:6px 0 0">Kept apart from the program — when you update, replace everything except this folder.</p><pre class="code" style="margin-top:10px">${esc(S.info.root)}
   features/   what each feature means (${S.features.length})
   projects/   one folder per project (${ps.length})</pre></div>
       <div class="card"><b>Use it from Claude CLI</b><p class="muted small" style="margin:6px 0 10px">Register the workspace MCP server once — then Claude can list, create and edit projects from any terminal.</p>
         <pre class="code">claude mcp add workspace --scope user -- node "${esc(S.info.mcpScript)}"</pre></div></div></div>`;
   $$('[data-new-project]').forEach(b => b.onclick = () => newProjectDialog());
+  const ex = $('[data-examples]'); if (ex) ex.onclick = async () => { ex.disabled = true; const r = await api('/api/examples', { body: {} }); await App.refreshProjects(); toast(`Added ${r.added.length} example projects`); route(); };
 }
 
 // ---------- search ----------

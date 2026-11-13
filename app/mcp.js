@@ -3,6 +3,7 @@
 // Register once:  claude mcp add workspace --scope user -- node "<path>/app/mcp.js"
 'use strict';
 const ws = require('./lib/workspace');
+ws.ensureWorkspace();
 
 const S = (props, req = []) => ({ type: 'object', properties: props, required: req });
 const str = (description) => ({ type: 'string', description });

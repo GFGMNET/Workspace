@@ -1,6 +1,6 @@
 {
   "name": "project-workspace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "File-based project workspace: project.yaml says which features a project has, features/*.yaml says what they mean. Web UI, chat with Claude CLI, MCP server. No database, no dependencies.",
   "private": true,
   "scripts": {

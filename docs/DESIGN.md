@@ -21,29 +21,40 @@ Principles:
 ## 2. Folder structure
 
 ```
-Workspace/
-  app/                       the program (Node.js, no dependencies)
+Workspace/                   ← the program: replace it completely on update
+  app/
     server.js                local web server + API
     mcp.js                   MCP server for Claude CLI
     lib/yaml.js              small YAML reader/writer
-    lib/workspace.js         all file logic (features, projects, items)
+    lib/exif.js              reads the "date taken" from photos
+    lib/workspace.js         all file logic (features, projects, items, first start)
     lib/chat.js              runs Claude CLI for the chat feature
     public/                  the user interface (HTML/CSS/JS)
       vendor/mermaid.min.js  Mermaid 11 (MIT) for diagrams, bundled for offline use
+    starter/features/        starter feature definitions (copied into data/ on first start)
+    starter/examples/        example projects (added on request)
     test/smoke.js            automated checks (npm test)
-  features/                  what each feature means — one YAML file per feature
-  projects/                  one folder per project
-    <project>/
-      project.yaml           which features this project has
-      <feature folder>/...   the content
-      .claude/skills/...     written by the skills feature (read by Claude CLI)
-      .mcp.json              written by the mcp feature (read by Claude CLI)
-      .trash/                deleted items end up here (never really deleted)
   docs/                      this document, screenshots
   start.bat / start.sh       start the app
+  data/                      ← the client's data: never replaced, not in git
+    .workspace.json          which starter features were installed (so deleted ones stay deleted)
+    features/                what each feature means — one YAML file per feature
+    projects/                one folder per project
+      <project>/
+        project.yaml         which features this project has
+        <feature folder>/... the content
+        .claude/skills/...   written by the skills feature (read by Claude CLI)
+        .mcp.json            written by the mcp feature (read by Claude CLI)
+        .trash/              deleted items end up here (never really deleted)
 ```
 
-The workspace folder is the repository root by default. Set the `WORKSPACE_DIR` environment variable to keep the data somewhere else.
+**Program and data are separate.** The GitHub repository is only for developing the tool. A live installation never touches git: a new version is downloaded and replaces everything except `data/`.
+
+- **First start:** `data/` is created and the starter features are copied in. Example projects are only added when you click *Add the example projects* on the empty home page.
+- **Update:** starter features that are new in that version are added. A starter feature is only ever added once (tracked in `.workspace.json`), so features the client changed or deleted are never touched.
+- **Old layout:** v0.1 kept `features/` and `projects/` next to `app/`; these are moved into `data/` automatically on the first start of a newer version.
+
+Set the `WORKSPACE_DIR` environment variable to keep the data somewhere else (for example on a network drive or in OneDrive).
 
 ## 3. Projects: `project.yaml`
 
@@ -82,9 +93,9 @@ Rules:
 - **The app changes `project.yaml` only by appending** (when you add a feature), so comments and formatting stay intact. The exception is removing a feature, which deletes that key's block.
 - **An unknown feature key** shows a notice with a button to create that feature.
 
-## 4. Features: `features/<key>.yaml`
+## 4. Features: `data/features/<key>.yaml`
 
-A feature definition says what a feature stores and how it looks. Every project that names it gets the same behaviour, and changing the file changes it everywhere.
+A feature definition (`data/features/<key>.yaml`) says what a feature stores and how it looks. Every project that names it gets the same behaviour, and changing the file changes it everywhere.
 
 ```yaml
 # Kanban board. Cards are records; the column is the "status" field.   ← first comment = description in the UI
@@ -266,7 +277,8 @@ Screens (from the accepted mockup, issue #2):
 | Diagram | Mermaid text |
 | Chat | Claude CLI in the project folder; permissions per project |
 | Theme | Light, dark, or follow the OS |
-| App format | v0.1: Node.js + browser. Portable `.exe` planned (#1) |
+| App format | Node.js + browser. Portable `.exe` planned (#1) |
+| Updates | Program and client data are separate (`data/`); update = replace everything except `data/` (#17) |
 | Dependencies | None at runtime (Mermaid is bundled) |
 
 ## 9. Rebuilding it

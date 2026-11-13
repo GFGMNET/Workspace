@@ -4,3 +4,6 @@ node_modules/
 Thumbs.db
 # deleted items are moved here, not removed
 .trash/
+
+# client data (projects, features) — never part of the program
+/data/

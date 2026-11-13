@@ -14,6 +14,7 @@ const OPEN = ARGS.includes('--open');
 const HOST = process.env.HOST || '127.0.0.1';
 const PUBLIC = path.join(__dirname, 'public');
 const VERSION = require('../package.json').version;
+const setupNotes = ws.ensureWorkspace();
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
   '.webp': 'image/webp', '.svg': 'image/svg+xml', '.avif': 'image/avif', '.bmp': 'image/bmp', '.ico': 'image/x-icon',
@@ -63,9 +64,10 @@ function watch() {
 // ---------- routes ----------
 const P = '/api/projects/([^/]+)';
 const routes = [
-  ['GET', /^\/api\/info$/, async () => ({ version: VERSION, root: ws.ROOT, projectsDir: ws.PROJECTS_DIR, featuresDir: ws.FEATURES_DIR,
+  ['GET', /^\/api\/info$/, async () => ({ version: VERSION, root: ws.ROOT, examples: ws.listExamples().length, projectsDir: ws.PROJECTS_DIR, featuresDir: ws.FEATURES_DIR,
     stores: ws.STORES, layouts: ws.LAYOUTS, fieldTypes: ws.FIELD_TYPES, platform: process.platform, mcpScript: path.join(__dirname, 'mcp.js') })],
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
+  ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],
   ['GET', /^\/api\/search$/, (m, q) => ws.search(q.get('q'), q.get('project') || undefined)],
   // features
   ['GET', /^\/api\/features$/, () => {
@@ -163,7 +165,9 @@ server.listen(PORT, HOST, () => {
   watch();
   console.log(`\n  Project Workspace ${VERSION}`);
   console.log(`  → http://localhost:${PORT}`);
-  console.log(`  Workspace folder: ${ws.ROOT}\n`);
+  console.log(`  Your data: ${ws.ROOT}`);
+  for (const n of setupNotes) console.log('  · ' + n);
+  console.log('');
   console.log('  Keep this window open while you use the workspace. Close it (or press Ctrl+C) to stop.\n');
   if (OPEN) openBrowser();
 });

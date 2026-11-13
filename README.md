@@ -12,12 +12,16 @@ You need [Node.js](https://nodejs.org) 18 or newer (LTS). Nothing else gets inst
 - **macOS / Linux:** `./start.sh`
 - or run `node app/server.js` yourself, then open http://localhost:4321
 
+On the first start a `data/` folder is created for your projects. The home page offers to add the example projects.
+
+**Updating:** download the new version and replace everything **except the `data/` folder**. New starter features are added automatically, and your own projects and features are never overwritten.
+
 The chat feature also needs [Claude CLI](https://docs.claude.com/en/docs/claude-code), installed and signed in (`claude` in a terminal).
 
 ## How it works
 
 ```yaml
-# projects/test/project.yaml
+# data/projects/test/project.yaml
 name: test
 wiki:
   - a wiki page
@@ -28,7 +32,7 @@ gallery:
 ```
 
 ```yaml
-# features/wiki.yaml  — defined once, used by every project that says "wiki:"
+# data/features/wiki.yaml  — defined once, used by every project that says "wiki:"
 name: Wiki
 stores: markdown
 layout: pages
@@ -65,6 +69,6 @@ Each feature key becomes a tab on the project page. The content lives in the pro
 - Full design and rebuild guide: [docs/DESIGN.md](docs/DESIGN.md)
 - Bugs and ideas: [Issues](https://github.com/GFGMNET/Workspace/issues)
 - Tests: `npm test`
-- Settings (environment variables): `PORT` (default 4321), `WORKSPACE_DIR` (data folder, default this folder), `CLAUDE_COMMAND` (default `claude`)
+- Settings (environment variables): `PORT` (default 4321), `WORKSPACE_DIR` (data folder, default `data/`), `CLAUDE_COMMAND` (default `claude`)
 
 Mermaid (MIT) is bundled in `app/public/vendor/` for offline diagrams.

@@ -1,7 +1,8 @@
-// Workspace store. Everything is plain files:
-//   <workspace>/features/<key>.yaml   what a feature means (stores + layout + options)
-//   <workspace>/projects/<slug>/project.yaml   which features a project uses
-//   <workspace>/projects/<slug>/<feature folder>/...   the content
+// Workspace store. Everything is plain files. The client's data lives in its own folder
+// (default: data/ next to app/, or WORKSPACE_DIR), so the program can be replaced on update:
+//   <data>/features/<key>.yaml   what a feature means (stores + layout + options)
+//   <data>/projects/<slug>/project.yaml   which features a project uses
+//   <data>/projects/<slug>/<feature folder>/...   the content
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -9,7 +10,10 @@ const YAML = require('./yaml');
 const { dateTaken } = require('./exif');
 
 const APP_DIR = path.resolve(__dirname, '..');
-const ROOT = path.resolve(process.env.WORKSPACE_DIR || path.join(APP_DIR, '..'));
+const INSTALL_DIR = path.resolve(APP_DIR, '..');
+const ROOT = path.resolve(process.env.WORKSPACE_DIR || path.join(INSTALL_DIR, 'data'));
+const STARTER_DIR = path.join(APP_DIR, 'starter');
+const STATE_FILE = '.workspace.json';
 const FEATURES_DIR = path.join(ROOT, 'features');
 const PROJECTS_DIR = path.join(ROOT, 'projects');
 const PROJECT_FILE = 'project.yaml';
@@ -652,7 +656,53 @@ function search(query, onlySlug) {
   return hits.slice(0, 200);
 }
 
+// ---------- first start, updates, examples ----------
+function readState() { try { return JSON.parse(readText(path.join(ROOT, STATE_FILE))); } catch { return {}; } }
+function writeState(st) { writeText(path.join(ROOT, STATE_FILE), JSON.stringify(st, null, 2) + '\n'); }
+// Creates the data folder on first start, moves an old layout (features/ + projects/ next to app/)
+// into it, and adds starter features that are new in this version. A starter feature is only ever
+// added once, so features the client changed or deleted are never touched again.
+function ensureWorkspace() {
+  const notes = [];
+  const legacy = !process.env.WORKSPACE_DIR && ['projects', 'features'].some(d => isDir(path.join(INSTALL_DIR, d)));
+  if (legacy && !exists(ROOT)) {
+    ensureDir(ROOT);
+    for (const d of ['features', 'projects']) {
+      const from = path.join(INSTALL_DIR, d);
+      if (isDir(from)) { fs.renameSync(from, path.join(ROOT, d)); notes.push(`moved ${d}/ into ${path.relative(INSTALL_DIR, ROOT) || ROOT}/`); }
+    }
+  }
+  ensureDir(FEATURES_DIR); ensureDir(PROJECTS_DIR);
+  const st = readState();
+  const installed = new Set(st.starterFeatures || []);
+  const sdir = path.join(STARTER_DIR, 'features');
+  if (isDir(sdir)) for (const f of fs.readdirSync(sdir).filter(n => /\.ya?ml$/.test(n))) {
+    const key = f.replace(/\.ya?ml$/, '');
+    if (installed.has(key)) continue;
+    const target = path.join(FEATURES_DIR, f);
+    if (!exists(target)) { fs.copyFileSync(path.join(sdir, f), target); notes.push(`added feature ${key}`); }
+    installed.add(key);
+  }
+  writeState({ ...st, starterFeatures: [...installed].sort(), version: require('../../package.json').version });
+  return notes;
+}
+function listExamples() {
+  const d = path.join(STARTER_DIR, 'examples');
+  return isDir(d) ? fs.readdirSync(d).filter(n => exists(path.join(d, n, PROJECT_FILE))) : [];
+}
+// Copies the example projects into the data folder (never overwrites: gets a new name instead).
+function addExamples() {
+  const added = [];
+  for (const name of listExamples()) {
+    const slug = uniqueName(PROJECTS_DIR, name, '');
+    fs.cpSync(path.join(STARTER_DIR, 'examples', name), path.join(PROJECTS_DIR, slug), { recursive: true });
+    syncProject(slug); added.push(slug);
+  }
+  return added;
+}
+
 module.exports = {
+  ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
   ROOT, FEATURES_DIR, PROJECTS_DIR, STORES, LAYOUTS, FIELD_TYPES, YAML,
   httpError, slugify, normalizeFeature,
   listFeatures, getFeature, saveFeature, deleteFeature,

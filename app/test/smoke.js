@@ -5,12 +5,19 @@ const fs = require('fs'), path = require('path'), os = require('os'), assert = r
 const { spawnSync, spawn } = require('child_process');
 const repo = path.resolve(__dirname, '..', '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-test-'));
-fs.cpSync(path.join(repo, 'features'), path.join(tmp, 'features'), { recursive: true });
-fs.cpSync(path.join(repo, 'projects'), path.join(tmp, 'projects'), { recursive: true });
+let n = 0; const ok = (name, fn) => { fn(); n++; console.log('  ✓ ' + name); };
 process.env.WORKSPACE_DIR = tmp;
 const ws = require('../lib/workspace');
+ok('first start: data folder with starter features', () => { ws.ensureWorkspace(); assert(fs.existsSync(path.join(tmp, 'features', 'wiki.yaml'))); assert.strictEqual(ws.listProjects().length, 0); });
+ok('deleted starter features are not re-added on update', () => {
+  fs.rmSync(path.join(tmp, 'features', 'contacts.yaml')); fs.writeFileSync(path.join(tmp, 'features', 'wiki.yaml'), 'name: My wiki\nstores: markdown\n');
+  ws.ensureWorkspace();
+  assert(!fs.existsSync(path.join(tmp, 'features', 'contacts.yaml'))); assert(/My wiki/.test(fs.readFileSync(path.join(tmp, 'features', 'wiki.yaml'), 'utf8')));
+  fs.copyFileSync(path.join(repo, 'app', 'starter', 'features', 'contacts.yaml'), path.join(tmp, 'features', 'contacts.yaml'));
+  fs.copyFileSync(path.join(repo, 'app', 'starter', 'features', 'wiki.yaml'), path.join(tmp, 'features', 'wiki.yaml'));
+});
+ok('example projects can be added', () => assert.strictEqual(ws.addExamples().length, 3));
 const YAML = require('../lib/yaml');
-let n = 0; const ok = (name, fn) => { fn(); n++; console.log('  ✓ ' + name); };
 
 ok('YAML: the original example with sloppy indentation', () => {
   const d = YAML.parse('---\nname: test\n wiki:\n   - a wiki page\n knowlege:\n   - a knowlegde based\n');
