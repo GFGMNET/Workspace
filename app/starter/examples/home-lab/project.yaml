@@ -19,6 +19,7 @@ devices:
     ip: 192.168.1.30
     kind: access point
     location: Office
+scripts:
 diagrams:
   - Network
 map:

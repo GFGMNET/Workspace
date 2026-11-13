@@ -23,7 +23,7 @@ const STORES = ['markdown', 'images', 'files', 'records', 'diagram', 'chat'];
 const LAYOUTS = {
   markdown: ['pages', 'cards', 'list'],
   images: ['grid'],
-  files: ['files'],
+  files: ['files', 'code'],
   records: ['table', 'list', 'cards', 'kanban', 'calendar', 'orgchart', 'map'],
   diagram: ['diagram'],
   chat: ['chat'],
@@ -792,8 +792,10 @@ function addExamples() {
   return added;
 }
 
+function refreshClaudeFiles(slug) { const p = loadProject(slug); if (!p.error) writeMcpJson(p); }
+
 module.exports = {
-  projectIndex, resolveRef, backlinks, projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
+  refreshClaudeFiles, projectIndex, resolveRef, backlinks, projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
   ROOT, FEATURES_DIR, PROJECTS_DIR, STORES, LAYOUTS, FIELD_TYPES, YAML,
   httpError, slugify, normalizeFeature,
   listFeatures, getFeature, saveFeature, deleteFeature,

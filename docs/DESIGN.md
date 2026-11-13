@@ -2,7 +2,7 @@
 
 This document describes what the workspace is, how it is built, and why. It has enough detail to rebuild it from scratch or port it to another stack.
 
-Status: version 0.1 (first working version). Open work is tracked in [GitHub Issues](https://github.com/GFGMNET/Workspace/issues).
+Status: version 0.3. Requirements and their status: [REQUIREMENTS.md](REQUIREMENTS.md). Open work is tracked in [GitHub Issues](https://github.com/GFGMNET/Workspace/issues).
 
 ---
 
@@ -161,6 +161,7 @@ A feature can combine only the building blocks below. A truly new look (a new bu
 | `list` | markdown / records | as above | Simple list |
 | `grid` | images | `<folder>/<album>/*.png…` | Album cards (cover, count, date range), drag & drop upload, lightbox (arrow keys, Del moves to trash). Sort by date (newest/oldest), name or size; group by album, month or year; “All albums” shows every picture at once. Dates are the photo's EXIF *date taken* (JPEG), else the file date. Sort/group are remembered per gallery |
 | `files` | files | `<folder>/<subfolder>/*` | Folder browser with upload |
+| `code` | files | `<folder>/**` (any text files) | Explorer limited to the feature folder with a code editor (syntax colours, line numbers, Tab indents, Ctrl+S), *New script* templates (PowerShell, batch, Bash, Python, JS, SQL, …), *Open in VS Code*. Used by the starter feature **Scripts** |
 | `table` | records | `<folder>/<id>.yaml` | Sortable, filterable table; click a row to edit |
 | `cards` | records | `<folder>/<id>.yaml` | Cards showing the fields (the MCP feature also shows the generated `.mcp.json`) |
 | `kanban` | records | `<folder>/<id>.yaml` | Columns from `columns:`; drag cards between them (this changes the status field) |
@@ -255,6 +256,8 @@ Plain Node `http` with no framework. It binds to `127.0.0.1:4321` (override with
 | `POST …/upload?folder=&filename=[&map=1]` | upload (raw body) |
 | `POST …/trash` | move a file to trash |
 | `POST …/chat` | run one chat turn (server-sent events) |
+| `GET /api/fs/tree`, `GET/PUT /api/fs/file`, `POST /api/fs/mkdir`, `…/rename`, `…/trash`, `…/upload`, `GET /api/fs/raw` (all with `?scope=workspace` or `?scope=p/<project>` and `&path=`) | explorer |
+| `POST /api/fs/vscode?scope=&path=` | open in VS Code |
 | `GET /api/events` | live refresh (server-sent events from a recursive `fs.watch`) |
 | `GET /files/<p>/<path>` | raw project files (images, downloads) |
 
@@ -279,6 +282,8 @@ Screens (from the accepted mockup, issue #2):
 3. **Features:** list, YAML editor with validation, a sketch of the layout, fields, and which projects use it.
 4. **New project:** name, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.
+6. **Explorer:** every project has an *Explorer* tab with the whole project folder as a tree (incl. `project.yaml`, `.claude/`, `.mcp.json`), and the sidebar has a workspace explorer (features + all projects). Text files open in the code editor (Markdown with preview, images shown); new file/folder, upload, rename/move, delete (to `.trash`), download. Saving a `project.yaml` or feature YAML is validated first.
+7. **VS Code:** *VS Code* in the project header and *Open in VS Code* on every file run the `code` command (`VSCODE_COMMAND` to override) to open the project folder in the installed VS Code and jump to the file. If `code` is not on the PATH the browser is asked to open a `vscode://file/…` link.
 
 - **Theme:** light, dark or auto (follows the OS), switched in the sidebar and remembered in `localStorage`.
 - **Sidebar:** can be collapsed to icons and project avatars (button at the bottom, or Ctrl+B), remembered in `localStorage`.

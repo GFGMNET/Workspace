@@ -28,6 +28,7 @@ function renderSidebar() {
     || '<div class="small" style="color:var(--side-ink2);padding:6px 8px">No projects yet.</div>';
   $('#featCount').textContent = S.features.length || '';
   $('#navFeatures').classList.toggle('active', location.hash.startsWith('#/features'));
+  $('#navFiles').classList.toggle('active', location.hash.startsWith('#/files'));
 }
 $('[data-action="new-project"]').onclick = () => newProjectDialog();
 
@@ -65,6 +66,11 @@ async function route() {
       await renderProject(parts[2] || '', parts.slice(3).join('/'), query);
     } else if (parts[0] === 'features') {
       S.project = null; renderSidebar(); await renderFeatures(parts[1] || '', query);
+    } else if (parts[0] === 'files') {
+      S.project = null; renderSidebar();
+      $('#main').innerHTML = `<div class="wrap"><div class="hero"><div>${menuBtn}<h1>Explorer</h1><p class="muted" style="margin:6px 0 0">All files of the workspace — features and every project.</p></div></div><section id="wsx"></section></div>`;
+      fillIcons($('#main'));
+      await explorer($('#wsx'), { scope: 'workspace', root: '', title: 'Workspace', sub: parts.slice(1).join('/'), query, href: p => '#/files' + (p ? '/' + p.split('/').map(enc).join('/') : '') });
     } else if (parts[0] === 'search') {
       S.project = null; renderSidebar(); await renderSearch(parts.slice(1).join('/'));
     } else { S.project = null; renderSidebar(); renderHome(); }
@@ -116,6 +122,7 @@ function renderTabs() {
   const ov = p.meta.overview !== false;
   el.innerHTML = (ov ? `<a role="tab" class="tab ${currentTab === '_overview' ? 'active' : ''}" href="${projectHref('_overview')}" aria-selected="${currentTab === '_overview'}">${icon('cards', 15)} Overview</a>` : '') + p.features.map(f => `<a role="tab" class="tab ${f.key === currentTab ? 'active' : ''} ${f.missing ? 'missing' : ''}" href="${projectHref(f.key)}" aria-selected="${f.key === currentTab}">
       ${f.missing ? icon('warn', 14) : featureIcon(f.def, 15)} ${esc(f.def ? f.def.name : f.key)}${!f.missing && counts[f.key] != null && f.def.stores !== 'chat' ? ` <span class="n">${counts[f.key]}</span>` : ''}</a>`).join('')
+    + `<a role="tab" class="tab ${currentTab === '_files' ? 'active' : ''}" href="${projectHref('_files')}" aria-selected="${currentTab === '_files'}">${icon('folder', 15)} Explorer</a>`
     + `<a role="tab" class="tab ${currentTab === '_yaml' ? 'active' : ''}" href="${projectHref('_yaml')}" aria-selected="${currentTab === '_yaml'}"><span class="mono" style="font-size:12.5px">project.yaml</span></a>`
     + `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature>${icon('plus', 14)} Feature</button>`;
   $('[data-add-feature]', el).onclick = addFeatureDialog;
@@ -129,16 +136,19 @@ async function renderProject(tab, sub, query) {
     <div class="phead">${menuBtn}${avatar(p.name, p.meta.icon, p.meta.color, p.slug)}
       <div class="title"><h1>${esc(p.name)}</h1><div class="muted small">${esc(p.meta.description || '')}</div>
         ${(Array.isArray(p.meta.tags) && p.meta.tags.length) || p.meta.status ? `<div class="chips" style="margin-top:6px">${(p.meta.tags || []).map(t => `<span class="chip accent">#${esc(t)}</span>`).join('')}${p.meta.status ? `<span class="chip">${esc(p.meta.status)}</span>` : ''}</div>` : ''}</div>
-      <button class="btn" type="button" data-cli title="${esc(cli)}">${icon('terminal', 14)} Open in Claude CLI</button>
+      <button class="btn" type="button" data-cli title="Copies: ${esc(cli)}">${icon('terminal', 14)} Claude CLI</button>
+      <button class="btn" type="button" data-vscode title="Open this project in VS Code">${icon('terminal', 14)} VS Code</button>
       <button class="btn" type="button" data-path title="${esc(p.path)}">${icon('copy', 14)} Copy path</button></div>
     ${p.error ? `<div class="err" style="margin-top:12px" role="alert">project.yaml has an error: ${esc(p.error)}. Fix it in the project.yaml tab.</div>` : ''}
     <nav class="tabs" id="ptabs" role="tablist" aria-label="Features of ${esc(p.name)}"></nav>
     <div id="fnote"></div><section id="fbody"></section></div>`;
   $('[data-cli]').onclick = () => copy(cli); $('[data-path]').onclick = () => copy(p.path);
+  $('[data-vscode]').onclick = () => openVSCode('p/' + p.slug, '');
   renderTabs();
   const body = $('#fbody');
   if (tab === '_yaml') return renderProjectYaml(body);
   if (tab === '_overview') return renderOverview(body);
+  if (tab === '_files') return explorer(body, { scope: 'p/' + p.slug, root: '', title: p.name, sub, query, href: x => projectHref('_files', x) });
   const f = p.features.find(x => x.key === tab);
   if (!f) { body.innerHTML = `<div class="err">“${esc(tab)}” is not in this project.</div>`; return; }
   if (f.missing) {

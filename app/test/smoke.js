@@ -54,6 +54,18 @@ ok('links: [[Title]] across features + link fields -> mentioned in', () => {
   assert.deepStrictEqual(who, ['tasks/replace-the-old-switch', 'wiki/home']);
 });
 ok('overview lists upcoming dates and open tasks', () => { const o = ws.projectOverview('home-lab', 100000); assert(o.upcoming.length >= 2 && o.open.length === 2); });
+ok('explorer: tree, write, rename, trash; stays inside the folder', () => {
+  const files = require('../lib/files');
+  assert(files.tree('p/home-lab').children.some(n => n.name === 'project.yaml'));
+  files.writeFile('p/home-lab', 'scripts/hello.ps1', 'Write-Host hi', { create: true });
+  assert.throws(() => files.writeFile('p/home-lab', 'scripts/hello.ps1', 'x', { create: true }), /exists/);
+  files.rename('p/home-lab', 'scripts/hello.ps1', 'scripts/hi.ps1');
+  assert.strictEqual(files.readFile('p/home-lab', 'scripts/hi.ps1').content, 'Write-Host hi');
+  files.trash('p/home-lab', 'scripts/hi.ps1');
+  assert.throws(() => files.readFile('p/home-lab', 'scripts/hi.ps1'), /not found/i);
+  assert.throws(() => files.readFile('p/home-lab', '../test/project.yaml'), /outside/i);
+  assert.throws(() => files.writeFile('p/home-lab', 'project.yaml', 'a: [\n- : :'), /YAML/);
+});
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 
 // MCP server handshake

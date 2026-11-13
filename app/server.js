@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const ws = require('./lib/workspace');
 const chat = require('./lib/chat');
+const files = require('./lib/files');
 
 const ARGS = process.argv.slice(2);
 const PORT = parseInt(process.env.PORT || ARGS.find(a => /^\d+$/.test(a)) || '4321', 10);
@@ -69,6 +70,15 @@ const routes = [
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
   ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],
   ['GET', /^\/api\/search$/, (m, q) => ws.search(q.get('q'), q.get('project') || undefined)],
+  // file explorer + VS Code (scope = "workspace" or "p/<project>")
+  ['GET', /^\/api\/fs\/tree$/, (m, q) => files.tree(q.get('scope'), q.get('path') || '')],
+  ['GET', /^\/api\/fs\/file$/, (m, q) => { const r = files.readFile(q.get('scope'), q.get('path')); delete r.full; return r; }],
+  ['PUT', /^\/api\/fs\/file$/, async (m, q, req) => files.writeFile(q.get('scope'), q.get('path'), (await json(req)).content, { create: q.get('create') === '1' })],
+  ['POST', /^\/api\/fs\/mkdir$/, (m, q) => files.mkdir(q.get('scope'), q.get('path'))],
+  ['POST', /^\/api\/fs\/rename$/, async (m, q, req) => { const b = await json(req); return files.rename(q.get('scope'), b.from, b.to); }],
+  ['POST', /^\/api\/fs\/trash$/, (m, q) => files.trash(q.get('scope'), q.get('path'))],
+  ['POST', /^\/api\/fs\/upload$/, async (m, q, req) => files.upload(q.get('scope'), q.get('path') || '', q.get('filename') || 'upload.bin', await readBody(req))],
+  ['POST', /^\/api\/fs\/vscode$/, (m, q) => files.openInVSCode(q.get('scope'), q.get('path') || '')],
   // features
   ['GET', /^\/api\/features$/, () => {
     const projects = ws.listProjects();
@@ -131,6 +141,13 @@ const server = http.createServer(async (req, res) => {
         if (m && req.method === method) return send(res, 200, await fn(m, url.searchParams, req));
       }
       return send(res, 404, { error: 'Not found' });
+    }
+    if (url.pathname === '/api/fs/raw') {
+      const f = files.absPath(url.searchParams.get('scope'), url.searchParams.get('path'));
+      if (!fs.statSync(f).isFile()) return send(res, 404, { error: 'Not a file' });
+      res.writeHead(200, { 'Content-Type': MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache',
+        ...(url.searchParams.get('download') ? { 'Content-Disposition': `attachment; filename="${path.basename(f).replace(/"/g, '')}"` } : {}) });
+      return fs.createReadStream(f).pipe(res);
     }
     const fm = url.pathname.match(/^\/files\/([^/]+)\/(.+)$/);
     if (fm) {

@@ -41,7 +41,9 @@ search: true
 
 Each feature key becomes a tab on the project page. The content lives in the project folder (`projects/test/wiki/a-wiki-page.md`, …), so you can edit it in any editor or have Claude edit it.
 
-**Building blocks:** pages · cards · list · picture grid · files · table · kanban · calendar · org chart · offline map (your own image with pins) · Mermaid diagrams · chat with Claude CLI.
+**Building blocks:** pages · cards · list · picture grid · files · scripts (code editor) · table · kanban · calendar · org chart · offline map (your own image with pins) · Mermaid diagrams · chat with Claude CLI.
+
+Every project also has an **Overview**, an **Explorer** with all its files, and **VS Code** buttons that open it in the installed VS Code.
 
 **Starter features:** wiki, knowledge, gallery, files, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices. You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
 
@@ -67,8 +69,9 @@ Each feature key becomes a tab on the project page. The content lives in the pro
 ## More
 
 - Full design and rebuild guide: [docs/DESIGN.md](docs/DESIGN.md)
+- Requirements and their status: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
 - Bugs and ideas: [Issues](https://github.com/GFGMNET/Workspace/issues)
 - Tests: `npm test`
 - Settings (environment variables): `PORT` (default 4321), `WORKSPACE_DIR` (data folder, default `data/`), `CLAUDE_COMMAND` (default `claude`)
 
-Mermaid (MIT) is bundled in `app/public/vendor/` for offline diagrams.
+Bundled for offline use in `app/public/vendor/`: Mermaid (MIT) for diagrams, highlight.js (BSD-3-Clause) for syntax colours (rebuild with `node tools/build-highlight.js <path to highlight.js>`).

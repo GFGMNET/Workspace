@@ -1,0 +1,7 @@
+# Scripts with a code editor (PowerShell, batch, Bash, Python, ...). Each script is a normal file;
+# "Open in VS Code" opens it in the full editor.
+name: Scripts
+icon: terminal
+stores: files
+layout: code
+new_item: Script
