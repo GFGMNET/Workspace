@@ -2,12 +2,15 @@
 // Project Workspace — local web app server. Zero dependencies: `node app/server.js`
 'use strict';
 const http = require('http');
+const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const ws = require('./lib/workspace');
 const chat = require('./lib/chat');
 
-const PORT = parseInt(process.env.PORT || process.argv[2] || '4321', 10);
+const ARGS = process.argv.slice(2);
+const PORT = parseInt(process.env.PORT || ARGS.find(a => /^\d+$/.test(a)) || '4321', 10);
+const OPEN = ARGS.includes('--open');
 const HOST = process.env.HOST || '127.0.0.1';
 const PUBLIC = path.join(__dirname, 'public');
 const VERSION = require('../package.json').version;
@@ -144,7 +147,15 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Open the browser only once the server really listens (no "site can't be reached" on start).
+function openBrowser() {
+  const url = `http://localhost:${PORT}`;
+  const cmd = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
+  exec(cmd, { windowsHide: true }, () => {});
+}
+
 server.on('error', e => {
+  if (e.code === 'EADDRINUSE' && OPEN) { console.log(`\n  The workspace is already running — opening http://localhost:${PORT}\n`); openBrowser(); setTimeout(() => process.exit(0), 500); return; }
   if (e.code === 'EADDRINUSE') { console.error(`\n  Port ${PORT} is already in use. Is the workspace already running? Open http://localhost:${PORT}\n  (or start with another port: node app/server.js 4322)\n`); process.exit(1); }
   throw e;
 });
@@ -153,4 +164,6 @@ server.listen(PORT, HOST, () => {
   console.log(`\n  Project Workspace ${VERSION}`);
   console.log(`  → http://localhost:${PORT}`);
   console.log(`  Workspace folder: ${ws.ROOT}\n`);
+  console.log('  Keep this window open while you use the workspace. Close it (or press Ctrl+C) to stop.\n');
+  if (OPEN) openBrowser();
 });

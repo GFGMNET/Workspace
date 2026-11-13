@@ -275,7 +275,7 @@ You need Node.js 18 or newer. Nothing else is installed.
 ```
 git clone https://github.com/GFGMNET/Workspace
 cd Workspace
-node app/server.js      # or start.bat / ./start.sh
+node app/server.js --open   # or start.bat / ./start.sh (--open opens the browser once ready)
 npm test                # smoke test, incl. the MCP server
 ```
 
