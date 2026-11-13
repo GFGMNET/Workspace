@@ -38,6 +38,8 @@ Workspace/                   ← the program: replace it completely on update
   start.bat / start.sh       start the app
   data/                      ← the client's data: never replaced, not in git
     .workspace.json          which starter features were installed (so deleted ones stay deleted)
+    settings.yaml            workspace settings (e.g. how the in-app VS Code is started)
+    .ide-token               random access token for the in-app VS Code
     features/                what each feature means — one YAML file per feature
     projects/                one folder per project
       <project>/
@@ -257,7 +259,8 @@ Plain Node `http` with no framework. It binds to `127.0.0.1:4321` (override with
 | `POST …/trash` | move a file to trash |
 | `POST …/chat` | run one chat turn (server-sent events) |
 | `GET /api/fs/tree`, `GET/PUT /api/fs/file`, `POST /api/fs/mkdir`, `…/rename`, `…/trash`, `…/upload`, `GET /api/fs/raw` (all with `?scope=workspace` or `?scope=p/<project>` and `&path=`) | explorer |
-| `POST /api/fs/vscode?scope=&path=` | open in VS Code |
+| `POST /api/fs/vscode?scope=&path=` | open in VS Code (desktop) |
+| `GET /api/ide`, `POST /api/ide/start`, `POST /api/ide/stop`, `GET /api/projects/<p>/ide` | in-app VS Code (status, start, stop, URL for a project) |
 | `GET /api/events` | live refresh (server-sent events from a recursive `fs.watch`) |
 | `GET /files/<p>/<path>` | raw project files (images, downloads) |
 
@@ -283,7 +286,8 @@ Screens (from the accepted mockup, issue #2):
 4. **New project:** name, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.
 6. **Explorer:** every project has an *Explorer* tab with the whole project folder as a tree (incl. `project.yaml`, `.claude/`, `.mcp.json`), and the sidebar has a workspace explorer (features + all projects). Text files open in the code editor (Markdown with preview, images shown); new file/folder, upload, rename/move, delete (to `.trash`), download. Saving a `project.yaml` or feature YAML is validated first.
-7. **VS Code:** *VS Code* in the project header and *Open in VS Code* on every file run the `code` command (`VSCODE_COMMAND` to override) to open the project folder in the installed VS Code and jump to the file. If `code` is not on the PATH the browser is asked to open a `vscode://file/…` link.
+7. **VS Code tab (full VS Code in the app):** shows the browser version of VS Code, opened on the project folder, in an embedded frame. By default the app starts the installed VS Code's own web server (`code serve-web`, downloads its web part once) on `127.0.0.1:8740` with a random connection token (kept in `data/.ide-token`), and stops it when the app exits. The command, port and URL are set in `data/settings.yaml` (`ide:`), so code-server or OpenVSCode Server can be used instead. *Open in new window* is always offered in case the browser blocks the frame.
+8. **VS Code buttons:** *VS Code* in the project header and *Open in VS Code* on every file run the `code` command (`VSCODE_COMMAND` to override) to open the project folder in the installed VS Code and jump to the file. If `code` is not on the PATH the browser is asked to open a `vscode://file/…` link.
 
 - **Theme:** light, dark or auto (follows the OS), switched in the sidebar and remembered in `localStorage`.
 - **Sidebar:** can be collapsed to icons and project avatars (button at the bottom, or Ctrl+B), remembered in `localStorage`.

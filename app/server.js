@@ -8,6 +8,7 @@ const path = require('path');
 const ws = require('./lib/workspace');
 const chat = require('./lib/chat');
 const files = require('./lib/files');
+const ide = require('./lib/ide');
 
 const ARGS = process.argv.slice(2);
 const PORT = parseInt(process.env.PORT || ARGS.find(a => /^\d+$/.test(a)) || '4321', 10);
@@ -70,6 +71,11 @@ const routes = [
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
   ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],
   ['GET', /^\/api\/search$/, (m, q) => ws.search(q.get('q'), q.get('project') || undefined)],
+  // full VS Code inside the app
+  ['GET', /^\/api\/ide$/, () => ide.status()],
+  ['POST', /^\/api\/ide\/start$/, () => ide.start()],
+  ['POST', /^\/api\/ide\/stop$/, () => ide.stop()],
+  ['GET', new RegExp(`^${P}/ide$`), async (m) => { const p = ws.loadProject(d(m[1])); const st = await ide.status(); return { ...st, folder: ide.folderParam(p.dir) }; }],
   // file explorer + VS Code (scope = "workspace" or "p/<project>")
   ['GET', /^\/api\/fs\/tree$/, (m, q) => files.tree(q.get('scope'), q.get('path') || '')],
   ['GET', /^\/api\/fs\/file$/, (m, q) => { const r = files.readFile(q.get('scope'), q.get('path')); delete r.full; return r; }],

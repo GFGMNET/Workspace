@@ -123,6 +123,7 @@ function renderTabs() {
   el.innerHTML = (ov ? `<a role="tab" class="tab ${currentTab === '_overview' ? 'active' : ''}" href="${projectHref('_overview')}" aria-selected="${currentTab === '_overview'}">${icon('cards', 15)} Overview</a>` : '') + p.features.map(f => `<a role="tab" class="tab ${f.key === currentTab ? 'active' : ''} ${f.missing ? 'missing' : ''}" href="${projectHref(f.key)}" aria-selected="${f.key === currentTab}">
       ${f.missing ? icon('warn', 14) : featureIcon(f.def, 15)} ${esc(f.def ? f.def.name : f.key)}${!f.missing && counts[f.key] != null && f.def.stores !== 'chat' ? ` <span class="n">${counts[f.key]}</span>` : ''}</a>`).join('')
     + `<a role="tab" class="tab ${currentTab === '_files' ? 'active' : ''}" href="${projectHref('_files')}" aria-selected="${currentTab === '_files'}">${icon('folder', 15)} Explorer</a>`
+    + `<a role="tab" class="tab ${currentTab === '_ide' ? 'active' : ''}" href="${projectHref('_ide')}" aria-selected="${currentTab === '_ide'}">${icon('terminal', 15)} VS Code</a>`
     + `<a role="tab" class="tab ${currentTab === '_yaml' ? 'active' : ''}" href="${projectHref('_yaml')}" aria-selected="${currentTab === '_yaml'}"><span class="mono" style="font-size:12.5px">project.yaml</span></a>`
     + `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature>${icon('plus', 14)} Feature</button>`;
   $('[data-add-feature]', el).onclick = addFeatureDialog;
@@ -148,6 +149,7 @@ async function renderProject(tab, sub, query) {
   const body = $('#fbody');
   if (tab === '_yaml') return renderProjectYaml(body);
   if (tab === '_overview') return renderOverview(body);
+  if (tab === '_ide') return renderIde(body);
   if (tab === '_files') return explorer(body, { scope: 'p/' + p.slug, root: '', title: p.name, sub, query, href: x => projectHref('_files', x) });
   const f = p.features.find(x => x.key === tab);
   if (!f) { body.innerHTML = `<div class="err">“${esc(tab)}” is not in this project.</div>`; return; }
@@ -164,6 +166,39 @@ async function renderProject(tab, sub, query) {
   const view = VIEWS[f.def.layout] || VIEWS.pages;
   await view(ctx);
   fillIcons(body);
+}
+
+// Full VS Code (browser version) embedded for this project.
+async function renderIde(body) {
+  const p = S.project;
+  const st = await api(`/api/projects/${enc(p.slug)}/ide`);
+  const src = st.url.replace('{host}', location.hostname).replace('{folder}', st.folder);
+  if (st.running) {
+    body.innerHTML = `<div class="row" style="margin-bottom:10px"><span class="chip ok">VS Code is running</span><span class="faint small">${esc(p.path)}</span><span class="sp"></span>
+        <a class="btn sm" href="${esc(src)}" target="_blank" rel="noopener">Open in new window</a>
+        <button class="btn sm" type="button" data-desk>${icon('terminal', 14)} Desktop VS Code</button>
+        ${st.managed ? `<button class="btn sm ghost danger" type="button" data-stop>Stop</button>` : ''}</div>
+      <iframe class="ide" src="${esc(src)}" title="VS Code — ${esc(p.name)}" allow="clipboard-read; clipboard-write"></iframe>
+      <p class="faint small">Nothing showing? Some browsers block embedded pages — use “Open in new window”.</p>`;
+    $('[data-desk]', body).onclick = () => openVSCode('p/' + p.slug, '');
+    const stop = $('[data-stop]', body); if (stop) stop.onclick = async () => { await api('/api/ide/stop', { body: {} }); toast('VS Code stopped'); setTimeout(route, 800); };
+    return;
+  }
+  body.innerHTML = `<div class="card" style="max-width:760px;display:flex;flex-direction:column;gap:12px">
+      <h2>${icon('terminal')} VS Code in the app</h2>
+      <p class="muted" style="margin:0">Runs the full VS Code — extensions, terminal, Git — right here, opened on <span class="mono">${esc(p.path)}</span>. It uses your installed VS Code (<span class="mono">code serve-web</span>); the first start downloads its web part once, so it needs internet that time and can take a minute.</p>
+      <div class="row"><button class="btn primary" type="button" data-start>${st.starting ? 'Starting…' : 'Start VS Code'}</button>
+        <button class="btn" type="button" data-desk>Open desktop VS Code instead</button></div>
+      <pre class="code" data-log ${st.log.length ? '' : 'hidden'}>${esc(st.log.join('\n'))}</pre>
+      <details class="small"><summary style="cursor:pointer">Settings</summary><p class="muted">Command: <span class="mono">${esc(st.command)}</span><br>Change it in <a href="#/files/settings.yaml" class="mono">settings.yaml</a> (e.g. to use code-server or OpenVSCode Server).</p></details></div>`;
+  $('[data-desk]', body).onclick = () => openVSCode('p/' + p.slug, '');
+  $('[data-start]', body).onclick = async e => {
+    const b = e.target; b.disabled = true; b.textContent = 'Starting… (first time can take a minute)';
+    const lg = $('[data-log]', body);
+    const poll = setInterval(async () => { try { const s = await api('/api/ide'); if (s.log.length) { lg.hidden = false; lg.textContent = s.log.join('\n'); } } catch {} }, 1500);
+    try { const r = await api('/api/ide/start', { body: {} }); clearInterval(poll); if (r.running) { toast('VS Code is running'); route(); } else { lg.hidden = false; lg.textContent = (r.log || []).join('\n') || 'VS Code did not start.'; b.disabled = false; b.textContent = 'Try again'; } }
+    catch (er) { clearInterval(poll); toast(er.message); b.disabled = false; b.textContent = 'Start VS Code'; }
+  };
 }
 
 async function renderOverview(body) {
