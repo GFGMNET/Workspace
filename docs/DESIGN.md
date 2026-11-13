@@ -293,6 +293,18 @@ Screens (from the accepted mockup, issue #2):
 - **Sidebar:** can be collapsed to icons and project avatars (button at the bottom, or Ctrl+B), remembered in `localStorage`.
 - **Live refresh:** when files change on disk (by hand or by Claude), the open view reloads, unless you are editing.
 
+## 7a. Documentation
+
+| Document | For whom | Where |
+|---|---|---|
+| `README.md` | first look, start, update | repo root |
+| `docs/GETTING-STARTED.md` | new users: install, first project, first feature, Claude, VS Code, updating | repo + wiki *Getting-Started* |
+| `docs/wiki/*.md` | user guide: projects, features (all settings), building blocks, Claude, VS Code & Explorer, data & updates, FAQ | GitHub wiki |
+| `docs/DESIGN.md` | developers: architecture and rebuild guide | repo + wiki *Design* |
+| `docs/REQUIREMENTS.md` | everyone: every requirement with status and issue | repo + wiki *Requirements* |
+
+The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and turns the three documents above into wiki pages (links and screenshots rewritten). The workflow `.github/workflows/wiki.yml` runs it on every push to `main` that touches `docs/` and pushes the result to the wiki. Edit the files in `docs/`, never in the wiki itself. One-time setup: the first wiki page must be created on GitHub once, because GitHub only creates the wiki repository then.
+
 ## 8. Decisions
 
 | Topic | Decision |
@@ -308,7 +320,8 @@ Screens (from the accepted mockup, issue #2):
 | Theme | Light, dark, or follow the OS |
 | App format | Node.js + browser. Portable `.exe` planned (#1) |
 | Updates | Program and client data are separate (`data/`); update = replace everything except `data/` (#17) |
-| Dependencies | None at runtime (Mermaid is bundled) |
+| Dependencies | None at runtime (Mermaid and highlight.js are bundled) |
+| Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |
 
 ## 9. Rebuilding it
 

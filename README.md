@@ -68,6 +68,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 
 ## More
 
+- **New here?** [Getting started](docs/GETTING-STARTED.md) · [Wiki](https://github.com/GFGMNET/Workspace/wiki)
 - Full design and rebuild guide: [docs/DESIGN.md](docs/DESIGN.md)
 - Requirements and their status: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
 - Bugs and ideas: [Issues](https://github.com/GFGMNET/Workspace/issues)
