@@ -14,7 +14,7 @@ You need [Node.js](https://nodejs.org) 18 or newer (LTS). Nothing else gets inst
 
 On the first start a `data/` folder is created for your projects. The home page offers to add the example projects.
 
-**Updating:** download the new version and replace everything **except the `data/` folder**. New starter features are added automatically, and your own projects and features are never overwritten.
+**Updating:** the app checks GitHub once a week and offers new versions with one click (*Update now*), keeping a backup and never touching `data/`. By hand: replace everything **except the `data/` folder**.
 
 The chat feature also needs [Claude CLI](https://docs.claude.com/en/docs/claude-code), installed and signed in (`claude` in a terminal).
 

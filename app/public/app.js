@@ -401,6 +401,50 @@ function newFeatureDialog(presetKey = '') {
   f.oninput = sync; f.onchange = sync; sync();
 }
 
+// ---------- updates ----------
+async function refreshUpdates() {
+  let u; try { u = await api('/api/update'); } catch { return; }
+  $('#ver').textContent = u.current; $('#updDot').hidden = !u.available;
+  const bar = $('#updbar');
+  if (u.available && !u.snoozed) {
+    bar.hidden = false;
+    bar.innerHTML = `<div class="updbar" role="status"><b>Version ${esc(u.latest.version)} is available</b><span class="muted">you have ${esc(u.current)}</span><span class="sp"></span>
+      <button class="btn sm ghost" type="button" data-u="notes">What's new</button><button class="btn sm primary" type="button" data-u="now">Update now</button>
+      <button class="btn sm ghost" type="button" data-u="later">Later</button><button class="btn sm ghost" type="button" data-u="skip">Skip this version</button></div>`;
+    $('[data-u=notes]', bar).onclick = () => updatesDialog(u);
+    $('[data-u=now]', bar).onclick = () => runUpdate(u);
+    $('[data-u=later]', bar).onclick = async () => { await api('/api/update/later', { body: {} }); refreshUpdates(); toast('Reminding you again in a week'); };
+    $('[data-u=skip]', bar).onclick = async () => { await api('/api/update/skip', { body: { version: u.latest.version } }); refreshUpdates(); };
+  } else { bar.hidden = true; bar.innerHTML = ''; }
+  return u;
+}
+function updatesDialog(u) {
+  const when = u.lastCheck ? ago(u.lastCheck) : 'never';
+  const m = modal({ title: 'Version and updates', ok: u.available ? 'Update now' : null, cancel: 'Close',
+    body: `<p style="margin:0 0 8px">You have <b>version ${esc(u.current)}</b>. ${u.available ? `<b>Version ${esc(u.latest.version)}</b> is available.` : u.latest ? 'This is the latest version.' : 'No releases published yet.'}</p>
+      ${u.latest && u.latest.notes ? `<div class="relnotes md">${md(u.latest.notes)}</div>` : ''}
+      ${u.error ? `<div class="err">${esc(u.error)}</div>` : ''}
+      <p class="faint small" style="margin:8px 0 0">Checked ${esc(when)} · weekly, from <a href="https://github.com/${esc(u.repo)}/releases" target="_blank" rel="noopener">github.com/${esc(u.repo)}</a>${u.enabled ? '' : ' · automatic checks are off (settings.yaml → updates: check: false)'}.
+      Updating replaces the program and keeps your <span class="mono">data</span> folder; the old version is kept in <span class="mono">.update/</span>.</p>`,
+    extra: `<button class="btn" type="button" data-checknow>Check now</button>`,
+    onOk: () => { runUpdate(u); } });
+  $('[data-checknow]', m.el).onclick = async () => { const b = $('[data-checknow]', m.el); b.disabled = true; b.textContent = 'Checking…'; const v = await api('/api/update/check', { body: {} }); m.close(); await refreshUpdates(); updatesDialog(v); };
+}
+async function runUpdate(u) {
+  const m = modal({ title: `Updating to ${u.latest.version}`, ok: null, cancel: null, body: `<p data-st>Downloading and installing… please keep this window open.</p>` });
+  const st = $('[data-st]', m.el);
+  try {
+    const r = await api('/api/update/apply', { body: {} });
+    st.innerHTML = `Installed version ${esc(r.to)}. Restarting…${r.notes && r.notes.length ? `<br><span class="faint small">${r.notes.map(esc).join('<br>')}</span>` : ''}`;
+    for (let i = 0; i < 60; i++) {
+      await new Promise(res => setTimeout(res, 1000));
+      try { const info = await api('/api/info'); if (info.version === r.to) { location.reload(); return; } } catch {}
+    }
+    st.innerHTML = 'The new version is installed. Please start the workspace again (start.bat).';
+  } catch (e) { st.innerHTML = `<span style="color:var(--err)">${esc(e.message)}</span>`; m.el.querySelector('.mf').innerHTML = '<span class="sp"></span><button class="btn" type="button" data-x>Close</button>'; $('[data-x]', m.el).onclick = m.close; }
+}
+$('[data-action="updates"]').onclick = async () => { const u = await refreshUpdates(); if (u) updatesDialog(u); };
+
 // ---------- live refresh ----------
 function listen() {
   const es = new EventSource('/api/events');
@@ -428,4 +472,5 @@ function listen() {
   } catch (e) { $('#main').innerHTML = `<div class="wrap"><div class="err">Cannot reach the workspace server: ${esc(e.message)}</div></div>`; return; }
   fillIcons(document);
   renderSidebar(); route(); listen();
+  refreshUpdates(); setInterval(refreshUpdates, 6 * 3600 * 1000);
 })();

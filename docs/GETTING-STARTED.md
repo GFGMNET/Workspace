@@ -111,11 +111,11 @@ The layouts you can use are:
 
 ## 9. Update to a new version
 
-1. Download the new version.
-2. Replace everything **except the `data` folder**.
-3. Start it as usual.
+The workspace checks GitHub **once a week**. When a new version is out, a bar at the top says so: click **What's new** to read about it, then **Update now** (or *Later* / *Skip this version*). It downloads the new version, keeps a backup of the old one in `.update/`, and restarts by itself. Your `data` folder is never touched.
 
-New starter features are added automatically. Your own projects and features are never overwritten.
+You can also check any time via **v… · Updates** at the bottom of the sidebar.
+
+Updating by hand works too: download the new version and replace everything **except the `data` folder**.
 
 ## Something not working?
 

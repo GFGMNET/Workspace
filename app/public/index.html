@@ -29,10 +29,12 @@
         <button type="button" data-theme-set="dark" title="Dark">Dark</button>
         <button type="button" data-theme-set="system" title="Follow Windows">Auto</button>
       </div>
+      <button class="side-link side-ver" type="button" data-action="updates" title="Version and updates"><span data-icon="upload"></span><span class="txt">v<span id="ver"></span> · Updates</span><span class="n" id="updDot" hidden>●</span></button>
       <button class="side-link side-collapse" type="button" data-action="collapse" aria-expanded="true" title="Collapse sidebar (Ctrl+B)"><span data-icon="chevl"></span><span class="txt">Collapse</span></button>
     </div>
   </nav>
   <main class="main" id="main" tabindex="-1"></main>
+  <div id="updbar" hidden></div>
 </div>
 <div id="overlay"></div>
 <script src="vendor/mermaid.min.js" defer></script>

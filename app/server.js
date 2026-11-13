@@ -9,6 +9,7 @@ const ws = require('./lib/workspace');
 const chat = require('./lib/chat');
 const files = require('./lib/files');
 const ide = require('./lib/ide');
+const updater = require('./lib/updater');
 
 const ARGS = process.argv.slice(2);
 const PORT = parseInt(process.env.PORT || ARGS.find(a => /^\d+$/.test(a)) || '4321', 10);
@@ -71,6 +72,12 @@ const routes = [
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
   ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],
   ['GET', /^\/api\/search$/, (m, q) => ws.search(q.get('q'), q.get('project') || undefined)],
+  // updates (weekly check of GitHub releases)
+  ['GET', /^\/api\/update$/, () => updater.check()],
+  ['POST', /^\/api\/update\/check$/, () => updater.check({ force: true })],
+  ['POST', /^\/api\/update\/skip$/, async (m, q, req) => updater.skip((await json(req)).version)],
+  ['POST', /^\/api\/update\/later$/, () => updater.later()],
+  ['POST', /^\/api\/update\/apply$/, async () => { const r = await updater.apply(); setTimeout(restart, 600); return { ...r, restarting: true }; }],
   // full VS Code inside the app
   ['GET', /^\/api\/ide$/, () => ide.status()],
   ['POST', /^\/api\/ide\/start$/, () => ide.start()],
@@ -175,6 +182,19 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Restart after an update. start.bat/start.sh run the server in a loop and restart it on exit code 75;
+// without them we start a new process ourselves.
+function restart() {
+  console.log('\n  Updated — restarting…\n');
+  try { ide.stop(); } catch {}
+  server.close();
+  if (process.env.PW_LAUNCHER === 'loop') return process.exit(75);
+  const args = [path.join(__dirname, 'server.js'), ...ARGS.filter(a => a !== '--open')];
+  if (process.platform === 'win32') exec(`start "Project Workspace" "${process.execPath}" ${args.map(a => `"${a}"`).join(' ')}`, { cwd: ws.INSTALL_DIR });
+  else require('child_process').spawn(process.execPath, args, { cwd: ws.INSTALL_DIR, detached: true, stdio: 'inherit' }).unref();
+  setTimeout(() => process.exit(0), 300);
+}
+
 // Open the browser only once the server really listens (no "site can't be reached" on start).
 function openBrowser() {
   const url = `http://localhost:${PORT}`;
@@ -196,4 +216,5 @@ server.listen(PORT, HOST, () => {
   console.log('');
   console.log('  Keep this window open while you use the workspace. Close it (or press Ctrl+C) to stop.\n');
   if (OPEN) openBrowser();
+  setTimeout(() => updater.check().then(v => { if (v.available) console.log(`  Version ${v.latest.version} is available — see the app to update.\n`); }).catch(() => {}), 3000);
 });

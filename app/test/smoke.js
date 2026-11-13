@@ -66,6 +66,22 @@ ok('explorer: tree, write, rename, trash; stays inside the folder', () => {
   assert.throws(() => files.readFile('p/home-lab', '../test/project.yaml'), /outside/i);
   assert.throws(() => files.writeFile('p/home-lab', 'project.yaml', 'a: [\n- : :'), /YAML/);
 });
+ok('updates: version compare + unzip (incl. unsafe paths refused)', () => {
+  const up = require('../lib/updater'); const zlib = require('zlib');
+  assert(up.newer('0.10.0', '0.9.3') && up.newer('v1.0.0', '0.9.9') && !up.newer('0.3.0', '0.3.0') && !up.newer('0.2.9', '0.3.0'));
+  const mk = (name, data) => { const raw = Buffer.from(data); const comp = zlib.deflateRawSync(raw); const nm = Buffer.from(name);
+    const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(8, 8); local.writeUInt32LE(comp.length, 18); local.writeUInt32LE(raw.length, 22); local.writeUInt16LE(nm.length, 26);
+    const cen = Buffer.alloc(46); cen.writeUInt32LE(0x02014b50, 0); cen.writeUInt16LE(8, 10); cen.writeUInt32LE(comp.length, 20); cen.writeUInt32LE(raw.length, 24); cen.writeUInt16LE(nm.length, 28);
+    return { local: Buffer.concat([local, nm, comp]), cen: Buffer.concat([cen, nm]) }; };
+  const zip = entries => { let off = 0; const L = [], C = []; for (const e of entries) { e.cen.writeUInt32LE(off, 42); off += e.local.length; L.push(e.local); C.push(e.cen); }
+    const cd = Buffer.concat(C); const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(entries.length, 8); end.writeUInt16LE(entries.length, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(off, 16);
+    return Buffer.concat([...L, cd, end]); };
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-zip-'));
+  up.unzip(zip([mk('top/app/hello.txt', 'hi there')]), out);
+  assert.strictEqual(fs.readFileSync(path.join(out, 'top/app/hello.txt'), 'utf8'), 'hi there');
+  assert.throws(() => up.unzip(zip([mk('../evil.txt', 'x')]), out), /Unsafe/);
+  fs.rmSync(out, { recursive: true, force: true });
+});
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 
 // MCP server handshake

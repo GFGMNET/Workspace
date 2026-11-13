@@ -8,3 +8,4 @@ Thumbs.db
 # client data (projects, features) — never part of the program
 /data/
 build/
+.update/

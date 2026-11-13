@@ -1,0 +1,36 @@
+# Publishes a release when a version tag is pushed (e.g. `git tag v0.4.0 && git push origin v0.4.0`).
+# Installed workspaces check the latest release once a week and offer the update.
+# The tag must match "version" in package.json.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check version and run tests
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          p=$(node -p "require('./package.json').version")
+          if [ "$v" != "$p" ]; then echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $p"; exit 1; fi
+          node app/test/smoke.js
+      - name: Build the program zip (everything except client data)
+        run: |
+          mkdir -p dist
+          git archive --format=zip --prefix=project-workspace/ -o "dist/project-workspace-${GITHUB_REF_NAME}.zip" HEAD
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "dist/project-workspace-${GITHUB_REF_NAME}.zip" \
+            --title "Project Workspace ${GITHUB_REF_NAME}" --generate-notes

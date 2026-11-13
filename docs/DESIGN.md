@@ -293,6 +293,23 @@ Screens (from the accepted mockup, issue #2):
 - **Sidebar:** can be collapsed to icons and project avatars (button at the bottom, or Ctrl+B), remembered in `localStorage`.
 - **Live refresh:** when files change on disk (by hand or by Claude), the open view reloads, unless you are editing.
 
+## 7b. Updates
+
+Live installations never use git; they are updated from **GitHub Releases** (#26).
+
+- **Weekly check:** the server asks `https://api.github.com/repos/GFGMNET/Workspace/releases/latest` (public, no login, nothing sent about the client) at most once a week, and the UI shows the result. The last check, the latest release, *skip* and *later* are stored in `data/.workspace.json`. Turn checking off with `updates: check: false` in `data/settings.yaml`; `updates: repo:` points to another repository.
+- **Banner:** *Version X is available* · **What's new** (the release notes) · **Update now** · **Later** (a week) · **Skip this version**. The sidebar shows the version and a dot when an update is waiting; *v… · Updates* opens the same dialog with *Check now*.
+- **Update now:**
+  1. downloads the release zip (the `.zip` asset, else GitHub's source zip) and unpacks it with the app's own unzip (paths are checked)
+  2. checks that it really is Project Workspace
+  3. moves the current program into `.update/backup-<version>-<time>/`, then copies the new program in. `data/` is never touched
+  4. restarts
+
+  If anything fails, the old program is put back.
+- **Restart:** `start.bat` / `start.sh` run the server in a loop and start it again on exit code 75. A server started without them starts a new process itself. The page reloads once the new version answers.
+- **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
+- **Releases** are made by `.github/workflows/release.yml` when a tag `vX.Y.Z` is pushed. It checks the tag against `package.json`, runs the tests, zips the program (`git archive`, so no client data) and creates the release with generated notes.
+
 ## 7a. Documentation
 
 | Document | For whom | Where |
@@ -319,7 +336,7 @@ The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and 
 | Chat | Claude CLI in the project folder; permissions per project |
 | Theme | Light, dark, or follow the OS |
 | App format | Node.js + browser. Portable `.exe` planned (#1) |
-| Updates | Program and client data are separate (`data/`); update = replace everything except `data/` (#17) |
+| Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
 | Dependencies | None at runtime (Mermaid and highlight.js are bundled) |
 | Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |
 

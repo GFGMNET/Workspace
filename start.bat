@@ -7,5 +7,12 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+set PW_LAUNCHER=loop
 node app\server.js --open %*
+:again
+if not "%errorlevel%"=="75" goto end
+echo Restarting after the update...
+node app\server.js %*
+goto again
+:end
 pause

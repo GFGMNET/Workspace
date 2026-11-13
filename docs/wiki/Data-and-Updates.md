@@ -17,9 +17,25 @@ Workspace/          ← the program: replaced on update
 
 ## Updating
 
+**Automatic:** the workspace checks GitHub once a week. When a new version is out, a bar appears at the top: **What's new** · **Update now** · **Later** · **Skip this version**. *Update now*:
+1. downloads the new version
+2. moves the old program into `.update/backup-…`
+3. installs the new one
+4. restarts
+
+`data/` is never touched, and if anything goes wrong the old version is put back. **v… · Updates** in the sidebar checks right away. Turn the weekly check off in `data/settings.yaml`:
+
+```yaml
+updates:
+  check: false
+```
+
+**By hand:**
 1. Download the new version from GitHub (release zip or **Code → Download ZIP**).
 2. Replace everything **except `data/`**.
 3. Start as usual.
+
+> If the update says *start.bat changed*, the new launcher was saved as `start.bat.new`. Close the workspace and rename it to `start.bat`.
 
 On start, starter features that are new in this version are added. Each one is added only once, so features you changed or deleted are left alone.
 
@@ -36,3 +52,4 @@ Version 0.1 kept `features/` and `projects/` next to `app/`. Newer versions move
 | Claude CLI command | `CLAUDE_COMMAND` | `claude` |
 | VS Code command | `VSCODE_COMMAND` | `code` |
 | In-app VS Code | `data/settings.yaml` → `ide:` | `code serve-web` on port 8740 |
+| Update check | `data/settings.yaml` → `updates: check:` / `repo:` | weekly, GFGMNET/Workspace |

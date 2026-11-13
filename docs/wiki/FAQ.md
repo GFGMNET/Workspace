@@ -7,7 +7,10 @@ No. Node.js runs a small local app on your PC (`localhost`), and everything is f
 Each person runs it on their own PC. You can share the `data` folder (OneDrive, a network drive), but two people editing the same file at the same moment can overwrite each other.
 
 **Does it need internet?**
-No, except for the Claude chat, the first start of the in-app VS Code, and MCP servers that are online.
+No, except for the Claude chat, the first start of the in-app VS Code, MCP servers that are online, and the weekly update check (which simply fails quietly when offline).
+
+**How do I get new versions?**
+The app tells you: once a week it checks GitHub and shows *Version X is available* with an **Update now** button. See [[Data and Updates|Data-and-Updates]].
 
 **"Port 4321 is already in use"**
 The workspace is already running. Open http://localhost:4321, or start a second one with `node app/server.js 4322`.

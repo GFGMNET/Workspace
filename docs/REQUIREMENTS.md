@@ -68,7 +68,8 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D10 | Licence for the repository | ❓ | #13 |
 | D11 | Getting started guide | ✅ | #25 · [GETTING-STARTED.md](GETTING-STARTED.md) |
 | D12 | Wiki on the GitHub page (generated from `docs/`, published by a GitHub Action) | ✅ · first page must be created once on GitHub | #25 |
-| D13 | The app checks GitHub once a week for a new version and asks the user to update (release notes, *Update now / Later / Skip*) | 🚧 | #26 |
+| D13 | The app checks GitHub once a week for a new version and asks the user to update (release notes, *Update now / Later / Skip*) | ✅ | #26 |
+| D14 | New versions are published as GitHub releases by a GitHub Action when a version tag is pushed | ✅ | #26 |
 
 ## Open questions
 
