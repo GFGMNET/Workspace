@@ -23,12 +23,25 @@ $$('[data-theme-set]').forEach(b => b.onclick = () => setTheme(b.dataset.themeSe
 // ---------- sidebar ----------
 function renderSidebar() {
   const cur = S.project && location.hash.startsWith('#/p/') ? S.project.slug : null;
-  $('#plist').innerHTML = S.projects.map(p => `<a class="pitem ${p.slug === cur ? 'active' : ''}" href="#/p/${enc(p.slug)}" ${p.slug === cur ? 'aria-current="page"' : ''}>${avatar(p.name, p.icon, p.color, p.slug)}<span class="nm">${esc(p.name)}</span>${p.error ? ' <span title="project.yaml has an error">⚠</span>' : ''}</a>`).join('')
+  $('#plist').innerHTML = S.projects.map(p => `<a class="pitem ${p.slug === cur ? 'active' : ''}" href="#/p/${enc(p.slug)}" title="${esc(p.name)}" ${p.slug === cur ? 'aria-current="page"' : ''}>${avatar(p.name, p.icon, p.color, p.slug)}<span class="nm">${esc(p.name)}</span>${p.error ? ' <span class="warn" title="project.yaml has an error">⚠</span>' : ''}</a>`).join('')
     || '<div class="small" style="color:var(--side-ink2);padding:6px 8px">No projects yet.</div>';
   $('#featCount').textContent = S.features.length || '';
   $('#navFeatures').classList.toggle('active', location.hash.startsWith('#/features'));
 }
 $('[data-action="new-project"]').onclick = () => newProjectDialog();
+
+// ---------- collapsible sidebar (remembered per browser) ----------
+function setCollapsed(on) {
+  document.documentElement.classList.toggle('side-collapsed', on);
+  try { localStorage.setItem('pw-side', on ? 'collapsed' : 'open'); } catch {}
+  const b = $('[data-action="collapse"]');
+  b.setAttribute('aria-expanded', String(!on)); b.title = (on ? 'Expand' : 'Collapse') + ' sidebar (Ctrl+B)'; b.setAttribute('aria-label', b.title);
+}
+const isCollapsed = () => document.documentElement.classList.contains('side-collapsed');
+$('[data-action="collapse"]').onclick = () => setCollapsed(!isCollapsed());
+$('[data-action="search"]').onclick = () => { setCollapsed(false); setTimeout(() => $('#q').focus(), 200); };
+addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.target.closest('textarea,input')) { e.preventDefault(); setCollapsed(!isCollapsed()); } });
+setCollapsed(isCollapsed());
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => go('#/search/' + enc(e.target.value)), 250); });
 
 const menuBtn = `<button class="btn ghost sm menu-toggle" type="button" onclick="$('#side').classList.toggle('open')" aria-label="Menu">${icon('menu')}</button>`;

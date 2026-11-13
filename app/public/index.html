@@ -5,28 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Project Workspace</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232f5bea'/><path d='M8 9h7v14H8zM17 9h7v6h-7zM17 17h7v6h-7z' fill='white'/></svg>">
-<script>try{var t=localStorage.getItem('pw-theme');if(t&&t!=='system')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<script>try{var t=localStorage.getItem('pw-theme');if(t&&t!=='system')document.documentElement.dataset.theme=t;if(localStorage.getItem('pw-side')==='collapsed')document.documentElement.classList.add('side-collapsed');}catch(e){}</script>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 <div class="app">
   <nav class="side" id="side" aria-label="Workspace">
-    <a class="brand" href="#/">
+    <a class="brand" href="#/" title="All projects">
       <span class="logo"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2h6v12H1zM9 2h6v5H9zM9 9h6v5H9z" fill="#fff"/></svg></span>
       <span><b>Workspace</b><small id="rootPath"></small></span>
     </a>
     <label class="search"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="Search all projects" autocomplete="off" aria-label="Search all projects"></label>
+    <button class="side-icon only-collapsed" type="button" data-action="search" title="Search all projects" aria-label="Search all projects"><span data-icon="search"></span></button>
     <div class="plabel">Projects</div>
     <div class="plist" id="plist"></div>
-    <button class="side-new" type="button" data-action="new-project">+ New project</button>
+    <button class="side-new" type="button" data-action="new-project" title="New project"><span aria-hidden="true">+</span><span class="txt"> New project</span></button>
     <div class="side-foot">
-      <a href="#/features" id="navFeatures" class="side-link"><span data-icon="layers"></span>Features <span class="n" id="featCount"></span></a>
+      <a href="#/features" id="navFeatures" class="side-link" title="Features"><span data-icon="layers"></span><span class="txt">Features</span> <span class="n" id="featCount"></span></a>
       <div class="theme" role="group" aria-label="Theme">
         <button type="button" data-theme-set="light" title="Light">Light</button>
         <button type="button" data-theme-set="dark" title="Dark">Dark</button>
         <button type="button" data-theme-set="system" title="Follow Windows">Auto</button>
       </div>
+      <button class="side-link side-collapse" type="button" data-action="collapse" aria-expanded="true" title="Collapse sidebar (Ctrl+B)"><span data-icon="chevl"></span><span class="txt">Collapse</span></button>
     </div>
   </nav>
   <main class="main" id="main" tabindex="-1"></main>

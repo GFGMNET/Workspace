@@ -250,6 +250,7 @@ Screens (from the accepted mockup, issue #2):
 5. **Search** across all projects.
 
 - **Theme:** light, dark or auto (follows the OS), switched in the sidebar and remembered in `localStorage`.
+- **Sidebar:** can be collapsed to icons and project avatars (button at the bottom, or Ctrl+B), remembered in `localStorage`.
 - **Live refresh:** when files change on disk (by hand or by Claude), the open view reloads, unless you are editing.
 
 ## 8. Decisions
