@@ -16,6 +16,7 @@ A feature is a combination of **what it stores** and **how it looks**. Everythin
 | **orgchart** | records | `.yaml` | Tree from `reports_to` |
 | **map** | records | `.yaml` + `_map.png` | Your own picture (floor plan, site plan) with draggable pins; works offline |
 | **diagram** | diagram | `<folder>/<name>.mmd` | Mermaid text with live preview, SVG download |
+| **issues** | github | nothing (read from GitHub) | Issues of a repository: open/closed, labels, search, read inline, *New issue*. Set `repo: owner/name` in the project |
 | **chat** | chat | `chats/<date>-<title>.json` | Chat with Claude CLI in the project folder (see [[Claude]]) |
 
 | | |

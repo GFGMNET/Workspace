@@ -9,3 +9,8 @@ Thumbs.db
 /data/
 build/
 .update/
+
+# per-machine files written by the workspace when it manages its own folder
+/.mcp.json
+/.workspace/
+/.ide-token

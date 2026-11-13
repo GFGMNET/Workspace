@@ -16,7 +16,7 @@ ok('deleted starter features are not re-added on update', () => {
   fs.copyFileSync(path.join(repo, 'app', 'starter', 'features', 'contacts.yaml'), path.join(tmp, 'features', 'contacts.yaml'));
   fs.copyFileSync(path.join(repo, 'app', 'starter', 'features', 'wiki.yaml'), path.join(tmp, 'features', 'wiki.yaml'));
 });
-ok('example projects can be added', () => assert.strictEqual(ws.addExamples().length, 3));
+ok('example projects can be added', () => assert.strictEqual(ws.addExamples().length, 4));
 const YAML = require('../lib/yaml');
 
 ok('YAML: the original example with sloppy indentation', () => {
@@ -81,6 +81,14 @@ ok('updates: version compare + unzip (incl. unsafe paths refused)', () => {
   assert.strictEqual(fs.readFileSync(path.join(out, 'top/app/hello.txt'), 'utf8'), 'hi there');
   assert.throws(() => up.unzip(zip([mk('../evil.txt', 'x')]), out), /Unsafe/);
   fs.rmSync(out, { recursive: true, force: true });
+});
+ok('location: project content in an existing folder ({install})', () => {
+  const p = ws.loadProject('workspace-dev');
+  assert(p.external && p.dir === ws.INSTALL_DIR && !p.error);
+  assert(ws.listItems('workspace-dev', 'docs').items.some(i => i.id === 'DESIGN'));
+  assert.strictEqual(require('../lib/files').readFile('p/workspace-dev', 'package.json').name, 'package.json');
+  fs.writeFileSync(path.join(tmp, 'projects', 'workspace-dev', 'project.yaml'), 'name: x\nlocation: /does/not/exist\nwiki:\n');
+  assert(/does not exist/.test(ws.loadProject('workspace-dev').error));
 });
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 

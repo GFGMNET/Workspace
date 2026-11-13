@@ -135,7 +135,7 @@ async function renderProject(tab, sub, query) {
   const cli = S.info.platform === 'win32' ? `cd /d "${p.path}" && claude` : `cd "${p.path}" && claude`;
   $('#main').innerHTML = `<div class="wrap">
     <div class="phead">${menuBtn}${avatar(p.name, p.meta.icon, p.meta.color, p.slug)}
-      <div class="title"><h1>${esc(p.name)}</h1><div class="muted small">${esc(p.meta.description || '')}</div>
+      <div class="title"><h1>${esc(p.name)}</h1><div class="muted small">${esc(p.meta.description || '')}</div>${p.external ? `<div class="faint small" title="location: in project.yaml">${icon('folder', 12)} <span class="mono">${esc(p.path)}</span></div>` : ''}
         ${(Array.isArray(p.meta.tags) && p.meta.tags.length) || p.meta.status ? `<div class="chips" style="margin-top:6px">${(p.meta.tags || []).map(t => `<span class="chip accent">#${esc(t)}</span>`).join('')}${p.meta.status ? `<span class="chip">${esc(p.meta.status)}</span>` : ''}</div>` : ''}</div>
       <button class="btn" type="button" data-cli title="Copies: ${esc(cli)}">${icon('terminal', 14)} Claude CLI</button>
       <button class="btn" type="button" data-vscode title="Open this project in VS Code">${icon('terminal', 14)} VS Code</button>
@@ -160,7 +160,7 @@ async function renderProject(tab, sub, query) {
     return;
   }
   const over = Object.keys(f.overrides || {}).length ? ` · overridden in project.yaml: ${Object.entries(f.overrides).map(([k, v]) => `<span class="mono">${esc(k)}: ${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join(', ')}` : '';
-  $('#fnote').innerHTML = `<div class="note" style="margin-bottom:14px"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} · folder <span class="mono">${esc(f.def.folder)}/</span>${over}</div>`;
+  $('#fnote').innerHTML = `<div class="note" style="margin-bottom:14px"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} ${f.def.stores === 'github' ? ` · repository <a class="mono" href="https://github.com/${esc(f.def.repo)}" target="_blank" rel="noopener">${esc(f.def.repo || 'not set')}</a>` : ` · folder <span class="mono">${esc(f.def.folder)}/</span>`}${over}</div>`;
   try { App.index = await api(`/api/projects/${enc(p.slug)}/index`); } catch { App.index = []; }
   const ctx = { p, f, el: body, sub, query, href: (id, suffix = '') => projectHref(f.key, id, suffix) };
   const view = VIEWS[f.def.layout] || VIEWS.pages;
@@ -290,11 +290,12 @@ function newProjectDialog() {
 // ---------- features ----------
 const KEYS_HELP = `name: Display name
 icon: book | lightbulb | image | folder | puzzle | plug | chat | kanban | calendar | users | map | diagram | contact | server | table | list | cards | file
-stores: markdown | images | files | records | diagram | chat
+stores: markdown | images | files | records | diagram | chat | github
 layout:
   markdown → pages | cards | list
   records  → table | list | cards | kanban | calendar | orgchart | map
-  images → grid · files → files · diagram → diagram · chat → chat
+  images → grid · files → files | code · diagram → diagram · chat → chat · github → issues
+repo: owner/name                # github: which repository
 search: true | false
 new_item: Label of the "+ New" button
 folder: where content goes in a project (default: the key)
@@ -330,6 +331,8 @@ function layoutSketch(layout) {
     orgchart: `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">${b('30%', 14, 'background:var(--accent-soft)')}<div style="display:flex;gap:8px;width:100%;justify-content:center">${b('22%', 12)}${b('22%', 12)}${b('22%', 12)}</div></div>`,
     map: `<div style="flex:1;position:relative;background:var(--panel2);border-radius:6px;min-height:60px"><span style="position:absolute;left:30%;top:30%;color:#e5484d">${icon('pin', 16)}</span><span style="position:absolute;left:65%;top:55%;color:#e5484d">${icon('pin', 16)}</span></div>`,
     diagram: `<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">${b('22%', 16, 'border:1px solid var(--line2);background:none')}→${b('22%', 16, 'border:1px solid var(--line2);background:none')}→${b('22%', 16, 'background:var(--accent-soft)')}</div>`,
+    issues: [1, 2, 3, 4].map(i => `<div style="display:flex;gap:6px;align-items:center;width:100%"><i style="width:10px;height:10px;border-radius:99px;background:${i === 4 ? '#8250df' : '#1a7f37'}"></i>${b('60%', 8)}${b('14%', 8, 'background:var(--accent-soft)')}</div>`).join(''),
+    code: `<div style="flex:0 0 30%;display:flex;flex-direction:column;gap:5px">${b('100%', 8)}${b('80%', 8, 'background:var(--accent-soft)')}${b('90%', 8)}</div><div style="flex:1;display:flex;flex-direction:column;gap:5px;background:var(--panel2);padding:4px;border-radius:4px">${b('50%', 6, 'background:#cf222e55')}${b('80%', 6, 'background:#0a306955')}${b('65%', 6)}</div>`,
     chat: `<div style="flex:1;display:flex;flex-direction:column;gap:6px">${b('55%', 12, 'align-self:flex-end;background:var(--accent-soft)')}${b('80%', 8)}${b('70%', 8)}${b('100%', 14, 'border:1px solid var(--line2);background:none;margin-top:auto')}</div>`,
   }[layout] || '';
   return `<div class="lay" style="flex-wrap:wrap;align-content:flex-start">${s}</div>`;
@@ -353,7 +356,7 @@ async function renderFeatures(key, query) {
       <button class="btn sm primary" type="button" data-savef>Save</button></div>
     <div id="ferr" style="padding:0 16px"></div>
     <div class="fedit"><textarea class="yaml" spellcheck="false" aria-label="Feature YAML" data-fy>${esc(sel.yaml)}</textarea>
-      <div class="info"><b>Looks like</b>${layoutSketch(sel.def.layout)}<span class="muted small">${esc({ pages: 'Page list with search on the left, the page on the right.', cards: 'Cards with summary and tags, search and tag filters.', list: 'A simple list.', grid: 'Picture grid with albums and drag & drop upload.', files: 'Folders and files with upload.', table: 'Sortable table; click a row to edit.', kanban: 'Columns; drag cards between them.', calendar: 'Month view; click a day to add.', orgchart: 'Tree of people; set who they report to.', map: 'Your own image with pins you can drag.', diagram: 'Mermaid text with live preview.', chat: 'Chat with Claude CLI inside the project folder.' }[sel.def.layout] || '')}</span>
+      <div class="info"><b>Looks like</b>${layoutSketch(sel.def.layout)}<span class="muted small">${esc({ pages: 'Page list with search on the left, the page on the right.', cards: 'Cards with summary and tags, search and tag filters.', list: 'A simple list.', grid: 'Picture grid with albums and drag & drop upload.', files: 'Folders and files with upload.', table: 'Sortable table; click a row to edit.', kanban: 'Columns; drag cards between them.', calendar: 'Month view; click a day to add.', orgchart: 'Tree of people; set who they report to.', map: 'Your own image with pins you can drag.', diagram: 'Mermaid text with live preview.', chat: 'Chat with Claude CLI inside the project folder.', issues: 'Issues of a GitHub repository: open/closed, labels, search.', code: 'Explorer with a code editor and script templates.' }[sel.def.layout] || '')}</span>
         ${sel.def.fields ? `<b>Fields</b><div class="chips">${sel.def.fields.map(f => `<span class="chip">${esc(f.name)} <span class="faint">${esc(f.type)}</span></span>`).join('')}</div>` : ''}
         <b>Used by</b><div class="chips">${sel.usedBy.map(p => `<a class="chip accent" href="#/p/${enc(p.slug)}/${enc(sel.key)}">${esc(p.name)}</a>`).join('') || '<span class="faint small">No project yet</span>'}</div>
         <details><summary class="small" style="cursor:pointer;font-weight:600">All settings</summary><pre class="code" style="font-size:11.5px;margin-top:8px">${esc(KEYS_HELP)}</pre></details></div></div></div>`;

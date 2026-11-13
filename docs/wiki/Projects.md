@@ -18,6 +18,7 @@ chat:
 photos:
   feature: gallery              # use a feature under another name
 overview: false                 # optional: hide the Overview tab
+location: C:\dev\MyRepo         # optional: the content lives in this existing folder
 ```
 
 | Value under a key | Meaning |
@@ -25,6 +26,17 @@ overview: false                 # optional: hide the Overview tab
 | nothing | Just add the feature |
 | a list | First entries. Each is created as a file once; existing files are never overwritten |
 | settings (`key: value`) | Override the feature's settings for this project. `items:` holds first entries, `feature:` uses another feature definition |
+
+## Projects in an existing folder
+
+With `location:` a project works on a folder you already have, for example a git clone or a share. `project.yaml` stays in `data/projects/<name>/`, and everything else uses that folder: features, Explorer, chat, scripts and the VS Code tab. You can write `~` for your home folder and `{install}` for the program folder.
+
+The example project **Workspace (development)** manages the workspace itself this way:
+- its `docs/` folder as a wiki
+- `tools/` as scripts
+- the GitHub issues
+- chat
+- a *release* skill
 
 ## Good to know
 

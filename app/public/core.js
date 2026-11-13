@@ -57,10 +57,12 @@ const ICONS = {
   pin: '<path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
   chevl: '<path d="m15 18-6-6 6-6"/>', chevr: '<path d="m9 18 6-6-6-6"/>',
   menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  issue: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/>',
+  github: '<path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>',
   warn: '<path d="M12 3 2 21h20zM12 10v5M12 18h.01"/>',
   stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>', send: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
 };
-const LAYOUT_ICON = { pages: 'book', cards: 'cards', list: 'list', grid: 'image', files: 'folder', table: 'table', kanban: 'kanban', calendar: 'calendar', orgchart: 'users', map: 'map', diagram: 'diagram', chat: 'chat' };
+const LAYOUT_ICON = { pages: 'book', cards: 'cards', list: 'list', grid: 'image', files: 'folder', table: 'table', kanban: 'kanban', calendar: 'calendar', orgchart: 'users', map: 'map', diagram: 'diagram', chat: 'chat', issues: 'issue', code: 'terminal' };
 function icon(name, size = 16) { return `<svg class="ico" aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ICONS.file}</svg>`; }
 function featureIcon(def, size) { return icon(def && ICONS[def.icon] ? def.icon : LAYOUT_ICON[def && def.layout] || 'file', size); }
 function fillIcons(root = document) { $$('[data-icon]', root).forEach(el => { if (!el.firstChild) el.innerHTML = icon(el.dataset.icon); }); }

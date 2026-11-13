@@ -36,6 +36,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B13 | Chat permissions defined per project | ✅ v0.1 | |
 | B14 | Tables, lists, cards for records; files | ✅ v0.1 | |
 | B15 | Scripts: create scripts inside a project with a code editor | ✅ | #23 |
+| B16 | GitHub issues of a repository as a feature | ✅ | #28 |
 
 ## Working with projects
 
@@ -51,6 +52,8 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W8 | Rename, archive and delete projects in the app | 📋 | #11 |
 | W9 | Answer chat permission prompts inline | 📋 | #10 |
 | W10 | Version history with git inside the app | ❌ not wanted: git is only for developing the tool | |
+| W11 | A project can live in an existing folder (`location:`), e.g. a git clone | ✅ | #27 |
+| W12 | Manage this workspace itself as a project (example *Workspace (development)*) | ✅ | #29 |
 
 ## Delivery and operations
 

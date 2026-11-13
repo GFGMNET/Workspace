@@ -19,7 +19,7 @@ const PROJECTS_DIR = path.join(ROOT, 'projects');
 const PROJECT_FILE = 'project.yaml';
 const TRASH = '.trash';
 
-const STORES = ['markdown', 'images', 'files', 'records', 'diagram', 'chat'];
+const STORES = ['markdown', 'images', 'files', 'records', 'diagram', 'chat', 'github'];
 const LAYOUTS = {
   markdown: ['pages', 'cards', 'list'],
   images: ['grid'],
@@ -27,9 +27,10 @@ const LAYOUTS = {
   records: ['table', 'list', 'cards', 'kanban', 'calendar', 'orgchart', 'map'],
   diagram: ['diagram'],
   chat: ['chat'],
+  github: ['issues'],
 };
 const FIELD_TYPES = ['text', 'longtext', 'number', 'date', 'datetime', 'select', 'bool', 'url', 'email', 'tags', 'list', 'keyvalue', 'link'];
-const META_KEYS = new Set(['name', 'description', 'icon', 'color', 'tags', 'status', 'owner', 'created', 'overview']);
+const META_KEYS = new Set(['name', 'description', 'icon', 'color', 'tags', 'status', 'owner', 'created', 'overview', 'location']);
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i;
 
 // ---------- helpers ----------
@@ -103,7 +104,7 @@ function guessType(n) {
   return 'text';
 }
 
-const DEFAULT_LAYOUT = { markdown: 'pages', images: 'grid', files: 'files', records: 'table', diagram: 'diagram', chat: 'chat' };
+const DEFAULT_LAYOUT = { markdown: 'pages', images: 'grid', files: 'files', records: 'table', diagram: 'diagram', chat: 'chat', github: 'issues' };
 
 function normalizeFeature(key, raw = {}) {
   const def = { ...raw };
@@ -146,6 +147,7 @@ function normalizeFeature(key, raw = {}) {
     def.allowed_tools = Array.isArray(def.allowed_tools) ? def.allowed_tools.map(String) : [];
   }
   if (def.stores === 'images') def.albums = def.albums ?? true;
+  if (def.stores === 'github') { def.repo = def.repo ? String(def.repo) : ''; def.state = ['open', 'closed', 'all'].includes(def.state) ? def.state : 'open'; def.search = def.search ?? true; }
   return def;
 }
 
@@ -189,9 +191,16 @@ function deleteFeature(key) {
 // ---------- projects ----------
 function projectDir(slug) { checkId(slug, 'project'); return safeJoin(PROJECTS_DIR, slug); }
 
+// `location:` lets a project's content live in an existing folder (e.g. a git clone);
+// project.yaml itself stays in data/projects/<slug>/ ("home").
+function resolveLocation(loc, home) {
+  let l = String(loc).trim().replace(/\{install\}/gi, INSTALL_DIR).replace(/\{data\}/gi, ROOT);
+  if (l === '~' || l.startsWith('~/') || l.startsWith('~\\')) l = path.join(require('os').homedir(), l.slice(1));
+  return path.resolve(home, l);
+}
 function loadProject(slug, features = null) {
-  const dir = projectDir(slug);
-  const file = path.join(dir, PROJECT_FILE);
+  const home = projectDir(slug);
+  const file = path.join(home, PROJECT_FILE);
   if (!exists(file)) throw httpError(404, `Project "${slug}" not found`);
   const yaml = readText(file);
   let data = {}, error = null;
@@ -212,7 +221,13 @@ function loadProject(slug, features = null) {
     if (def) def.featureName = found.def.name;
     feats.push({ key: k, feature: found ? found.key : fkey, missing: !found, def, seeds, overrides });
   }
-  return { slug, dir, file, name: meta.name ? String(meta.name) : slug, meta, features: feats, yaml, data, error };
+  let dir = home, external = false;
+  if (meta.location) {
+    const d = resolveLocation(meta.location, home);
+    if (isDir(d)) { dir = d; external = true; }
+    else error = error || `location: the folder "${d}" does not exist`;
+  }
+  return { slug, dir, home, external, file, name: meta.name ? String(meta.name) : slug, meta, features: feats, yaml, data, error };
 }
 
 function projectFeature(p, key) {
@@ -245,7 +260,7 @@ function latestMtime(dir, depth = 0) {
   let m = 0;
   try {
     for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (ent.name === TRASH) continue;
+      if (ent.name === TRASH || ent.name === '.git' || ent.name === 'node_modules' || ent.name === 'data') continue;
       const p = path.join(dir, ent.name);
       if (ent.isDirectory()) { if (depth < 3) m = Math.max(m, latestMtime(p, depth + 1)); }
       else m = Math.max(m, fs.statSync(p).mtimeMs);
@@ -307,7 +322,7 @@ function syncProject(slug) {
   const p = loadProject(slug);
   if (p.error) return p;
   for (const f of p.features) {
-    if (f.missing) continue;
+    if (f.missing || f.def.stores === 'github') continue;
     const d = safeJoin(p.dir, f.def.folder);
     ensureDir(d);
     for (const seed of f.seeds) {
@@ -381,6 +396,7 @@ function writeMcpJson(p) {
 function featureDir(p, f) { return safeJoin(p.dir, f.def.folder); }
 
 function countItems(p, f) {
+  if (f.def.stores === 'github') { try { const n = require('./github').cachedOpenCount(f.def.repo); return n == null ? 0 : n; } catch { return 0; } }
   try {
     const d = featureDir(p, f); if (!exists(d)) return 0;
     const def = f.def;
@@ -618,7 +634,7 @@ function saveUpload(slug, key, folder, filename, buffer, opts = {}) {
   return { ok: true, name };
 }
 
-function filePath(slug, rel) { return safeJoin(projectDir(slug), rel); }
+function filePath(slug, rel) { return safeJoin(loadProject(slug).dir, rel); }
 
 // ---------- search ----------
 function search(query, onlySlug) {

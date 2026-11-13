@@ -35,8 +35,9 @@ new_item: Task
 |---|---|---|
 | `name` | display name | the key |
 | `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal | by layout |
-| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat` | `markdown` |
-| `layout` | markdown → `pages`, `cards`, `list` · records → `table`, `list`, `cards`, `kanban`, `calendar`, `orgchart`, `map` · images → `grid` · files → `files`, `code` · diagram → `diagram` · chat → `chat` | first one |
+| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github` | `markdown` |
+| `repo` | github: `owner/name` of the repository | none |
+| `layout` | markdown → `pages`, `cards`, `list` · records → `table`, `list`, `cards`, `kanban`, `calendar`, `orgchart`, `map` · images → `grid` · files → `files`, `code` · diagram → `diagram` · chat → `chat` · github → `issues` | first one |
 | `folder` | where the content goes in a project | the key |
 | `search` | `true` / `false` | true for text and records |
 | `new_item` | label of the **+ New** button | by store |
@@ -55,6 +56,6 @@ new_item: Task
 
 ## Starter features
 
-wiki · knowledge · gallery · files · scripts · skills · mcp · chat · tasks · calendar · team · map · diagrams · contacts · devices
+wiki · knowledge · gallery · files · scripts · skills · mcp · chat · tasks · calendar · team · map · diagrams · contacts · devices · github (issues)
 
 New versions can bring new starter features; they are added once. Features you changed or deleted are never touched.

@@ -10,6 +10,7 @@ const chat = require('./lib/chat');
 const files = require('./lib/files');
 const ide = require('./lib/ide');
 const updater = require('./lib/updater');
+const github = require('./lib/github');
 
 const ARGS = process.argv.slice(2);
 const PORT = parseInt(process.env.PORT || ARGS.find(a => /^\d+$/.test(a)) || '4321', 10);
@@ -39,7 +40,7 @@ function readBody(req, limit = 200 * 1024 * 1024) {
 async function json(req) { const b = await readBody(req, 20 * 1024 * 1024); try { return b.length ? JSON.parse(b.toString('utf8')) : {}; } catch { throw ws.httpError(400, 'Bad JSON'); } }
 
 function projectView(p) {
-  return { slug: p.slug, name: p.name, meta: p.meta, yaml: p.yaml, error: p.error, path: p.dir,
+  return { slug: p.slug, name: p.name, meta: p.meta, yaml: p.yaml, error: p.error, path: p.dir, external: p.external, yamlPath: p.file,
     features: p.features.map(f => ({ key: f.key, feature: f.feature, missing: f.missing, def: f.def, overrides: f.overrides })) };
 }
 const d = decodeURIComponent;
@@ -62,6 +63,25 @@ function watch() {
       timer = setTimeout(() => { for (const [k, r] of pending) broadcast(k === 'features' ? { type: 'features', path: r } : { type: 'project', slug: k.slice(2), path: r }); pending = new Map(); }, 250);
     });
   } catch (e) { console.warn('  (live refresh disabled: ' + e.message + ')'); }
+}
+
+// Projects with `location:` live outside the data folder: watch those folders too.
+const extWatch = new Map();
+function watchExternal() {
+  const want = new Map();
+  for (const x of ws.listProjects()) { try { const p = ws.loadProject(x.slug); if (p.external) want.set(x.slug, p.dir); } catch {} }
+  for (const [slug, w] of extWatch) if (want.get(slug) !== w.dir) { try { w.watcher.close(); } catch {} extWatch.delete(slug); }
+  for (const [slug, dir] of want) {
+    if (extWatch.has(slug)) continue;
+    try {
+      const watcher = fs.watch(dir, { recursive: true }, (type, file) => {
+        if (!file || /(^|[\\/])(\.git|node_modules|\.trash|\.update)([\\/]|$)/.test(String(file))) return;
+        pending.set('p:' + slug, String(file)); clearTimeout(timer);
+        timer = setTimeout(() => { for (const [k, r] of pending) broadcast(k === 'features' ? { type: 'features', path: r } : { type: 'project', slug: k.slice(2), path: r }); pending = new Map(); }, 250);
+      });
+      extWatch.set(slug, { dir, watcher });
+    } catch {}
+  }
 }
 
 // ---------- routes ----------
@@ -109,6 +129,8 @@ const routes = [
   ['PUT', new RegExp(`^${P}/yaml$`), async (m, q, req) => projectView(ws.saveProjectYaml(d(m[1]), (await json(req)).yaml))],
   ['POST', new RegExp(`^${P}/features$`), async (m, q, req) => { const b = await json(req); return projectView(ws.addFeatureToProject(d(m[1]), b.key, b.settings)); }],
   ['DELETE', new RegExp(`^${P}/features/([^/]+)$`), (m) => projectView(ws.removeFeatureFromProject(d(m[1]), d(m[2])))],
+  // GitHub issues feature
+  ['GET', new RegExp(`^${P}/f/([^/]+)/github$`), (m, q) => { const p = ws.loadProject(d(m[1])); const f = ws.projectFeature(p, d(m[2])); return github.issues(f.def.repo, { state: q.get('state') || f.def.state, refresh: q.get('refresh') === '1' }); }],
   // items
   ['GET', new RegExp(`^${P}/f/([^/]+)/items$`), (m, q) => ws.listItems(d(m[1]), d(m[2]), { folder: q.get('folder') || '', all: q.get('all') === '1' })],
   ['POST', new RegExp(`^${P}/f/([^/]+)/items$`), async (m, q, req) => ws.createItem(d(m[1]), d(m[2]), await json(req))],
@@ -208,7 +230,7 @@ server.on('error', e => {
   throw e;
 });
 server.listen(PORT, HOST, () => {
-  watch();
+  watch(); watchExternal(); setInterval(watchExternal, 30000);
   console.log(`\n  Project Workspace ${VERSION}`);
   console.log(`  → http://localhost:${PORT}`);
   console.log(`  Your data: ${ws.ROOT}`);

@@ -43,7 +43,7 @@ Each feature key becomes a tab on the project page. The content lives in the pro
 
 **Building blocks:** pages · cards · list · picture grid · files · scripts (code editor) · table · kanban · calendar · org chart · offline map (your own image with pins) · Mermaid diagrams · chat with Claude CLI.
 
-Every project also has an **Overview**, an **Explorer** with all its files, and **VS Code** buttons that open it in the installed VS Code.
+Every project also has an **Overview**, an **Explorer** with all its files, and **VS Code** (buttons for the installed VS Code, and the full VS Code in a tab). A project can live in an existing folder (`location:`), so the workspace can even manage itself: see the example *Workspace (development)*.
 
 **Starter features:** wiki, knowledge, gallery, files, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices. You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
 

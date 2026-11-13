@@ -14,8 +14,7 @@ function base(scope) {
   if (scope === 'workspace') return ws.ROOT;
   const m = /^p\/(.+)$/.exec(scope || '');
   if (!m) throw ws.httpError(400, 'Unknown scope');
-  ws.loadProject(m[1]); // 404 if missing
-  return path.join(ws.PROJECTS_DIR, m[1]);
+  return ws.loadProject(m[1]).dir; // the project's content folder (its location:, if set)
 }
 function rel2abs(b, rel) {
   const clean = String(rel || '').replace(/\\/g, '/').replace(/^\/+/, '');

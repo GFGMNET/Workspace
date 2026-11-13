@@ -600,3 +600,49 @@ VIEWS.chat = async ctx => {
   ta.oninput = () => { ta.style.height = 'auto'; ta.style.height = Math.min(200, ta.scrollHeight) + 'px'; };
   ta.focus();
 };
+
+// ---------- GitHub issues ----------
+VIEWS.issues = async ctx => {
+  const def = ctx.f.def;
+  const key = `pw-iss-${ctx.p.slug}-${ctx.f.key}`;
+  let st = { state: def.state || 'open' }; try { Object.assign(st, JSON.parse(sessionStorage.getItem(key) || '{}')); } catch {}
+  const save = () => { try { sessionStorage.setItem(key, JSON.stringify(st)); } catch {} };
+  const load = async (refresh = false) => {
+    ctx.el.innerHTML = `<div class="empty">Loading issues from GitHub…</div>`;
+    let data;
+    try { data = await api(`/api/projects/${enc(ctx.p.slug)}/f/${enc(ctx.f.key)}/github?state=${st.state}${refresh ? '&refresh=1' : ''}`); }
+    catch (e) { ctx.el.innerHTML = `<div class="card" style="max-width:680px"><h2>${icon('warn')} Can't show the issues</h2><p class="muted">${esc(e.message)}</p><button class="btn" type="button" data-retry>Try again</button></div>`; $('[data-retry]', ctx.el).onclick = () => load(true); return; }
+    const labels = [...new Map(data.issues.flatMap(i => i.labels).map(l => [l.name, l])).values()].sort((a, b) => a.name.localeCompare(b.name));
+    const active = new Set(st.labels || []);
+    const repoUrl = `https://github.com/${def.repo}`;
+    const chip = l => { const c = /^[0-9a-f]{6}$/i.test(l.color) ? '#' + l.color : '#888'; return `<span class="chip ilabel" style="--lc:${c}">${esc(l.name)}</span>`; };
+    ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px">
+        <div class="seg" role="group" aria-label="State">${['open', 'closed', 'all'].map(x => `<button type="button" class="${st.state === x ? 'on' : ''}" data-state="${x}">${x[0].toUpperCase() + x.slice(1)}</button>`).join('')}</div>
+        <label class="finput" style="flex:1 1 240px;max-width:360px;margin:0">${icon('search', 14)}<input type="search" data-q placeholder="Search issues" aria-label="Search issues"></label>
+        <span class="sp"></span><span class="faint small">${esc(def.repo)} · ${data.cached ? 'updated ' + esc(ago(data.fetched)) : 'just loaded'}</span>
+        <button class="btn sm" type="button" data-refresh>Refresh</button>
+        <a class="btn sm" href="${repoUrl}/issues" target="_blank" rel="noopener">${icon('github', 14)} On GitHub</a>
+        <a class="btn sm primary" href="${repoUrl}/issues/new" target="_blank" rel="noopener">${icon('plus', 14)} New issue</a></div>
+      ${data.error ? `<div class="err" style="margin-bottom:10px">${esc(data.error)}</div>` : ''}
+      ${labels.length ? `<div class="chips" style="margin-bottom:12px">${labels.map(l => `<button type="button" class="chip ilabel ${active.has(l.name) ? 'on' : ''}" style="--lc:#${esc(l.color)}" data-label="${esc(l.name)}" aria-pressed="${active.has(l.name)}">${esc(l.name)}</button>`).join('')}</div>` : ''}
+      <div class="card list-rows" style="padding:0" data-list>${data.issues.map(i => `<div class="issue" data-n="${i.number}" data-text="${esc((i.title + ' ' + i.body + ' #' + i.number).toLowerCase())}" data-labels="${esc(i.labels.map(l => l.name).join('|'))}">
+          <button type="button" class="lrow ihead" aria-expanded="false"><span class="ist ${i.state}">${icon('issue', 16)}</span>
+            <span style="flex:1;min-width:0"><b>${esc(i.title)}</b> ${i.labels.map(chip).join(' ')}<span class="faint small" style="display:block">#${i.number} · ${esc(i.user || '')} · ${i.state === 'closed' ? 'closed ' + esc(ago(Date.parse(i.closed))) : 'updated ' + esc(ago(Date.parse(i.updated)))}${i.comments ? ` · ${i.comments} comment${i.comments === 1 ? '' : 's'}` : ''}</span></span></button>
+          <div class="ibody" hidden></div></div>`).join('') || `<div class="empty">No ${st.state === 'all' ? '' : st.state + ' '}issues.</div>`}</div>
+      <p class="faint small">Issues come from GitHub (${esc(def.repo)}). Write and comment on GitHub; this view refreshes every 5 minutes or with Refresh.</p>`;
+    const q = $('[data-q]', ctx.el);
+    const apply = () => $$('.issue', ctx.el).forEach(r => { const ok = (!q.value || r.dataset.text.includes(q.value.toLowerCase())) && [...active].every(l => r.dataset.labels.split('|').includes(l)); r.style.display = ok ? '' : 'none'; });
+    q.oninput = apply;
+    $$('[data-label]', ctx.el).forEach(b => b.onclick = () => { const n = b.dataset.label; active.has(n) ? active.delete(n) : active.add(n); st.labels = [...active]; save(); b.classList.toggle('on'); b.setAttribute('aria-pressed', active.has(n)); apply(); });
+    $$('[data-state]', ctx.el).forEach(b => b.onclick = () => { st.state = b.dataset.state; save(); load(); });
+    $('[data-refresh]', ctx.el).onclick = () => load(true);
+    $$('.ihead', ctx.el).forEach(h => h.onclick = () => {
+      const row = h.closest('.issue'); const body = $('.ibody', row); const i = data.issues.find(x => String(x.number) === row.dataset.n);
+      const open = body.hidden; body.hidden = !open; h.setAttribute('aria-expanded', open);
+      if (open && !body.innerHTML) { body.innerHTML = `<div class="md">${md(i.body || '*No description.*')}</div><p><a href="${esc(i.url)}" target="_blank" rel="noopener">Open #${i.number} on GitHub →</a></p>`; hydrateMarkdown(body); }
+    });
+    apply();
+    App.refreshProjects();
+  };
+  await load();
+};

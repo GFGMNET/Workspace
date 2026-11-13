@@ -88,6 +88,7 @@ Rules:
 |---|---|
 | `name`, `description`, `icon`, `color`, `tags`, `status`, `owner`, `created` | Project information, not features |
 | `overview: false` | Hides the built-in Overview tab |
+| `location: <folder>` | The project's content lives in an existing folder (e.g. a git clone). `project.yaml` stays in `data/projects/<slug>/`. Absolute paths, `~`, `{install}` (the program folder) and `{data}` work; relative paths are relative to the project's home folder. Feature folders, the Explorer, chat, scripts and the VS Code tab all use this folder, and it is watched for live refresh |
 | a list | Starting items. Each one is created as a file when the project is saved; existing files are never overwritten |
 | a mapping | Settings that override the feature definition for this project only. `items:` holds starting items, `feature:` points to another feature definition |
 | empty | Just adds the feature |
@@ -125,7 +126,8 @@ aliases: [todo]          # other keys in project.yaml that mean this feature
 |---|---|---|
 | `name` | Display name | key, prettified |
 | `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file | by layout |
-| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat` | `markdown` |
+| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github` | `markdown` |
+| `repo` | github: `owner/name` | none |
 | `layout` | see building blocks | first layout of the store |
 | `folder` | where content goes inside a project | the key (skills: `.claude/skills`, chat: `chats`) |
 | `search` | `true` / `false` | true for markdown, records, diagram |
@@ -172,6 +174,7 @@ A feature can combine only the building blocks below. A truly new look (a new bu
 | `map` | records | `<folder>/<id>.yaml` with `x`, `y` in % + `<folder>/_map.<ext>` | Your own image (floor plan, site plan) with draggable pins; works offline |
 | `diagram` | diagram | `<folder>/<id>.mmd` (first line `%% Title`) | Mermaid text with live preview, SVG download |
 | `chat` | chat | `<folder>/<date>-<title>.json` | Chat with Claude CLI inside the project folder (section 6) |
+| `issues` | github | nothing on disk (GitHub API, cached 5 min) | Issues of `repo: owner/name`: open/closed/all, label filter, search, expand to read, *New issue* / *On GitHub*. Public repos need no login; a token in `data/settings.yaml` (`github: token:`) or `GITHUB_TOKEN` for private repos and higher limits |
 
 Records are one YAML file per item, so they are readable, diff-friendly, and easy for Claude to edit.
 
@@ -339,6 +342,7 @@ The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and 
 | Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
 | Dependencies | None at runtime (Mermaid and highlight.js are bundled) |
 | Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |
+| Developing the tool | It can manage itself: the example project *Workspace (development)* uses `location: "{install}"` with docs, scripts, GitHub issues, chat and a *release* skill (#27–#29) |
 
 ## 9. Rebuilding it
 
