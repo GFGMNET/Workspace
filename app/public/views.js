@@ -349,23 +349,55 @@ VIEWS.map = async ctx => {
   render(); openRecordFromHash(ctx, items);
 };
 
-// ---------- images: gallery ----------
+// ---------- images: gallery (sort + group, remembered per gallery) ----------
+const GAL_SORTS = { 'date-desc': 'Newest first', 'date-asc': 'Oldest first', 'name-asc': 'Name A–Z', 'name-desc': 'Name Z–A', 'size-desc': 'Largest first' };
+const GAL_GROUPS = { none: 'No grouping', album: 'Album', month: 'Month', year: 'Year' };
+function galSort(list, sort, key = x => x) {
+  const [k, dir] = sort.split('-'); const m = dir === 'desc' ? -1 : 1;
+  const val = x => { const v = key(x); return k === 'date' ? (v.date || '') : k === 'size' ? v.size || 0 : String(v.name || v.title || '').toLowerCase(); };
+  return [...list].sort((a, b) => { const A = val(a), B = val(b); return (A < B ? -1 : A > B ? 1 : 0) * m || String(key(a).name || key(a).title).localeCompare(String(key(b).name || key(b).title), undefined, { numeric: true }); });
+}
+const fmtDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
+const fmtRange = (a, b) => { if (!a) return ''; const A = fmtDay(a), B = fmtDay(b); return A === B ? A : `${A} – ${B}`; };
 VIEWS.grid = async ctx => {
   const folder = ctx.sub || '';
-  const data = await api(itemsUrl(ctx, `?folder=${enc(folder)}`));
-  const imgs = data.files.filter(f => f.image);
   const def = ctx.f.def;
+  const key = `pw-gal-${ctx.p.slug}-${ctx.f.key}`;
+  let st = { sort: 'date-desc', group: 'none', all: false };
+  try { Object.assign(st, JSON.parse(localStorage.getItem(key) || '{}')); } catch {}
+  const save = () => { try { localStorage.setItem(key, JSON.stringify(st)); } catch {} };
+  const all = st.all && !folder;
+  const data = await api(itemsUrl(ctx, `?folder=${enc(folder)}${all ? '&all=1' : ''}`));
+  const imgs = galSort(data.files.filter(f => f.image), st.sort);
+  if (st.group === 'album' && !all) st.group = 'none';
+  const groupOf = f => st.group === 'album' ? (f.album || 'Not in an album') : st.group === 'month' ? f.date.slice(0, 7) : st.group === 'year' ? f.date.slice(0, 4) : '';
+  const groupTitle = g => { if (st.group === 'month') { const d = new Date(g + '-01T00:00:00'); return isNaN(d) ? g : d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); } return g; };
+  const groups = [];
+  for (const f of imgs) { const g = groupOf(f); let last = groups[groups.length - 1]; if (!last || last.g !== g) { last = groups.find(x => x.g === g) || null; if (!last) { last = { g, items: [] }; groups.push(last); } } last.items.push(f); }
+  if (st.group === 'album' && !st.sort.startsWith('date')) groups.sort((a, b) => a.g.localeCompare(b.g) * (st.sort.endsWith('desc') && st.sort.startsWith('name') ? -1 : 1));
+  const order = groups.flatMap(g => g.items);
+  const albums = galSort(data.folders, st.sort, x => ({ ...x, date: x.latest, size: x.size, name: x.title }));
   const crumbs = folder ? folder.split('/').map((p, i, a) => `<span class="faint">/</span><a href="${ctx.href(a.slice(0, i + 1).join('/'))}">${esc(p)}</a>`).join('') : '';
+  const sel = (name, opts, cur, label) => `<label class="gsel"><span class="faint small">${label}</span><select data-${name} aria-label="${label}">${Object.entries(opts).map(([v, t]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`;
+  const groupOpts = all ? GAL_GROUPS : { none: GAL_GROUPS.none, month: GAL_GROUPS.month, year: GAL_GROUPS.year };
+  const figure = f => { const i = order.indexOf(f); return `<figure><button type="button" class="ph" data-i="${i}" aria-label="Open ${esc(f.name)}"><img loading="lazy" src="${fileUrl(ctx, f.path)}" alt=""></button><figcaption title="${esc(f.name)}${f.taken ? ' · taken ' + esc(fmtDay(f.taken)) : ''}">${esc(f.name)}<span>${esc(fmtDay(f.date))}${all && f.album && st.group !== 'album' ? ' · ' + esc(f.album) : ''}</span></figcaption></figure>`; };
   ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><div class="crumbs"><a href="${ctx.href('')}">${esc(def.name)}</a>${crumbs}</div><span class="sp"></span>
+      ${sel('sort', GAL_SORTS, st.sort, 'Sort')}${sel('group', groupOpts, st.group, 'Group')}
+      ${!folder && data.folders.length ? `<label class="row small" style="gap:6px;cursor:pointer"><input type="checkbox" data-all ${all ? 'checked' : ''}> All albums</label>` : ''}
       ${def.albums !== false ? `<button class="btn" type="button" data-new>${icon('plus', 14)} New album</button>` : ''}
       <label class="btn primary">${icon('upload', 14)} Add pictures<input type="file" accept="image/*" multiple hidden data-up></label></div>
-    ${data.folders.length ? `<div class="chips" style="margin-bottom:14px">${data.folders.map(f => `<a class="chip" href="${ctx.href(f.id)}" style="padding:6px 12px;font-size:13px">${icon('folder', 14)} ${esc(f.title)} <b>${f.count}</b></a>`).join('')}</div>` : ''}
+    ${albums.length && !all ? `<div class="albums">${albums.map(a => `<a class="album" href="${ctx.href(a.id)}"><span class="cov">${a.cover ? `<img loading="lazy" src="${fileUrl(ctx, a.cover)}" alt="">` : icon('folder', 28)}</span>
+        <span class="meta"><b>${esc(a.title)}</b><span>${a.count} picture${a.count === 1 ? '' : 's'}${a.first ? ' · ' + esc(fmtRange(a.first, a.latest)) : ''}</span></span></a>`).join('')}</div>` : ''}
     <label class="drop" data-drop>Drop pictures here — saved to <span class="mono">${esc(ctx.p.slug)}/${esc(def.folder)}${folder ? '/' + esc(folder) : ''}/</span><input type="file" accept="image/*" multiple hidden data-up></label>
-    <div class="gal">${imgs.map((f, i) => `<figure><button type="button" class="ph" data-i="${i}" aria-label="Open ${esc(f.name)}"><img loading="lazy" src="${fileUrl(ctx, f.path)}" alt=""></button><figcaption title="${esc(f.name)}">${esc(f.name)}</figcaption></figure>`).join('')}</div>
-    ${!imgs.length && !data.folders.length ? `<div class="empty">No pictures yet. You can also copy images straight into the folder.</div>` : ''}`;
+    ${groups.map(g => `${st.group !== 'none' ? `<h3 class="ghead">${st.group === 'album' && g.items[0].album ? `<a href="${ctx.href(g.items[0].album)}" style="color:inherit">${esc(groupTitle(g.g))}</a>` : esc(groupTitle(g.g))} <span class="faint">${g.items.length}</span></h3>` : ''}<div class="gal">${g.items.map(figure).join('')}</div>`).join('')}
+    ${!imgs.length && !data.folders.length ? `<div class="empty">No pictures yet. You can also copy images straight into the folder.</div>` : ''}
+    ${!imgs.length && data.folders.length && !all ? `<p class="faint small">Open an album, or tick “All albums” to see every picture.</p>` : ''}`;
   wireNew(ctx, ctx.el, () => newItemDialog(ctx, { folder }));
   wireUpload(ctx, folder);
-  $$('.ph', ctx.el).forEach(b => b.onclick = () => lightbox(imgs.map(f => ({ src: fileUrl(ctx, f.path), name: f.name, path: f.path })), +b.dataset.i, ctx));
+  $('[data-sort]', ctx.el).onchange = e => { st.sort = e.target.value; save(); VIEWS.grid(ctx); };
+  $('[data-group]', ctx.el).onchange = e => { st.group = e.target.value; save(); VIEWS.grid(ctx); };
+  const allBox = $('[data-all]', ctx.el); if (allBox) allBox.onchange = () => { st.all = allBox.checked; if (!st.all && st.group === 'album') st.group = 'none'; save(); VIEWS.grid(ctx); };
+  $$('.ph', ctx.el).forEach(b => b.onclick = () => lightbox(order.map(f => ({ src: fileUrl(ctx, f.path), name: f.name + (f.taken ? ' · ' + fmtDay(f.taken) : ''), path: f.path })), +b.dataset.i, ctx));
 };
 function wireUpload(ctx, folder) {
   const up = async files => {

@@ -190,6 +190,18 @@ table.tbl{border-collapse:collapse;width:100%;font-size:13.5px}
 .gal .ph{aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--code);border:1px solid var(--line);cursor:zoom-in;padding:0;display:block;width:100%}
 .gal img{width:100%;height:100%;object-fit:cover;display:block}
 .gal figcaption{font-size:12.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gal figcaption span{display:block;font-size:11.5px;color:var(--ink3)}
+.gsel{display:flex;align-items:center;gap:6px}
+.gsel select{border:1px solid var(--line2);border-radius:8px;background:var(--panel);padding:6px 8px;font-size:13px}
+.ghead{font-size:15px;margin:18px 0 10px;font-weight:600}
+.albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:14px}
+.album{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;color:var(--ink)}
+.album:hover{border-color:var(--line2);text-decoration:none}
+.album .cov{width:64px;height:64px;border-radius:8px;overflow:hidden;background:var(--code);display:grid;place-items:center;flex:none;color:var(--ink3)}
+.album .cov img{width:100%;height:100%;object-fit:cover}
+.album .meta{display:flex;flex-direction:column;min-width:0}
+.album .meta b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.album .meta span{font-size:12px;color:var(--ink2)}
 .drop{border:1.5px dashed var(--line2);border-radius:12px;padding:16px;text-align:center;color:var(--ink2);margin-bottom:14px;cursor:pointer;display:block;font-size:13.5px}
 .drop.over,.drop:hover{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
 .lb{position:fixed;inset:0;background:rgba(8,8,10,.9);display:grid;place-items:center;z-index:80;cursor:zoom-out}

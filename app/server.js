@@ -82,7 +82,7 @@ const routes = [
   ['POST', new RegExp(`^${P}/features$`), async (m, q, req) => { const b = await json(req); return projectView(ws.addFeatureToProject(d(m[1]), b.key, b.settings)); }],
   ['DELETE', new RegExp(`^${P}/features/([^/]+)$`), (m) => projectView(ws.removeFeatureFromProject(d(m[1]), d(m[2])))],
   // items
-  ['GET', new RegExp(`^${P}/f/([^/]+)/items$`), (m, q) => ws.listItems(d(m[1]), d(m[2]), { folder: q.get('folder') || '' })],
+  ['GET', new RegExp(`^${P}/f/([^/]+)/items$`), (m, q) => ws.listItems(d(m[1]), d(m[2]), { folder: q.get('folder') || '', all: q.get('all') === '1' })],
   ['POST', new RegExp(`^${P}/f/([^/]+)/items$`), async (m, q, req) => ws.createItem(d(m[1]), d(m[2]), await json(req))],
   ['GET', new RegExp(`^${P}/f/([^/]+)/items/([^/]+)$`), (m) => ws.readItem(d(m[1]), d(m[2]), d(m[3]))],
   ['PUT', new RegExp(`^${P}/f/([^/]+)/items/([^/]+)$`), async (m, q, req) => ws.writeItem(d(m[1]), d(m[2]), d(m[3]), await json(req))],

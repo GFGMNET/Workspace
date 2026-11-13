@@ -147,7 +147,7 @@ A feature can combine only the building blocks below. A truly new look (a new bu
 | `pages` | markdown | `<folder>/<id>.md` | Page list with full-text search, Markdown view, editor with live preview, `[[Page]]` links (a link to a missing page creates it), Mermaid code blocks |
 | `cards` | markdown | `<folder>/<id>.md` (tags in front matter) | Cards with summary and tags, search and tag filter |
 | `list` | markdown / records | as above | Simple list |
-| `grid` | images | `<folder>/<album>/*.png…` | Albums, drag & drop upload, lightbox (arrow keys, Del moves to trash) |
+| `grid` | images | `<folder>/<album>/*.png…` | Album cards (cover, count, date range), drag & drop upload, lightbox (arrow keys, Del moves to trash). Sort by date (newest/oldest), name or size; group by album, month or year; “All albums” shows every picture at once. Dates are the photo's EXIF *date taken* (JPEG), else the file date. Sort/group are remembered per gallery |
 | `files` | files | `<folder>/<subfolder>/*` | Folder browser with upload |
 | `table` | records | `<folder>/<id>.yaml` | Sortable, filterable table; click a row to edit |
 | `cards` | records | `<folder>/<id>.yaml` | Cards showing the fields (the MCP feature also shows the generated `.mcp.json`) |

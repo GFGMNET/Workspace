@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const YAML = require('./yaml');
+const { dateTaken } = require('./exif');
 
 const APP_DIR = path.resolve(__dirname, '..');
 const ROOT = path.resolve(process.env.WORKSPACE_DIR || path.join(APP_DIR, '..'));
@@ -439,20 +440,37 @@ function listChats(p, f) {
     catch { return { id: n.slice(0, -5), title: n, error: true }; }
   }).sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
 }
-function listFolder(p, f, sub = '') {
+// Files of one folder (or, with all=true, of every sub folder too). Each file carries
+// `date`: the EXIF "date taken" for photos, else the file's modification time.
+function fileEntry(f, dir, rel, name, album) {
+  const full = path.join(dir, name); const st = fs.statSync(full);
+  const taken = IMAGE_EXT.test(name) ? dateTaken(full, st.mtimeMs) : null;
+  return { name, path: `${f.def.folder}/${rel}`, album, size: st.size, modified: st.mtimeMs, taken, date: taken || new Date(st.mtimeMs).toISOString(), image: IMAGE_EXT.test(name) };
+}
+function listFolder(p, f, sub = '', all = false) {
   const base = featureDir(p, f);
   const d = sub ? safeJoin(base, sub) : base; if (!exists(d)) return { folders: [], files: [] };
+  const imagesOnly = f.def.stores === 'images';
   const folders = [], files = [];
-  for (const e of fs.readdirSync(d, { withFileTypes: true })) {
-    if (e.name.startsWith('.') || e.name.startsWith('_')) continue;
-    const rel = (sub ? sub + '/' : '') + e.name;
-    if (e.isDirectory()) folders.push({ id: rel, title: e.name, count: countFiles(path.join(d, e.name), f.def.stores === 'images') });
-    else {
-      if (f.def.stores === 'images' && !IMAGE_EXT.test(e.name)) continue;
-      const st = fs.statSync(path.join(d, e.name));
-      files.push({ name: e.name, path: `${f.def.folder}/${rel}`, size: st.size, modified: st.mtimeMs, image: IMAGE_EXT.test(e.name) });
+  const walk = (dir, relDir, deep) => {
+    const out = [];
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.name.startsWith('.') || e.name.startsWith('_')) continue;
+      const rel = (relDir ? relDir + '/' : '') + e.name;
+      if (e.isDirectory()) { if (deep) out.push(...walk(path.join(dir, e.name), rel, true)); }
+      else if (!imagesOnly || IMAGE_EXT.test(e.name)) out.push(fileEntry(f, dir, rel, e.name, relDir));
     }
+    return out;
+  };
+  for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    if (!e.isDirectory() || e.name.startsWith('.') || e.name.startsWith('_')) continue;
+    const rel = (sub ? sub + '/' : '') + e.name;
+    const inside = walk(path.join(d, e.name), rel, true);
+    const dates = inside.map(x => x.date).sort();
+    const cover = inside.filter(x => x.image).sort((a, b) => a.date.localeCompare(b.date))[0];
+    folders.push({ id: rel, title: e.name, count: inside.length, first: dates[0] || null, latest: dates[dates.length - 1] || null, size: inside.reduce((s, x) => s + x.size, 0), cover: cover ? cover.path : null });
   }
+  files.push(...walk(d, sub, all));
   folders.sort((a, b) => a.title.localeCompare(b.title)); files.sort((a, b) => a.name.localeCompare(b.name));
   return { folders, files };
 }
@@ -467,7 +485,7 @@ function listItems(slug, key, opts = {}) {
   }
   if (s === 'diagram') return { items: listDiagrams(p, f) };
   if (s === 'chat') return { items: listChats(p, f) };
-  return listFolder(p, f, opts.folder ? String(opts.folder) : '');
+  return listFolder(p, f, opts.folder ? String(opts.folder) : '', !!opts.all);
 }
 function findMapImage(p, f) {
   const d = featureDir(p, f); if (!exists(d)) return null;
