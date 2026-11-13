@@ -85,6 +85,7 @@ Rules:
 | Key value | Meaning |
 |---|---|
 | `name`, `description`, `icon`, `color`, `tags`, `status`, `owner`, `created` | Project information, not features |
+| `overview: false` | Hides the built-in Overview tab |
 | a list | Starting items. Each one is created as a file when the project is saved; existing files are never overwritten |
 | a mapping | Settings that override the feature definition for this project only. `items:` holds starting items, `feature:` points to another feature definition |
 | empty | Just adds the feature |
@@ -228,6 +229,8 @@ Plain Node `http` with no framework. It binds to `127.0.0.1:4321` (override with
 | `GET /api/search?q=&project=` | full-text search |
 | `GET/PUT/DELETE /api/features[/<key>]` | feature definitions |
 | `GET/POST /api/projects`, `GET /api/projects/<p>` | projects |
+| `GET /api/projects/<p>/overview` | overview tab data |
+| `POST /api/examples` | add the example projects |
 | `PUT /api/projects/<p>/yaml` | save project.yaml (validated) |
 | `POST/DELETE /api/projects/<p>/features[/<key>]` | add/remove a feature |
 | `GET/POST /api/projects/<p>/f/<feature>/items` | list / create items (`?folder=` for images/files) |
@@ -255,7 +258,7 @@ Vanilla JavaScript with no build step and no framework.
 Screens (from the accepted mockup, issue #2):
 
 1. **Workspace home:** project cards with feature chips and counts.
-2. **Project page:** a tab per feature from `project.yaml`, a note saying which `features/*.yaml` defines it, and a `project.yaml` tab with an editor.
+2. **Project page:** an **Overview** tab first (a tile per feature with its count, *coming up* in the next 30 days from every date field, open Kanban tasks with overdue ones marked, recently changed items; hide it with `overview: false` in project.yaml), then a tab per feature from `project.yaml`, a note saying which `features/*.yaml` defines it, and a `project.yaml` tab with an editor.
 3. **Features:** list, YAML editor with validation, a sketch of the layout, fields, and which projects use it.
 4. **New project:** name, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.

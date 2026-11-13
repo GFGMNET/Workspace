@@ -112,7 +112,8 @@ let currentTab = '';
 function renderTabs() {
   const p = S.project; const el = $('#ptabs'); if (!el) return;
   const counts = Object.fromEntries(((S.projects.find(x => x.slug === p.slug) || {}).features || []).map(f => [f.key, f.count]));
-  el.innerHTML = p.features.map(f => `<a role="tab" class="tab ${f.key === currentTab ? 'active' : ''} ${f.missing ? 'missing' : ''}" href="${projectHref(f.key)}" aria-selected="${f.key === currentTab}">
+  const ov = p.meta.overview !== false;
+  el.innerHTML = (ov ? `<a role="tab" class="tab ${currentTab === '_overview' ? 'active' : ''}" href="${projectHref('_overview')}" aria-selected="${currentTab === '_overview'}">${icon('cards', 15)} Overview</a>` : '') + p.features.map(f => `<a role="tab" class="tab ${f.key === currentTab ? 'active' : ''} ${f.missing ? 'missing' : ''}" href="${projectHref(f.key)}" aria-selected="${f.key === currentTab}">
       ${f.missing ? icon('warn', 14) : featureIcon(f.def, 15)} ${esc(f.def ? f.def.name : f.key)}${!f.missing && counts[f.key] != null && f.def.stores !== 'chat' ? ` <span class="n">${counts[f.key]}</span>` : ''}</a>`).join('')
     + `<a role="tab" class="tab ${currentTab === '_yaml' ? 'active' : ''}" href="${projectHref('_yaml')}" aria-selected="${currentTab === '_yaml'}"><span class="mono" style="font-size:12.5px">project.yaml</span></a>`
     + `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature>${icon('plus', 14)} Feature</button>`;
@@ -120,7 +121,7 @@ function renderTabs() {
 }
 async function renderProject(tab, sub, query) {
   const p = S.project;
-  if (!tab) { tab = p.features.length ? p.features[0].key : '_yaml'; history.replaceState(null, '', projectHref(tab)); }
+  if (!tab) { tab = p.meta.overview !== false ? '_overview' : p.features.length ? p.features[0].key : '_yaml'; history.replaceState(null, '', projectHref(tab)); }
   currentTab = tab;
   const cli = S.info.platform === 'win32' ? `cd /d "${p.path}" && claude` : `cd "${p.path}" && claude`;
   $('#main').innerHTML = `<div class="wrap">
@@ -136,6 +137,7 @@ async function renderProject(tab, sub, query) {
   renderTabs();
   const body = $('#fbody');
   if (tab === '_yaml') return renderProjectYaml(body);
+  if (tab === '_overview') return renderOverview(body);
   const f = p.features.find(x => x.key === tab);
   if (!f) { body.innerHTML = `<div class="err">“${esc(tab)}” is not in this project.</div>`; return; }
   if (f.missing) {
@@ -152,13 +154,30 @@ async function renderProject(tab, sub, query) {
   fillIcons(body);
 }
 
+async function renderOverview(body) {
+  const p = S.project;
+  const o = await api(`/api/projects/${enc(p.slug)}/overview`);
+  const day = d => { const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); };
+  const rel = d => { const n = Math.round((Date.parse(d + 'T00:00:00') - Date.parse(o.today + 'T00:00:00')) / 864e5); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? `${-n} day${n === -1 ? '' : 's'} overdue` : `in ${n} days`; };
+  const link = it => projectHref(it.feature, it.id);
+  const listCard = (title, items, row, empty, more = '') => `<div class="card ovcard"><div class="row"><b>${title}</b><span class="sp"></span>${more}</div><div class="ovlist">${items.map(row).join('') || `<div class="faint small" style="padding:6px 0">${empty}</div>`}</div></div>`;
+  body.innerHTML = `
+    <div class="ovtiles">${o.tiles.map(t => `<a class="card ovtile" href="${projectHref(t.key)}">${t.missing ? icon('warn', 18) : featureIcon(t, 18)}<span class="n">${t.missing ? '—' : t.stores === 'chat' ? (t.count ? t.count : '') : t.count}</span><span class="l">${esc(t.name)}</span>${t.missing ? '<span class="chip warn">undefined</span>' : ''}</a>`).join('')}</div>
+    <div class="ovgrid">
+      ${listCard(`Coming up <span class="faint small" style="font-weight:400">· next ${o.days} days</span>`, o.upcoming, it => `<a class="ovrow" href="${link(it)}"><span class="d ${it.overdue ? 'over' : ''}"><b>${esc(day(it.date))}</b><span>${esc(rel(it.date))}</span></span><span class="t">${esc(it.title)}<span>${esc(it.featureName)} · ${esc(it.field)}</span></span></a>`, 'Nothing planned. Dates come from calendar events and date fields like “due”.')}
+      ${listCard('Open tasks', o.open, it => `<a class="ovrow" href="${link(it)}"><span class="chip">${esc(it.status)}</span><span class="t">${esc(it.title)}<span>${esc(it.featureName)}${it.owner ? ' · ' + esc(it.owner) : ''}</span></span></a>`, 'No open tasks.', o.openTotal > o.open.length ? `<span class="faint small">${o.open.length} of ${o.openTotal}</span>` : '')}
+      ${listCard('Recently changed', o.recent, it => `<a class="ovrow" href="${link(it)}"><span class="t">${esc(it.title)}<span>${esc(it.featureName)}</span></span><span class="faint small">${esc(ago(it.modified))}</span></a>`, 'Nothing yet.')}
+    </div>
+    <p class="faint small">This overview is built in. Hide it with <span class="mono">overview: false</span> in project.yaml.</p>`;
+}
+
 function renderProjectYaml(body) {
   const p = S.project;
   body.innerHTML = `<div class="split" style="grid-template-columns:minmax(0,1fr) 320px">
     <div><div id="yerr"></div><textarea class="yaml" id="ytext" spellcheck="false" aria-label="project.yaml">${esc(p.yaml)}</textarea>
       <div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="ysave">Save project.yaml</button><span class="faint small">Ctrl+S · items listed under a feature are created; nothing is deleted</span></div></div>
     <aside class="card small" style="display:flex;flex-direction:column;gap:10px"><b>How project.yaml works</b>
-      <span class="muted">Each key (except name, description, icon, color, tags, status) is a feature from <a href="#/features">features/</a>.</span>
+      <span class="muted">Each key (except name, description, icon, color, tags, status, overview) is a feature from <a href="#/features">features/</a>.</span>
       <pre class="code" style="font-size:11.5px">name: My project
 description: What it is
 wiki:              # feature, no items

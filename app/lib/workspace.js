@@ -29,7 +29,7 @@ const LAYOUTS = {
   chat: ['chat'],
 };
 const FIELD_TYPES = ['text', 'longtext', 'number', 'date', 'datetime', 'select', 'bool', 'url', 'email', 'tags', 'list', 'keyvalue'];
-const META_KEYS = new Set(['name', 'description', 'icon', 'color', 'tags', 'status', 'owner', 'created']);
+const META_KEYS = new Set(['name', 'description', 'icon', 'color', 'tags', 'status', 'owner', 'created', 'overview']);
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i;
 
 // ---------- helpers ----------
@@ -656,6 +656,42 @@ function search(query, onlySlug) {
   return hits.slice(0, 200);
 }
 
+// ---------- project overview ----------
+function projectOverview(slug, days = 30) {
+  const p = loadProject(slug);
+  const today = new Date(); const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const t0 = iso(today); const t1 = iso(new Date(today.getFullYear(), today.getMonth(), today.getDate() + days));
+  const tiles = [], upcoming = [], open = [], recent = [];
+  for (const f of p.features) {
+    if (f.missing) { tiles.push({ key: f.key, name: prettify(f.key), missing: true }); continue; }
+    const def = f.def; tiles.push({ key: f.key, name: def.name, layout: def.layout, icon: def.icon, stores: def.stores, count: countItems(p, f) });
+    try {
+      if (def.stores === 'records') {
+        const recs = listRecords(p, f);
+        const dateFields = (def.fields || []).filter(x => x.type === 'date' || x.type === 'datetime').map(x => x.name);
+        const doneCol = def.layout === 'kanban' ? def.columns[def.columns.length - 1] : null;
+        for (const r of recs) {
+          const done = doneCol && r.data[def.status_field] === doneCol;
+          for (const fld of dateFields) {
+            const v = r.data[fld]; if (!v) continue; const day = String(v).slice(0, 10);
+            const overdue = def.layout === 'kanban' && !done && day < t0;
+            if ((day >= t0 && day <= t1 && !done) || overdue) upcoming.push({ date: day, title: r.title, feature: f.key, featureName: def.name, id: r.id, field: (def.fields.find(x => x.name === fld) || {}).label || fld, overdue });
+          }
+          if (doneCol && !done) open.push({ title: r.title, feature: f.key, featureName: def.name, id: r.id, status: r.data[def.status_field] || def.columns[0], owner: r.data.owner || null });
+          recent.push({ title: r.title, feature: f.key, featureName: def.name, id: r.id, modified: r.modified });
+        }
+      } else if (def.stores === 'markdown') listMarkdown(p, f).forEach(it => recent.push({ title: it.title, feature: f.key, featureName: def.name, id: it.id, modified: it.modified }));
+      else if (def.stores === 'diagram') listDiagrams(p, f).forEach(it => recent.push({ title: it.title, feature: f.key, featureName: def.name, id: it.id, modified: it.modified }));
+      else if (def.stores === 'chat') listChats(p, f).forEach(it => recent.push({ title: it.title, feature: f.key, featureName: def.name, id: it.id, modified: Date.parse(it.updated) || 0 }));
+      else if (def.stores === 'images' || def.stores === 'files') listFolder(p, f, '', true).files.forEach(x => recent.push({ title: x.name, feature: f.key, featureName: def.name, id: x.album || '', modified: x.modified }));
+    } catch {}
+  }
+  upcoming.sort((a, b) => a.date.localeCompare(b.date));
+  open.sort((a, b) => String(a.status).localeCompare(String(b.status)));
+  recent.sort((a, b) => b.modified - a.modified);
+  return { name: p.name, meta: p.meta, today: t0, days, tiles, upcoming: upcoming.slice(0, 30), open: open.slice(0, 20), openTotal: open.length, recent: recent.slice(0, 12) };
+}
+
 // ---------- first start, updates, examples ----------
 function readState() { try { return JSON.parse(readText(path.join(ROOT, STATE_FILE))); } catch { return {}; } }
 function writeState(st) { writeText(path.join(ROOT, STATE_FILE), JSON.stringify(st, null, 2) + '\n'); }
@@ -702,7 +738,7 @@ function addExamples() {
 }
 
 module.exports = {
-  ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
+  projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
   ROOT, FEATURES_DIR, PROJECTS_DIR, STORES, LAYOUTS, FIELD_TYPES, YAML,
   httpError, slugify, normalizeFeature,
   listFeatures, getFeature, saveFeature, deleteFeature,
