@@ -147,6 +147,7 @@ mark{background:var(--mark);color:inherit;border-radius:2px;padding:0 1px}
 .editor{display:grid;grid-template-columns:1fr 1fr;flex:1;min-height:540px}
 .editor textarea{border:0;border-right:1px solid var(--line);resize:none;padding:18px;font:13px/1.65 var(--mono);background:var(--panel);outline:none;tab-size:2;color:var(--ink)}
 .editor .pv{padding:18px 24px;overflow:auto;max-height:78vh}
+.editor textarea.dropping{background:var(--accent-soft);outline:2px dashed var(--accent);outline-offset:-6px}
 
 /* markdown */
 .md{line-height:1.68;font-size:14.5px;overflow-wrap:anywhere}

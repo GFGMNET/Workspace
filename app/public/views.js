@@ -112,12 +112,13 @@ async function pageView(ctx, pane, id, items) {
   };
   const edit = () => {
     App.dirty = true;
-    pane.innerHTML = `<div class="bar"><span class="path">${esc(data.file)}</span><span class="faint small">Ctrl+S saves · [[Page name]] links pages</span>
+    pane.innerHTML = `<div class="bar"><span class="path">${esc(data.file)}</span><span class="faint small">Ctrl+S saves · [[Page name]] links pages · paste or drop pictures</span>
       <button class="btn sm ghost" type="button" data-cancel>Cancel</button><button class="btn sm primary" type="button" data-save>Save</button></div>
       <div class="editor"><textarea spellcheck="true" aria-label="Markdown source">${esc(data.content)}</textarea><div class="pv md"></div></div>`;
     const src = $('textarea', pane), pv = $('.pv', pane);
     let t; const upd = () => { clearTimeout(t); t = setTimeout(() => { pv.innerHTML = md(src.value, opts); hydrateMarkdown(pv); }, 120); }; upd();
     src.addEventListener('input', upd);
+    wireAttach(ctx, src, data.file, upd);
     const save = async () => { try { await api(itemsUrl(ctx, '/' + enc(id)), { method: 'PUT', body: { content: src.value } }); data.content = src.value; data.modified = Date.now(); toast('Saved'); App.refreshProjects(); view(); } catch (e) { toast('Error: ' + e.message); } };
     src.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
@@ -128,6 +129,35 @@ async function pageView(ctx, pane, id, items) {
     src.focus();
   };
   if (ctx.query.edit) edit(); else view();
+}
+
+// Paste (Ctrl+V) or drop pictures/files into the Markdown editor: they are saved in an
+// "assets" folder next to the page and linked at the cursor.
+function wireAttach(ctx, ta, pageFile, after) {
+  const featureFolder = ctx.f.def.folder;
+  const pageDir = pageFile.split('/').slice(0, -1).join('/');
+  const sub = (pageDir === featureFolder ? '' : pageDir.slice(featureFolder.length + 1) + '/') + 'assets';
+  const stamp = () => new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
+  const upload = async files => {
+    for (let file of files) {
+      let name = file.name || 'file';
+      if (/^image\.(png|jpe?g|gif|webp)$/i.test(name) || !file.name) name = `screenshot-${stamp()}.${(file.type.split('/')[1] || 'png').replace('jpeg', 'jpg')}`;
+      const isImg = /^image\//.test(file.type) || /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(name);
+      const marker = `${isImg ? '!' : ''}[Uploading ${name}…]()`;
+      const prev = ta.selectionStart > 0 ? ta.value[ta.selectionStart - 1] : '\n';
+      ta.setRangeText((prev === '\n' ? '' : isImg ? '\n' : /\s/.test(prev) ? '' : ' ') + marker + (isImg ? '\n' : ''), ta.selectionStart, ta.selectionEnd, 'end');
+      try {
+        const r = await api(`/api/projects/${enc(ctx.p.slug)}/f/${enc(ctx.f.key)}/upload?folder=${enc(sub)}&filename=${enc(name)}`, { body: file });
+        const link = `${isImg ? '!' : ''}[${r.name.replace(/\.[^.]+$/, '').replace(/[[\]]/g, '')}](assets/${encodeURIComponent(r.name)})`;
+        ta.value = ta.value.replace(marker, link);
+      } catch (e) { ta.value = ta.value.replace(marker, ''); toast(name + ': ' + e.message); }
+      after && after();
+    }
+  };
+  ta.addEventListener('paste', e => { const files = [...(e.clipboardData && e.clipboardData.files || [])]; if (files.length) { e.preventDefault(); upload(files); } });
+  ta.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); ta.classList.add('dropping'); } });
+  ta.addEventListener('dragleave', () => ta.classList.remove('dropping'));
+  ta.addEventListener('drop', e => { const files = [...(e.dataTransfer && e.dataTransfer.files || [])]; ta.classList.remove('dropping'); if (files.length) { e.preventDefault(); ta.focus(); upload(files); } });
 }
 
 // ---------- markdown: cards / list ----------

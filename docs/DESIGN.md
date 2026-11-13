@@ -156,7 +156,7 @@ A feature can combine only the building blocks below. A truly new look (a new bu
 
 | Layout | Stores | On disk | What you see |
 |---|---|---|---|
-| `pages` | markdown | `<folder>/<id>.md` | Page list with full-text search, Markdown view, editor with live preview, `[[Page]]` links (a link to a missing page creates it), Mermaid code blocks |
+| `pages` | markdown | `<folder>/<id>.md` (+ `<folder>/assets/` for pasted pictures and files) | Page list with full-text search, Markdown view, editor with live preview, `[[Page]]` links (a link to a missing page creates it), Mermaid code blocks. Paste (Ctrl+V) or drop pictures/files into the editor: saved in `assets/` next to the page and linked at the cursor |
 | `cards` | markdown | `<folder>/<id>.md` (tags in front matter) | Cards with summary and tags, search and tag filter |
 | `list` | markdown / records | as above | Simple list |
 | `grid` | images | `<folder>/<album>/*.png…` | Album cards (cover, count, date range), drag & drop upload, lightbox (arrow keys, Del moves to trash). Sort by date (newest/oldest), name or size; group by album, month or year; “All albums” shows every picture at once. Dates are the photo's EXIF *date taken* (JPEG), else the file date. Sort/group are remembered per gallery |
