@@ -1,5 +1,6 @@
 node_modules/
-.trash/
 *.log
 .DS_Store
 Thumbs.db
+# deleted items are moved here, not removed
+.trash/

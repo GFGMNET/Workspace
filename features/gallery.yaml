@@ -1,0 +1,7 @@
+# Picture gallery with albums (one sub folder per album).
+name: Gallery
+icon: image
+stores: images
+layout: grid
+albums: true
+new_item: Album

@@ -1,0 +1,9 @@
+# Knowledge base: articles shown as cards, with tags and search.
+# Tags come from the front matter of each page:  ---\ntags: [network, setup]\n---
+name: Knowledge
+icon: lightbulb
+stores: markdown
+layout: cards
+search: true
+new_item: Article
+aliases: [knowlege, kb, knowledge_base]   # other keys that mean the same feature

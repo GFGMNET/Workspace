@@ -1,0 +1,16 @@
+# Kanban board. Cards are records; the column is the "status" field.
+name: Tasks
+icon: kanban
+stores: records
+layout: kanban
+columns: [To do, Doing, Done]
+fields:
+  - title
+  - owner
+  - name: due
+    type: date
+  - name: priority
+    type: select
+    options: [low, normal, high]
+  - notes
+new_item: Task

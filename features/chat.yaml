@@ -1,0 +1,9 @@
+# Chat with Claude CLI, running inside the project folder.
+# permissions: ask (Claude asks before changing files) | auto (may edit files) | read-only
+# A project can override any of this, e.g.  chat: { permissions: auto }
+name: Chat
+icon: chat
+stores: chat
+layout: chat
+permissions: ask
+context: [wiki, knowledge]

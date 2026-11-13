@@ -1,0 +1,15 @@
+# Example of a feature you invent yourself: network devices as a table.
+name: Network devices
+icon: server
+stores: records
+layout: table
+fields:
+  - name
+  - ip
+  - mac
+  - location
+  - name: kind
+    type: select
+    options: [router, switch, server, access point, printer, other]
+  - notes
+new_item: Device

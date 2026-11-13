@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Workspace</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232f5bea'/><path d='M8 9h7v14H8zM17 9h7v6h-7zM17 17h7v6h-7z' fill='white'/></svg>">
+<script>try{var t=localStorage.getItem('pw-theme');if(t&&t!=='system')document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+  <nav class="side" id="side" aria-label="Workspace">
+    <a class="brand" href="#/">
+      <span class="logo"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2h6v12H1zM9 2h6v5H9zM9 9h6v5H9z" fill="#fff"/></svg></span>
+      <span><b>Workspace</b><small id="rootPath"></small></span>
+    </a>
+    <label class="search"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search all projects" autocomplete="off" aria-label="Search all projects"></label>
+    <div class="plabel">Projects</div>
+    <div class="plist" id="plist"></div>
+    <button class="side-new" type="button" data-action="new-project">+ New project</button>
+    <div class="side-foot">
+      <a href="#/features" id="navFeatures" class="side-link"><span data-icon="layers"></span>Features <span class="n" id="featCount"></span></a>
+      <div class="theme" role="group" aria-label="Theme">
+        <button type="button" data-theme-set="light" title="Light">Light</button>
+        <button type="button" data-theme-set="dark" title="Dark">Dark</button>
+        <button type="button" data-theme-set="system" title="Follow Windows">Auto</button>
+      </div>
+    </div>
+  </nav>
+  <main class="main" id="main" tabindex="-1"></main>
+</div>
+<div id="overlay"></div>
+<script src="vendor/mermaid.min.js" defer></script>
+<script src="core.js"></script>
+<script src="views.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Org chart. Each person is a record; "reports_to" points to another person.
+name: Team
+icon: users
+stores: records
+layout: orgchart
+parent_field: reports_to
+fields:
+  - name
+  - role
+  - email
+  - phone
+  - reports_to
+new_item: Person

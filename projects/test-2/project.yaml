@@ -1,0 +1,19 @@
+---
+name: test 2
+description: Example 2 — an agent project for Claude CLI
+wiki:
+  - a wiki page
+knowledge:
+  - a knowledge base
+skills:
+  - title: an skill.md for agent
+    description: Use this when someone asks how this project is organised.
+mcp:
+  - name: filesystem
+    description: Lets Claude read and write files in this project folder
+    transport: stdio
+    command: npx
+    args: [-y, "@modelcontextprotocol/server-filesystem", "."]
+  - a connection for different MCP
+chat:
+  permissions: ask

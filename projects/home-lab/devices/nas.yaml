@@ -1,0 +1,4 @@
+name: NAS
+ip: 192.168.1.20
+kind: server
+location: Office

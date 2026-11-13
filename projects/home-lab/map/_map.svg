@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="1000" height="600" fill="#f4f1ea"/>
+  <g fill="#fff" stroke="#6b665c" stroke-width="6">
+    <rect x="40" y="40" width="420" height="300"/><rect x="460" y="40" width="500" height="300"/>
+    <rect x="40" y="340" width="300" height="220"/><rect x="340" y="340" width="620" height="220"/>
+  </g>
+  <g fill="#f4f1ea"><rect x="220" y="334" width="80" height="12"/><rect x="454" y="160" width="12" height="80"/><rect x="600" y="334" width="80" height="12"/></g>
+  <g fill="#8a857a" font-size="26" font-weight="600">
+    <text x="70" y="90">Office</text><text x="490" y="90">Living room</text><text x="70" y="390">Hallway</text><text x="370" y="390">Kitchen</text>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+---
+name: test
+description: Example 1 — wiki, knowledge base and a picture gallery
+wiki:
+  - a wiki page
+knowledge:
+  - a knowledge base
+gallery:
+  - a picture gallery

@@ -1,0 +1,51 @@
+---
+name: Home Lab
+description: Shows every building block — devices table, network diagram, floor plan, tasks, calendar and team
+icon: "🏠"
+color: "#b4501a"
+tags: [network, example]
+wiki:
+  - Home
+devices:
+  - name: Router
+    ip: 192.168.1.1
+    kind: router
+    location: Hallway
+  - name: NAS
+    ip: 192.168.1.20
+    kind: server
+    location: Office
+  - name: Office AP
+    ip: 192.168.1.30
+    kind: access point
+    location: Office
+diagrams:
+  - Network
+map:
+  feature: map
+tasks:
+  - title: Replace the old switch
+    status: Doing
+    owner: Alex
+    priority: high
+  - title: Set up nightly backup to NAS
+    status: To do
+    due: 2026-11-20
+  - title: Label all cables
+    status: Done
+calendar:
+  - title: Firmware update window
+    date: 2026-11-18
+  - title: ISP technician visit
+    date: 2026-11-25
+team:
+  - name: Alex
+    role: Owner
+  - name: Sam
+    role: Network
+    reports_to: alex
+  - name: Kim
+    role: Backups
+    reports_to: alex
+chat:
+  permissions: read-only

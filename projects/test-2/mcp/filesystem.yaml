@@ -1,0 +1,5 @@
+name: filesystem
+description: Lets Claude read and write files in this project folder
+transport: stdio
+command: npx
+args: ["-y", "@modelcontextprotocol/server-filesystem", .]

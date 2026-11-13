@@ -1,0 +1,7 @@
+%% Network
+flowchart LR
+  Internet((Internet)) --> Router[Router<br/>192.168.1.1]
+  Router --> Switch[Switch]
+  Switch --> NAS[(NAS<br/>192.168.1.20)]
+  Switch --> AP[Office AP<br/>192.168.1.30]
+  AP -.-> Laptop[Laptops]
