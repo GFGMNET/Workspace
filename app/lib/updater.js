@@ -73,6 +73,7 @@ function unzip(buf, dest) {
   const root = path.resolve(dest); let n = 0;
   for (let i = 0; i < count; i++) {
     if (buf.readUInt32LE(p) !== 0x02014b50) throw new Error('Broken zip directory');
+    const made = buf.readUInt16LE(p + 4) >> 8, attr = buf.readUInt32LE(p + 38);
     const method = buf.readUInt16LE(p + 10), csize = buf.readUInt32LE(p + 20), nlen = buf.readUInt16LE(p + 28), xlen = buf.readUInt16LE(p + 30), clen = buf.readUInt16LE(p + 32), off = buf.readUInt32LE(p + 42);
     const name = buf.toString('utf8', p + 46, p + 46 + nlen).replace(/\\/g, '/');
     p += 46 + nlen + xlen + clen;
@@ -84,6 +85,9 @@ function unzip(buf, dest) {
     const out = method === 0 ? data : method === 8 ? zlib.inflateRawSync(data) : null;
     if (!out) throw new Error(`Unsupported zip method ${method} for ${name}`);
     fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, out); n++;
+    // keep the executable bit of files zipped on Linux/macOS (Electron's binaries need it)
+    const mode = (attr >>> 16) & 0o777;
+    if (made === 3 && mode && process.platform !== 'win32') { try { fs.chmodSync(target, mode); } catch {} }
   }
   return n;
 }
@@ -93,6 +97,36 @@ function findRoot(dir, depth = 0) {
   if (depth > 2) return null;
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) if (e.isDirectory()) { const r = findRoot(path.join(dir, e.name), depth + 1); if (r) return r; }
   return null;
+}
+const readJson = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
+
+// The desktop app (Electron): runtime.json lists the runtime's own files (exe, libraries, resources/).
+// They are in use while the app runs, so they are only replaced when the Electron version changes,
+// and then after the app has quit (runSwap): the program files in app/ are updated right away.
+function runtimePlan(install, src) {
+  if (!process.versions.electron && !process.env.PW_ELECTRON) return null;
+  const cur = readJson(path.join(install, 'runtime.json')), next = readJson(path.join(src, 'runtime.json'));
+  const files = new Set([...((cur && cur.files) || []), ...((next && next.files) || []), 'runtime.json']);
+  const same = !!(cur && next && cur.electron === next.electron && cur.platform === next.platform && cur.arch === next.arch);
+  return { files, same, next };
+}
+// Runs a small script that waits until the app has quit, puts the new runtime in place and starts it again.
+function runSwap(dir) {
+  const install = ws.INSTALL_DIR; const exe = process.env.PW_EXE; const pid = process.pid;
+  const { spawn } = require('child_process');
+  const env = { ...process.env, PW_RESTARTED: '1' };
+  if (process.platform === 'win32') {
+    const script = path.join(path.dirname(dir), 'swap.cmd');
+    fs.writeFileSync(script, ['@echo off',
+      ':wait', `tasklist /FI "PID eq ${pid}" 2>nul | find "${pid}" >nul && (ping -n 2 127.0.0.1 >nul & goto wait)`,
+      `robocopy "${dir}" "${install}" /E /MOVE /R:20 /W:1 /NFL /NDL /NJH /NJS /NP >nul`,
+      `start "" "${exe}"`, ''].join('\r\n'));
+    spawn('cmd.exe', ['/c', script], { detached: true, stdio: 'ignore', windowsHide: true, env }).unref();
+  } else {
+    const q = s => "'" + String(s).replace(/'/g, "'\\''") + "'";
+    const script = `while kill -0 ${pid} 2>/dev/null; do sleep 0.5; done; cp -a ${q(dir)}/. ${q(install)}/ && rm -rf ${q(dir)}; ${q(exe)} >/dev/null 2>&1 &`;
+    spawn('/bin/sh', ['-c', script], { detached: true, stdio: 'ignore', env }).unref();
+  }
 }
 const sameFile = (a, b) => { try { return fs.readFileSync(a).equals(fs.readFileSync(b)); } catch { return false; } };
 
@@ -115,15 +149,20 @@ async function apply() {
     if (!src) throw new Error('The download does not look like Project Workspace');
     const pkg = JSON.parse(fs.readFileSync(path.join(src, 'package.json'), 'utf8'));
     if (pkg.name !== PKG.name) throw new Error(`Unexpected package "${pkg.name}"`);
+    const rt = runtimePlan(install, src); let swap = null;
     // 1. move the current program into the backup folder (data/ stays where it is)
     fs.mkdirSync(backup, { recursive: true });
     for (const e of fs.readdirSync(install)) {
-      if (KEEP.has(e) || LAUNCHERS.has(e)) continue;
+      if (KEEP.has(e) || LAUNCHERS.has(e) || (rt && rt.files.has(e))) continue;
       fs.renameSync(path.join(install, e), path.join(backup, e)); moved.push(e);
     }
     // 2. copy the new program in
     for (const e of fs.readdirSync(src)) {
       if (KEEP.has(e)) continue;
+      if (rt && rt.files.has(e)) {
+        if (!rt.same) { swap = swap || path.join(work, `runtime-${stamp}`); fs.mkdirSync(swap, { recursive: true }); fs.renameSync(path.join(src, e), path.join(swap, e)); }
+        continue;
+      }
       if (LAUNCHERS.has(e)) {
         const cur = path.join(install, e);
         if (fs.existsSync(cur) && !sameFile(cur, path.join(src, e))) { fs.copyFileSync(path.join(src, e), cur + '.new'); notes.push(`${e} changed: the new one is saved as ${e}.new`); }
@@ -137,7 +176,8 @@ async function apply() {
     fs.rmSync(unpacked, { recursive: true, force: true });
     writeState({ updatedFrom: PKG.version, updatedTo: pkg.version, updatedAt: Date.now(), backup: path.relative(install, backup), updateError: null, skipped: null });
     busy = false;
-    return { ok: true, from: PKG.version, to: pkg.version, backup: path.relative(install, backup), notes };
+    if (swap) notes.push(`The app's runtime is updated to Electron ${rt.next.electron} when it restarts.`);
+    return { ok: true, from: PKG.version, to: pkg.version, backup: path.relative(install, backup), notes, swap };
   } catch (e) {
     // put the old program back
     for (const m of moved) { try { fs.rmSync(path.join(install, m), { recursive: true, force: true }); fs.renameSync(path.join(backup, m), path.join(install, m)); } catch {} }
@@ -148,4 +188,4 @@ async function apply() {
   }
 }
 
-module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset };
+module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset, runSwap };

@@ -1,5 +1,5 @@
-# Builds the portable Windows app: "ProjectWorkspace.exe" (contains Node, made with Node's
-# single executable application feature) + the app folder, zipped. Nothing to install.
+# Builds the Windows desktop app: "ProjectWorkspace.exe" (Electron: its own window, Node and the
+# browser engine included) + the app folder, zipped. Nothing to install.
 #  - Run by hand: Actions → "Build Windows app" → Run workflow  (zip appears under the run's Artifacts)
 #  - Called by the Release workflow: the zip is attached to the release
 name: Build Windows app
@@ -34,45 +34,58 @@ jobs:
         run: |
           $v = node -p "require('./package.json').version"
           "version=$v" >> $env:GITHUB_OUTPUT
-          node --version
       - name: Tests
         run: node app/test/smoke.js
+      - name: Get Electron
+        id: e
+        run: |
+          $major = (Get-Content tools/electron/electron-version).Trim()
+          npm install --prefix build/electron "electron@$major" --no-save --no-audit --no-fund
+          $ev = node -p "require('./build/electron/node_modules/electron/package.json').version"
+          "electron=$ev" >> $env:GITHUB_OUTPUT
+          Write-Host "Electron $ev"
       - name: Assemble the package folder
         run: |
           $out = "dist/ProjectWorkspace"
           New-Item -ItemType Directory -Force -Path $out | Out-Null
+          # 1. the Electron runtime, renamed, with our bootstrap instead of Electron's default app
+          Copy-Item -Recurse build/electron/node_modules/electron/dist/* $out
+          Rename-Item "$out/electron.exe" "ProjectWorkspace.exe"
+          Rename-Item "$out/LICENSE" "LICENSE.electron.txt"
+          Remove-Item -Force "$out/resources/default_app.asar" -ErrorAction SilentlyContinue
+          Copy-Item -Recurse tools/electron/bootstrap "$out/resources/app"
+          node -e "const f=require('path').resolve(process.argv[1]);const p=require(f);p.version=process.argv[2];require('fs').writeFileSync(f,JSON.stringify(p,null,2))" "$out/resources/app/package.json" "${{ steps.v.outputs.version }}"
+          $files = Get-ChildItem $out | ForEach-Object { $_.Name }
+          @{ electron = "${{ steps.e.outputs.electron }}"; platform = "win32"; arch = "x64"; files = @($files) } | ConvertTo-Json | Set-Content "$out/runtime.json"
+          # 2. the program (replaced by updates; data/ is never in the package)
           git archive --format=tar HEAD app docs tools README.md LICENSE package.json | tar -x -C $out
-          Remove-Item -Recurse -Force "$out/tools/sea" -ErrorAction SilentlyContinue
-      - name: Build the executable (Node single executable application)
-        run: |
-          New-Item -ItemType Directory -Force -Path build | Out-Null
-          node --experimental-sea-config tools/sea/sea-config.json
-          $exe = "dist/ProjectWorkspace/ProjectWorkspace.exe"
-          Copy-Item (Get-Command node).Source $exe
-          # icon and file details first, then the app is injected
-          npx --yes rcedit@4.0.1 $exe --set-icon tools/sea/icon.ico `
+          Remove-Item -Recurse -Force "$out/tools/electron" -ErrorAction SilentlyContinue
+          # 3. icon and file details
+          npx --yes rcedit@4.0.1 "$out/ProjectWorkspace.exe" --set-icon tools/electron/icon.ico `
             --set-version-string "ProductName" "Project Workspace" `
             --set-version-string "FileDescription" "Project Workspace" `
             --set-version-string "CompanyName" "GFGMNET" `
             --set-version-string "LegalCopyright" "MIT License" `
+            --set-version-string "OriginalFilename" "ProjectWorkspace.exe" `
             --set-file-version "${{ steps.v.outputs.version }}" --set-product-version "${{ steps.v.outputs.version }}"
-          npx --yes postject@1.0.0-alpha.6 $exe NODE_SEA_BLOB build/sea-prep.blob `
-            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --overwrite
-      - name: Check the executable starts
+      - name: Check the app starts and shows the workspace
         run: |
           $exe = Resolve-Path "dist/ProjectWorkspace/ProjectWorkspace.exe"
-          $v = & $exe --version
-          if ("$v".Trim() -ne "${{ steps.v.outputs.version }}") { throw "exe --version said '$v'" }
           $env:WORKSPACE_DIR = Join-Path $env:RUNNER_TEMP "pw-data"
-          $p = Start-Process -FilePath $exe -ArgumentList "--no-open","4399" -PassThru -WindowStyle Hidden
-          $ok = $false
-          for ($i = 0; $i -lt 30 -and -not $ok; $i++) {
-            Start-Sleep -Seconds 1
-            try { $r = Invoke-RestMethod http://localhost:4399/api/info; if ($r.version -eq "${{ steps.v.outputs.version }}" -and $r.exe) { $ok = $true } } catch {}
-          }
-          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-          if (-not $ok) { throw "The exe did not answer on http://localhost:4399" }
-          Write-Host "exe OK: version $($r.version), data $($r.root)"
+          $env:PW_SMOKE_FILE = Join-Path $env:RUNNER_TEMP "smoke.txt"
+          $p = Start-Process -FilePath $exe -ArgumentList "4399" -PassThru
+          if (-not $p.WaitForExit(90000)) { Stop-Process -Id $p.Id -Force; throw "The app did not finish its check in time" }
+          $r = Get-Content $env:PW_SMOKE_FILE -ErrorAction SilentlyContinue
+          Write-Host "Check: $r"
+          if ("$r" -notmatch "^OK ${{ steps.v.outputs.version }} .* exe true$") { throw "App check failed: $r" }
+      - name: Check the MCP server runs with the app's runtime
+        run: |
+          $env:ELECTRON_RUN_AS_NODE = "1"
+          $env:WORKSPACE_DIR = Join-Path $env:RUNNER_TEMP "pw-data"
+          $req = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}'
+          $out = $req | & "dist/ProjectWorkspace/ProjectWorkspace.exe" "dist/ProjectWorkspace/app/mcp.js"
+          Write-Host $out
+          if ("$out" -notmatch "project-workspace") { throw "MCP server did not answer" }
       - name: Zip
         id: zip
         run: |

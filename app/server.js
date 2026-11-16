@@ -89,7 +89,8 @@ const P = '/api/projects/([^/]+)';
 const routes = [
   ['GET', /^\/api\/info$/, async () => ({ version: VERSION, root: ws.ROOT, examples: ws.listExamples().length, projectsDir: ws.PROJECTS_DIR, featuresDir: ws.FEATURES_DIR,
     stores: ws.STORES, layouts: ws.LAYOUTS, fieldTypes: ws.FIELD_TYPES, platform: process.platform, mcpScript: path.join(__dirname, 'mcp.js'), exe: process.env.PW_EXE || null, wiki: require('../package.json').wiki || null,
-    mcpCommand: process.env.PW_EXE ? `"${process.env.PW_EXE}" --mcp` : `node "${path.join(__dirname, 'mcp.js')}"` })],
+    mcpCommand: process.env.PW_ELECTRON ? `"${process.env.PW_EXE}" "${path.join(__dirname, 'mcp.js')}"` : process.env.PW_EXE ? `"${process.env.PW_EXE}" --mcp` : `node "${path.join(__dirname, 'mcp.js')}"`,
+    mcpEnv: process.env.PW_ELECTRON ? 'ELECTRON_RUN_AS_NODE=1' : null, desktop: !!process.env.PW_ELECTRON })],
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
   ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],
   ['GET', /^\/api\/search$/, (m, q) => ws.search(q.get('q'), q.get('project') || undefined)],
@@ -98,7 +99,7 @@ const routes = [
   ['POST', /^\/api\/update\/check$/, () => updater.check({ force: true })],
   ['POST', /^\/api\/update\/skip$/, async (m, q, req) => updater.skip((await json(req)).version)],
   ['POST', /^\/api\/update\/later$/, () => updater.later()],
-  ['POST', /^\/api\/update\/apply$/, async () => { const r = await updater.apply(); setTimeout(restart, 600); return { ...r, restarting: true }; }],
+  ['POST', /^\/api\/update\/apply$/, async () => { const r = await updater.apply(); setTimeout(() => restart(r.swap), 600); return { ...r, restarting: true }; }],
   // full VS Code inside the app
   ['GET', /^\/api\/ide$/, () => ide.status()],
   ['POST', /^\/api\/ide\/start$/, () => ide.start()],
@@ -219,10 +220,11 @@ const server = http.createServer(async (req, res) => {
 
 // Restart after an update. start.bat/start.sh run the server in a loop and restart it on exit code 75;
 // without them we start a new process ourselves.
-function restart() {
+function restart(swap) {
   console.log('\n  Updated — restarting…\n');
   try { ide.stop(); } catch {}
   server.close();
+  if (global.pwRestart) return global.pwRestart({ swap }); // desktop app (app/electron/main.js)
   if (process.env.PW_LAUNCHER === 'loop') return process.exit(75);
   // The Windows exe was moved into the backup folder by the update: start the new one in its place.
   const exe = process.env.PW_EXE ? path.join(ws.INSTALL_DIR, path.basename(process.env.PW_EXE)) : null;

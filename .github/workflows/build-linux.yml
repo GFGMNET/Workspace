@@ -1,5 +1,5 @@
-# Builds the portable Linux app: "project-workspace" (contains Node, made with Node's single
-# executable application feature) + the app folder, zipped (the executable bit is kept).
+# Builds the Linux desktop app: "project-workspace" (Electron: its own window, Node and the browser
+# engine included) + the app folder, zipped (the executable bits are kept).
 #  - Run by hand: Actions → "Build Linux app" → Run workflow  (zips appear under the run's Artifacts)
 #  - Called by the Release workflow: the zips are attached to the release
 name: Build Linux app
@@ -41,37 +41,41 @@ jobs:
           node --version; uname -m
       - name: Tests
         run: node app/test/smoke.js
+      - name: Get Electron
+        id: e
+        run: |
+          npm install --prefix build/electron "electron@$(tr -d '[:space:]' < tools/electron/electron-version)" --no-save --no-audit --no-fund
+          echo "electron=$(node -p "require('./build/electron/node_modules/electron/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Assemble the package folder
         run: |
           out=dist/project-workspace
           mkdir -p "$out"
+          # 1. the Electron runtime, renamed, with our bootstrap instead of Electron's default app
+          cp -a build/electron/node_modules/electron/dist/. "$out/"
+          mv "$out/electron" "$out/project-workspace"
+          mv "$out/LICENSE" "$out/LICENSE.electron.txt"
+          rm -f "$out/resources/default_app.asar"
+          cp -r tools/electron/bootstrap "$out/resources/app"
+          node -e "const f=process.argv[1];const p=require(f);p.version='${{ steps.v.outputs.version }}';require('fs').writeFileSync(f,JSON.stringify(p,null,2))" "$PWD/$out/resources/app/package.json"
+          node -e "const fs=require('fs');fs.writeFileSync(process.argv[1]+'/runtime.json',JSON.stringify({electron:'${{ steps.e.outputs.electron }}',platform:'linux',arch:'${{ matrix.arch }}',files:fs.readdirSync(process.argv[1])},null,2))" "$out"
+          chmod 755 "$out/project-workspace" "$out/chrome_crashpad_handler" 2>/dev/null || true
+          # 2. the program (replaced by updates; data/ is never in the package)
           git archive --format=tar HEAD app docs tools README.md LICENSE package.json | tar -x -C "$out"
-          rm -rf "$out/tools/sea"
-      - name: Build the executable (Node single executable application)
+          rm -rf "$out/tools/electron"
+      - name: Check the app starts and shows the workspace
         run: |
-          mkdir -p build
-          node --experimental-sea-config tools/sea/sea-config.json
-          exe=dist/project-workspace/project-workspace
-          cp "$(command -v node)" "$exe"
-          chmod u+w "$exe"
-          npx --yes postject@1.0.0-alpha.6 "$exe" NODE_SEA_BLOB build/sea-prep.blob \
-            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --overwrite
-          chmod 755 "$exe"
-      - name: Check the executable starts
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libnss3 libgbm1 libgtk-3-0t64 libasound2t64 libxss1 > /dev/null
+          export WORKSPACE_DIR="$RUNNER_TEMP/pw-data" PW_SMOKE_FILE="$RUNNER_TEMP/smoke.txt"
+          timeout 120 xvfb-run -a dist/project-workspace/project-workspace 4399 || true
+          r=$(cat "$PW_SMOKE_FILE" 2>/dev/null); echo "Check: $r"
+          echo "$r" | grep -Eq "^OK ${{ steps.v.outputs.version }} .* exe true$" || { echo "App check failed"; exit 1; }
+      - name: Check the MCP server runs with the app's runtime
         run: |
-          exe="$PWD/dist/project-workspace/project-workspace"
-          v=$("$exe" --version)
-          [ "$v" = "${{ steps.v.outputs.version }}" ] || { echo "exe --version said '$v'"; exit 1; }
           export WORKSPACE_DIR="$RUNNER_TEMP/pw-data"
-          "$exe" --no-open 4399 > "$RUNNER_TEMP/exe.log" 2>&1 &
-          pid=$!
-          for i in $(seq 1 30); do
-            sleep 1
-            if curl -fsS http://localhost:4399/api/info -o "$RUNNER_TEMP/info.json"; then break; fi
-          done
-          kill $pid 2>/dev/null || true
-          cat "$RUNNER_TEMP/exe.log"
-          node -e "const i=require(process.argv[1]); if(i.version!=='${{ steps.v.outputs.version }}'||!i.exe) process.exit(1); console.log('exe OK:', i.version, i.root)" "$RUNNER_TEMP/info.json"
+          out=$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            | ELECTRON_RUN_AS_NODE=1 dist/project-workspace/project-workspace dist/project-workspace/app/mcp.js)
+          echo "$out"; echo "$out" | grep -q project-workspace
       - name: Zip
         id: zip
         run: |
