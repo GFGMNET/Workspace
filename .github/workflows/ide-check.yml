@@ -61,7 +61,7 @@ jobs:
           cp "$RUNNER_TEMP/server.log" "$RUNNER_TEMP/ide-start.json" out/ 2>/dev/null || true
           curl -fsS http://localhost:4399/api/ide > out/ide-status.json || true
           tail -80 out/log.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ide-check
