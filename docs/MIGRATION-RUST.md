@@ -115,7 +115,7 @@ Decided 2026-11-16, details in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) 
 
 ### Phase 1: prototype and decision (5–7 days)
 
-**Status (2026-11-16): prototype built**, waiting for the test on Windows. `rust/` (crates `pw-core`, `pw-server`, `pw-app`), built by `.github/workflows/rust.yml` on Linux and Windows.
+**Status (2026-11-16): done — GO.** Tested by the maintainer on Windows: everything fine. `rust/` (crates `pw-core`, `pw-server`, `pw-app`), built by `.github/workflows/rust.yml` on Linux and Windows.
 
 | Measured | Electron (0.6) | Rust + Tauri prototype |
 |---|---|---|
