@@ -89,7 +89,8 @@ The **Versions** tab:
 
 - No server yet: the feature works **without one** (history only on the PC) and can be connected to a server later without changing anything in the project.
 - Built **with the Rust version** (after 1.0, see [MIGRATION-RUST.md](../MIGRATION-RUST.md)), not in 0.x.
-- Git first (phases A, B), SVN after (phase C). Still open: whether the whole data folder should be versionable too.
+- Git first (phases A, B), SVN after (phase C).
+- The **whole data folder** is **not** put under version history; only single projects (backups: see the wiki page *Backup*).
 
 ## 8. When you want a server later
 
