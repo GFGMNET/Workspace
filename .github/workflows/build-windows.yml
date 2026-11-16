@@ -100,7 +100,7 @@ jobs:
           Compress-Archive -Path dist/ProjectWorkspace -DestinationPath "dist/$name"
           "name=$name" >> $env:GITHUB_OUTPUT
           Get-Item "dist/$name" | Select-Object Name, Length
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.zip.outputs.name }}
           path: dist/${{ steps.zip.outputs.name }}
