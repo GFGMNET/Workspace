@@ -24,7 +24,7 @@ for (const f of fs.readdirSync(path.join(dir, 'updates')).filter(f => /\.yaml$/.
     const data = JSON.parse(fs.readFileSync(path.join(dir, 'updates', base + '.data.json'), 'utf8'));
     const out = run(['update', path.join(dir, 'updates', f), path.join(dir, 'updates', base + '.data.json')]);
     assert.deepEqual(Y.parse(out), data, 'the new values');
-    const comments = fs.readFileSync(path.join(dir, 'updates', f), 'utf8').match(/#[^\n]*/g) || [];
+    const comments = fs.readFileSync(path.join(dir, 'updates', f), 'utf8').match(/#[^\r\n]*/g) || [];
     for (const c of comments) assert.ok(out.includes(c), 'keeps ' + c);
   });
 }
