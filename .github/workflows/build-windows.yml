@@ -99,10 +99,14 @@ jobs:
           $d = Join-Path $env:RUNNER_TEMP 'sign'; New-Item -ItemType Directory -Force $d | Out-Null
           $key = Join-Path $d 'test.key'
           $env:PW_SIGN_PASSWORD = 'ci test password 123'
-          powershell -NoProfile -ExecutionPolicy Bypass -File dist/ProjectWorkspace/tools/signing/signing.ps1 new-key -KeyFile $key
+          $o = powershell -NoProfile -ExecutionPolicy Bypass -File dist/ProjectWorkspace/tools/signing/signing.ps1 new-key -KeyFile $key 6>&1 | Out-String
+          Write-Host $o
+          if ($o -notmatch 'BEGIN PUBLIC KEY') { throw 'new-key did not show the public key' }
           if (-not (Test-Path $key)) { throw 'new-key made no key' }
           "project-workspace v9.9.9`nabc  x.zip" | Set-Content -NoNewline (Join-Path $d 'SHA256SUMS.txt')
-          powershell -NoProfile -ExecutionPolicy Bypass -File dist/ProjectWorkspace/tools/signing/signing.ps1 sign (Join-Path $d 'SHA256SUMS.txt') -KeyFile $key -Yes
+          $o = powershell -NoProfile -ExecutionPolicy Bypass -File dist/ProjectWorkspace/tools/signing/signing.ps1 sign (Join-Path $d 'SHA256SUMS.txt') -KeyFile $key -Yes 6>&1 | Out-String
+          Write-Host $o
+          if ($o -notmatch 'Signed:') { throw 'sign did not report success' }
           node dist/ProjectWorkspace/tools/signing/signing.js verify (Join-Path $d 'SHA256SUMS.txt') ($key -replace '\.key$', '.pub.pem')
           if ($LASTEXITCODE) { throw 'signature check failed' }
           Remove-Item Env:PW_SIGN_PASSWORD

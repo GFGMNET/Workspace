@@ -11,6 +11,12 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// The desktop app's exe has no console on Windows: its output can't be seen there. signing.ps1 sets
+// PW_SIGN_OUT to a file, and everything printed also goes there, to be shown by the script.
+if (process.env.PW_SIGN_OUT) {
+  const out = process.env.PW_SIGN_OUT;
+  for (const k of ['log', 'error']) { const orig = console[k]; console[k] = (...a) => { try { fs.appendFileSync(out, a.join(' ') + '\n'); } catch {} orig(...a); }; }
+}
 const DEFAULT_KEY = path.join(os.homedir(), 'Documents', 'project-workspace-signing.key');
 const PUBLIC_IN_APP = path.join(__dirname, '..', '..', 'app', 'lib', 'release-key.pem');
 

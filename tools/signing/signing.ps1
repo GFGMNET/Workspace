@@ -18,12 +18,19 @@ function Plain([Security.SecureString]$s) {
   try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }
 }
 function Run([string[]]$a) {
-  if (Test-Path $exe) { $env:ELECTRON_RUN_AS_NODE = '1'; $out = & $exe $js @a 2>&1 }
-  elseif (Get-Command node -ErrorAction SilentlyContinue) { $out = & node $js @a 2>&1 }
-  else { Write-Host '  Neither ProjectWorkspace.exe (two folders up) nor Node.js was found.' -ForegroundColor Red; exit 1 }
-  $code = $LASTEXITCODE
-  $out | ForEach-Object { Write-Host $_ }
-  return $code
+  $env:PW_SIGN_OUT = [IO.Path]::GetTempFileName()
+  try {
+    if (Test-Path $exe) {
+      $env:ELECTRON_RUN_AS_NODE = '1'
+      $p = Start-Process -FilePath (Resolve-Path $exe) -ArgumentList (@("`"$js`"") + ($a | ForEach-Object { "`"$_`"" })) -NoNewWindow -Wait -PassThru
+      $code = $p.ExitCode
+    }
+    elseif (Get-Command node -ErrorAction SilentlyContinue) { & node $js @a | Out-Null; $code = $LASTEXITCODE }
+    else { Write-Host '  Neither ProjectWorkspace.exe (two folders up) nor Node.js was found.' -ForegroundColor Red; return 1 }
+    Get-Content $env:PW_SIGN_OUT -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+    return $code
+  }
+  finally { Remove-Item $env:PW_SIGN_OUT -ErrorAction SilentlyContinue; Remove-Item Env:PW_SIGN_OUT -ErrorAction SilentlyContinue }
 }
 
 try {
