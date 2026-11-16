@@ -472,14 +472,14 @@ fn list_markdown(p: &Project, def: &Value, dir: &Path) -> Vec<Value> {
 fn count_items(p: &Project, f: &ProjectFeature) -> usize {
     let def = match &f.def { Some(d) => d, None => return 0 };
     let dir = match safe_join(&p.dir, def["folder"].as_str().unwrap_or(&f.key)) { Ok(d) => d, Err(_) => return 0 };
-    let entries: Vec<_> = fs::read_dir(&dir).map(|rd| rd.flatten().filter(|e| { let n = e.file_name().to_string_lossy().to_string(); !n.starts_with('.') && !n.starts_with('_') }).collect()).unwrap_or_default();
-    let ends = |e: &fs::DirEntry, x: &[&str]| e.path().is_file() && x.iter().any(|s| e.file_name().to_string_lossy().ends_with(s));
+    let entries: Vec<PathBuf> = fs::read_dir(&dir).map(|rd| rd.flatten().filter(|e| { let n = e.file_name().to_string_lossy().to_string(); !n.starts_with('.') && !n.starts_with('_') }).map(|e| e.path()).collect()).unwrap_or_default();
+    fn ends(p: &Path, x: &[&str]) -> bool { p.is_file() && x.iter().any(|s| p.to_string_lossy().ends_with(s)) }
     match def["stores"].as_str().unwrap_or("") {
-        "markdown" if def["for_claude"] == "skills" => entries.iter().filter(|e| e.path().join("SKILL.md").exists()).count(),
-        "markdown" => entries.iter().filter(|e| ends(e, &[".md"])).count(),
-        "records" => entries.iter().filter(|e| ends(e, &[".yaml", ".yml"])).count(),
-        "diagram" => entries.iter().filter(|e| ends(e, &[".mmd"])).count(),
-        "chat" => entries.iter().filter(|e| ends(e, &[".json"])).count(),
+        "markdown" if def["for_claude"] == "skills" => entries.iter().filter(|p| p.join("SKILL.md").exists()).count(),
+        "markdown" => entries.iter().filter(|p| ends(p, &[".md"])).count(),
+        "records" => entries.iter().filter(|p| ends(p, &[".yaml", ".yml"])).count(),
+        "diagram" => entries.iter().filter(|p| ends(p, &[".mmd"])).count(),
+        "chat" => entries.iter().filter(|p| ends(p, &[".json"])).count(),
         "github" => 0,
         _ => count_files(&dir),
     }

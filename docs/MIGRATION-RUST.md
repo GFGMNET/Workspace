@@ -115,6 +115,19 @@ Decided 2026-11-16, details in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) 
 
 ### Phase 1: prototype and decision (5–7 days)
 
+**Status (2026-11-16): prototype built**, waiting for the test on Windows. `rust/` (crates `pw-core`, `pw-server`, `pw-app`), built by `.github/workflows/rust.yml` on Linux and Windows.
+
+| Measured | Electron (0.6) | Rust + Tauri prototype |
+|---|---|---|
+| Windows download (zip) | 157 MB | **4.7 MB** |
+| Desktop program | Electron runtime (~180 MB unpacked) | `ProjectWorkspace.exe` 6.9 MB |
+| Server without window | runtime + `ELECTRON_RUN_AS_NODE` | `project-workspace-server.exe` 1.4 MB |
+| Starts and answers (CI, Windows + Linux) | yes | yes |
+| YAML corpus | 33/33 | 26/33 (missing: lenient reading of broken files, duplicate keys, comment-keeping updates) |
+| API contract tests | 32/32 | 5/32 (prototype: info, features, projects, pages; the rest is phase 2–3) |
+
+In the prototype: project list, project pages, overview tiles, wiki/knowledge pages (read and edit), features list, `project.yaml` view. Not yet: records, pictures, files, explorer, chat, VS Code tab, search, links, templates, secrets, updates.
+
 - `pw-app` (Tauri) opening a window on `pw-server`, which serves `app/public`, `/api/info`, `/api/projects`, one project, the wiki feature (read, write, upload, paste a picture), live updates, and YAML reading incl. the sloppy example.
 - Try on Windows 10, Windows 11, Ubuntu 24.04, Raspberry Pi OS: Mermaid diagrams, code highlighting, drag & drop of files (Tauri's own file drop turned off so the page gets it), paste, dark mode, the VS Code tab (iframe + WebSockets through the proxy), notifications, tray.
 - Measure: download size, memory, start time.
