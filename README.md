@@ -6,7 +6,13 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 
 ## Start
 
-**Windows, nothing to install:** download `project-workspace-…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest), unzip it, and double-click **ProjectWorkspace.exe**.
+**Nothing to install:** download the package for your system from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest) and unzip it:
+
+| System | Download | Start |
+|---|---|---|
+| Windows | `project-workspace-…-windows-x64.zip` | double-click **ProjectWorkspace.exe** |
+| Linux (PC / server) | `project-workspace-…-linux-x64.zip` | `./project-workspace` |
+| Linux (ARM, e.g. Raspberry Pi) | `project-workspace-…-linux-arm64.zip` | `./project-workspace` |
 
 **With Node.js** (18 or newer, any system):
 

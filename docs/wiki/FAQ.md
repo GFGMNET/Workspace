@@ -15,6 +15,11 @@ The app tells you: once a week it checks GitHub and shows *Version X is availabl
 **Windows says "Windows protected your PC" when I start the exe**
 The exe isn't code-signed yet, so SmartScreen doesn't know the publisher. Click **More info → Run anyway**; Windows remembers it. Signing is planned ([#31](https://github.com/GFGMNET/Workspace/issues/31)).
 
+**Does it run on Linux?**
+Yes. Download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi), unzip it, and run `./project-workspace`. On a server without a desktop, add `--no-open`.
+
+The app only listens on the machine itself (`127.0.0.1`). To reach it from another computer, use an SSH tunnel (`ssh -L 4321:localhost:4321 server`) rather than opening it to the network.
+
 **Do I need start.bat?**
 Not with the Windows exe: **ProjectWorkspace.exe** replaces it. `start.bat` / `start.sh` are for running the program with Node.js, e.g. from a git clone while developing, or on macOS and Linux.
 

@@ -318,7 +318,7 @@ Live installations never use git; they are updated from **GitHub Releases** (#26
 - **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
 - **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* releases the version in `package.json` (or push a tag `vX.Y.Z`). It runs the tests, zips the program (`git archive`, so no client data) and creates the release; the notes come from `docs/releases/vX.Y.Z.md` (else generated).
 
-## 7c. Windows app (exe)
+## 7c. Windows and Linux apps (executables)
 
 `.github/workflows/build-windows.yml` (runs on `windows-latest`, by hand or from the Release workflow) builds a portable package:
 
@@ -333,6 +333,8 @@ ProjectWorkspace/
 - The launcher starts `app/server.js` from the folder next to the exe with `--open`, so updates only replace files.
 - Options: `--no-open`, a port number, `--mcp` (the workspace MCP server for Claude CLI) and `--version`.
 - The workflow tests the exe on the runner (`--version`, then `/api/info` must answer) before zipping it as `project-workspace-vX.Y.Z-windows-x64.zip`.
+- **Linux:** `.github/workflows/build-linux.yml` builds the same package with a `project-workspace` executable for **x64** (`ubuntu-latest`) and **arm64** (`ubuntu-24.04-arm`). It tests it the same way and zips it with the executable bit kept (`project-workspace-vX.Y.Z-linux-x64.zip` / `-linux-arm64.zip`).
+- **Updates** pick the package for the installation's own platform and processor (`pickAsset`). After an update the Linux executable is made runnable again (`chmod 755`).
 - Releases carry both zips. The updater picks the Windows zip when it runs from the exe (`PW_EXE` is set), and restarts the new exe after an update.
 
 ## 7a. Documentation
@@ -375,7 +377,7 @@ Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text
 | Diagram | Mermaid text |
 | Chat | Claude CLI in the project folder; permissions per project |
 | Theme | Light, dark, or follow the OS |
-| App format | Node.js + browser; portable Windows exe built by GitHub Actions (#1) |
+| App format | Node.js + browser; portable Windows exe and Linux executables (x64, arm64) built by GitHub Actions (#1, #32) |
 | Licence | MIT (#13) |
 | Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
 | Dependencies | None to install: Mermaid, highlight.js and yaml are bundled |

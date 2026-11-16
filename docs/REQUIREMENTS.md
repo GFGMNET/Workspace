@@ -78,6 +78,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D14 | New versions are published as GitHub releases by a GitHub Action when a version tag is pushed | ✅ | #26 |
 | D15 | Wiki: a details page per feature with all its options | ✅ | |
 | D16 | Link to the wiki inside the app (sidebar, Help on every feature) | ✅ | |
+| D17 | Linux variant in every release (x64 and arm64, nothing to install) | ✅ | #32 |
 
 ## Open questions
 
