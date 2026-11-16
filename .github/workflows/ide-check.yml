@@ -50,7 +50,8 @@ jobs:
             await p.goto('http://localhost:4399/#/p/test/_ide');
             await p.waitForTimeout(45000);
             await p.screenshot({ path: out + '/page.png' });
-            for (const f of p.frames().filter(x => x.url().includes('/ide/'))) {
+            log.push('frames: ' + p.frames().map(x => x.url().slice(0, 100)).join(' | '));
+            for (const f of p.frames().filter(x => x !== p.mainFrame())) {
               try {
                 const r = await f.evaluate(() => ({ wb: !!document.querySelector('.monaco-workbench'), parts: [...document.querySelectorAll('.part')].map(x => x.id || x.className.split(' ').slice(0, 2).join('.')).slice(0, 8), text: document.body.innerText.slice(0, 200) }));
                 log.push(`frame ${f.url().slice(0, 120)} → workbench ${r.wb}, parts ${r.parts.join(',')}, text ${JSON.stringify(r.text)}`);
@@ -74,7 +75,7 @@ jobs:
             await w.loadURL('http://localhost:4399/#/p/test/_ide');
             await new Promise(r => setTimeout(r, 45000));
             for (const f of w.webContents.mainFrame.framesInSubtree) {
-              if (!f.url.includes('/ide/')) continue;
+              if (f === w.webContents.mainFrame) continue;
               try { const r = await f.executeJavaScript('JSON.stringify({wb: !!document.querySelector(".monaco-workbench"), text: document.body.innerText.slice(0,200)})'); log.push(`frame ${f.url.slice(0, 120)} → ${r}`); } catch (e) { log.push('frame eval ' + e.message); }
             }
             const img = await w.webContents.capturePage({ x: 300, y: 200, width: 800, height: 500 });
@@ -84,7 +85,7 @@ jobs:
             console.log(log.join('\n')); app.exit(0);
           });
           JS
-          xvfb-run -a /tmp/pw/node_modules/.bin/electron /tmp/pw/el.js "$PWD/out" 2>&1 | grep -v "dbus\|Gtk\|ERROR:viz" | tee out/electron.txt || true
+          xvfb-run -a /tmp/pw/node_modules/.bin/electron --no-sandbox /tmp/pw/el.js "$PWD/out" 2>&1 | grep -v "dbus\|Gtk\|ERROR:viz" | tee out/electron.txt || true
           cp "$RUNNER_TEMP/server.log" "$RUNNER_TEMP/ide-start.json" out/ 2>/dev/null || true
           curl -fsS http://localhost:4399/api/ide > out/ide-status.json || true
           tail -80 out/log.txt
