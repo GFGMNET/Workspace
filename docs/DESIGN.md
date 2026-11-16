@@ -431,7 +431,7 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 
 **Signed releases (#49).** The private key never leaves the maintainer's PC (decision 2026-11-16: no key on GitHub).
 
-- `tools/signing/signing.js` (runs with Node or the app's runtime via `ELECTRON_RUN_AS_NODE`; Windows: `new-signing-key.cmd`, `sign-release.cmd`):
+- `tools/signing/signing.js` (runs with Node or the app's runtime via `ELECTRON_RUN_AS_NODE`). On Windows, `new-signing-key.cmd` / `sign-release.cmd` call `signing.ps1`, which asks the questions (password hidden) and passes them on (`PW_SIGN_PASSWORD`, `--yes`), because the app's exe has no console of its own:
   `new-key` makes an Ed25519 key pair, the private key as encrypted PKCS#8 PEM (AES-256-CBC, PBKDF2, password), the public key as SPKI PEM.
   `sign` shows the checksum list, asks for *yes* and the password, writes `SHA256SUMS.txt.sig` (base64 Ed25519 signature over the file's exact bytes).
 - `release.yml` creates the release as a **draft** (apps don't see drafts), builds all packages, then attaches `SHA256SUMS.txt`

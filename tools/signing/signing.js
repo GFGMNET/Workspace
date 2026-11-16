@@ -45,11 +45,17 @@ function ask(question) {
   return new Promise(resolve => { process.stdin.resume(); process.stdin.setEncoding('utf8'); process.stdin.once('data', d => { process.stdin.pause(); resolve(String(d).trim()); }); });
 }
 const die = msg => { console.error('\n  ' + msg + '\n'); process.exit(1); };
+// Non-interactive use (the Windows scripts ask in PowerShell and pass the answers on):
+//   PW_SIGN_PASSWORD = the password, --yes = signing was confirmed.
+const ARGS = process.argv.slice(2);
+const FLAG_YES = ARGS.includes('--yes');
+const ENV_PW = process.env.PW_SIGN_PASSWORD;
+const password = q => (ENV_PW != null ? Promise.resolve(ENV_PW) : askHidden(q));
 
 async function newKey(file = DEFAULT_KEY) {
   if (fs.existsSync(file)) die(`${file} already exists. Keep using it, or move it away first.`);
   console.log('\n  Creating the release signing key.\n  Choose a strong password (at least 12 characters). You need it for every release.\n');
-  const pw = await askHidden('  Password: '); const pw2 = await askHidden('  Repeat:   ');
+  const pw = await password('  Password: '); const pw2 = ENV_PW != null ? ENV_PW : await askHidden('  Repeat:   ');
   if (pw !== pw2) die('The passwords are not the same.');
   if (pw.length < 12) die('The password is too short (at least 12 characters).');
   const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
@@ -84,9 +90,9 @@ async function sign(sums, file = DEFAULT_KEY) {
   console.log(`\n  You are about to sign ${lines[0]}:\n`);
   for (const l of lines.slice(1)) console.log('    ' + l);
   console.log('\n  Only sign a release that you started yourself (Actions → Release) and expect.');
-  const ok = await ask('  Sign it? (yes/no) ');
+  const ok = FLAG_YES ? 'yes' : await ask('  Sign it? (yes/no) ');
   if (!/^y(es)?$/i.test(ok)) die('Not signed.');
-  const pw = await askHidden('  Password of the signing key: ');
+  const pw = await password('  Password of the signing key: ');
   let key; try { key = crypto.createPrivateKey({ key: fs.readFileSync(file, 'utf8'), format: 'pem', passphrase: pw }); } catch { die('Wrong password, or not a signing key.'); }
   const sig = crypto.sign(null, data, key).toString('base64');
   fs.writeFileSync(sums + '.sig', sig + '\n');
@@ -99,7 +105,7 @@ function verify(sums, pub = PUBLIC_IN_APP) {
   console.log(ok ? '  Signature OK' : '  Signature WRONG'); process.exit(ok ? 0 : 1);
 }
 
-const [cmd, a, b] = process.argv.slice(2);
+const [cmd, a, b] = ARGS.filter(x => x !== '--yes');
 if (cmd === 'new-key') newKey(a);
 else if (cmd === 'sign') sign(a, b);
 else if (cmd === 'verify') verify(a, b);
