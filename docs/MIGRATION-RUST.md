@@ -8,7 +8,7 @@ Issue: #41 · Design summary: [DESIGN.md](DESIGN.md), section 10 · Status: **pl
 
 - runs the screens in the **browser engine of the system**: WebView2 on Windows (updated by Windows), WebKitGTK on Linux (updated by the distribution);
 - has a **core written in Rust**: memory-safe, one program file, no runtime;
-- ships **signed packages** and a **software bill of materials (SBOM)** with every release.
+- ships a **software bill of materials (SBOM)** with every release, and trusted (signed) releases as planned in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).
 
 **Stays the same (users notice nothing but a smaller download):**
 
@@ -100,14 +100,9 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 
 Each phase ends with a check before the next starts. Estimates are working days for one developer with Claude.
 
-### Phase S: signed packages in 0.x (1–2 days, first)
+### Phase S: trusted releases
 
-Useful now and needed for 1.0: the updater only installs packages the maintainer signed. **Decided: the private key stays on the maintainer's PC** (option C, 2026-11-16).
-
-- Releases are built as drafts with `SHA256SUMS.txt`; the maintainer signs it with `tools/signing` (Ed25519) and publishes.
-- `updater.js` checks the signature and the zip's checksum with the public key in `app/lib/release-key.pem` before it unpacks anything.
-- 1.0 keeps the formats: `pw-cli new-key / sign` read the same encrypted PKCS#8 key (crate `pkcs8` with PBES2), and the Rust updater checks the same files.
-- Done when: an unsigned or tampered zip is refused (test ✅), the public key is in the app, and releases are signed.
+Moved out of this plan: see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) (#49, #31). The first attempt (2026-11-16: a key on the maintainer's PC and signing scripts) was removed as too cumbersome. 1.0 takes over whatever is decided there.
 
 ### Phase 0: the safety net (3–4 days)
 
@@ -133,7 +128,7 @@ Useful now and needed for 1.0: the updater only installs packages the maintainer
 
 - Chat with Claude CLI: stream-json parsing, resume, permission modes, denials, secrets as environment variables, Windows PATH refresh, sign-in hint.
 - VS Code: start/stop `code serve-web` (process tree), proxy with token cookie, redirect rewrite, frame headers.
-- Updater: weekly check, signed download, backup, replace, restart; asset choice by platform.
+- Updater: weekly check, download, backup, replace, restart; asset choice by platform (plus the checks from RELEASE-TRUST.md).
 - MCP server: the 12 tools, same answers.
 - GitHub issues feature, secrets API.
 - Desktop (`pw-app`): tray, reminders (same rules as `desktop.js`), autostart, single instance, window size, menu, links to the browser, `--hidden`, `--browser`.
@@ -151,7 +146,7 @@ Useful now and needed for 1.0: the updater only installs packages the maintainer
 
 ### Phase 5: release 1.0 (1–2 days)
 
-- Last 0.x release (0.x.y) first: its updater removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind. It also accepts signed packages only (from phase S).
+- Last 0.x release (0.x.y) first: its updater removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
 - Release 1.0.0 as the latest release. 0.x apps offer the update; after the restart the Tauri app starts.
 - Docs: README, Getting started, wiki (Desktop App, Data and Updates, Security), DESIGN.md (the Node/Electron sections become "history").
 - macOS is not built (#56, later).
@@ -177,7 +172,7 @@ Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 | Core logic | Rust unit tests in `pw-core` |
 | Screens in the system webview | build check like today: the app opens its window, the page renders, `/api/info` and `/api/due` answer (`PW_SMOKE_FILE`); on Windows and Linux runners |
 | MCP | the same `initialize` / `tools/list` / `tools/call` checks as today |
-| Updates | 0.x → 1.0 and 1.0 → 1.0.1 on a test data folder, signed and tampered packages |
+| Updates | 0.x → 1.0 and 1.0 → 1.0.1 on a test data folder |
 | By hand (Windows) | VS Code tab, chat with real Claude CLI, tray and reminders, update from 0.6 |
 
 ## 7. Security from day one
@@ -186,7 +181,7 @@ Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 - Dependabot for `cargo` (weekly).
 - CodeQL: Rust analysis next to JavaScript (screens) and workflows.
 - SBOM (`cargo cyclonedx`) attached to every release.
-- Signed packages (phase S), checked by the updater.
+- Trusted releases as decided in plans/RELEASE-TRUST.md.
 - Tauri: no IPC commands for the page, CSP unchanged, navigation outside localhost opens the system browser, devtools off in release builds.
 - No more browser engine of our own: WebView2 / WebKitGTK are updated by the system. The security page explains that Windows Update (and the Linux package manager) now deliver those fixes.
 
@@ -207,9 +202,9 @@ Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 1. **Node.js package:** 1.0 drops the "run with Node.js" package (`start.bat`/`start.sh`); machines without a screen use `project-workspace-server`. **Decided: yes** (2026-11-16).
 2. **macOS:** not part of 1.0; later improvement (#56). **Decided** (2026-11-16).
 3. **Where the screens live:** served from `app/public` on disk, updates replace files as today. **Decided: on disk** (2026-11-16).
-4. **Signing key custody:** only on the maintainer's PC, backed up in their password manager; releases are signed there. **Decided** (2026-11-16).
+4. **Signing:** reopened, see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).
 
 ## 10. Tracking
 
-- Milestone **v1.0 (Rust)** on GitHub with one issue per phase: S #49, 0 #50, 1 #51, 2 #52, 3 #53, 4 #54, 5 #55.
+- Milestone **v1.0 (Rust)** on GitHub with one issue per phase: S #49 (now: RELEASE-TRUST.md), 0 #50, 1 #51, 2 #52, 3 #53, 4 #54, 5 #55.
 - [REQUIREMENTS.md](REQUIREMENTS.md) D21 points here; DESIGN.md section 10 summarises it.

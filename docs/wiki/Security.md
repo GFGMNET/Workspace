@@ -11,8 +11,8 @@
 
 Most security fixes concern the **browser engine** (Chromium) and **Node.js** inside the desktop app (Electron):
 
-- Every Monday, GitHub checks for a new Electron security update. If there is one, a **patch release** (e.g. 0.6.3) is built automatically and waits for the maintainer's signature.
-- **Every release is signed** on the maintainer's own PC; the signing key is never on GitHub. The app only installs updates with a valid signature, so even someone who took over the GitHub account couldn't push a fake update to you.
+- Every Monday, GitHub checks for a new Electron security update. If there is one, a **patch release** (e.g. 0.6.2) is made automatically.
+- Planned: signed releases and a signed exe (no more *Windows protected your PC*), see the plan *Release trust* in the repository.
 - The app finds new releases with its weekly update check. Click **Update now** to install.
 
 The bundled libraries (yaml, Mermaid, highlight.js) are checked every week too; known vulnerabilities open an issue right away.

@@ -90,7 +90,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D19 | Desktop app in its own window instead of the browser (Electron, Windows and Linux) | ✅ v0.6.0 · to test on Windows | #36 |
 | D20 | Security: weekly check of Electron and bundled libraries, automatic security releases, CodeQL, Dependabot, SECURITY.md | ✅ | |
 | D21 | Version 1.0: core in Rust with Tauri, no bundled browser engine (fewer CVEs) — plan: [MIGRATION-RUST.md](MIGRATION-RUST.md) | 📋 planned | #41, #49–#55 |
-| D22 | Signed release packages, key only on the maintainer's PC; the updater only installs signed ones | 🚧 built, waits for the key | #49 |
+| D22 | Trusted releases: signed updates and a code-signed exe (plan: [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md)) | ❓ to decide · first attempt removed 2026-11-16 | #49, #31 |
 
 ## Open questions
 

@@ -25,7 +25,7 @@ The workspace opens in its own app window.
 
 On the first start a `data/` folder is created for your projects. The home page offers to add the example projects.
 
-**Updating:** the app checks GitHub once a week and offers new versions with one click (*Update now*), keeping a backup and never touching `data/`. Releases are signed by the maintainer, and the app installs only signed updates. By hand: replace everything **except the `data/` folder**.
+**Updating:** the app checks GitHub once a week and offers new versions with one click (*Update now*), keeping a backup and never touching `data/`. By hand: replace everything **except the `data/` folder**.
 
 The chat feature also needs [Claude CLI](https://docs.claude.com/en/docs/claude-code), installed and signed in (`claude` in a terminal).
 

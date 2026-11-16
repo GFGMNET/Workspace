@@ -26,29 +26,10 @@ function settings() {
 const parseV = v => String(v || '').replace(/^v/i, '').split(/[.+-]/).slice(0, 3).map(n => parseInt(n, 10) || 0);
 function newer(a, b) { const x = parseV(a), y = parseV(b); for (let i = 0; i < 3; i++) { if (x[i] !== y[i]) return x[i] > y[i]; } return false; }
 
-// ---------- signatures ----------
-// With app/lib/release-key.pem (the maintainer's public key) every update must come with
-// SHA256SUMS.txt and SHA256SUMS.txt.sig, signed on the maintainer's PC (tools/signing).
-// The app then only installs a package whose checksum is in that signed list.
-const KEY_FILE = path.join(__dirname, 'release-key.pem');
-const crypto = require('crypto');
-function releaseKey() { try { return crypto.createPublicKey(fs.readFileSync(KEY_FILE, 'utf8')); } catch { return null; } }
-function checkSigned(sumsBuf, sigText, version, fileName, zipBuf, key = releaseKey()) {
-  if (!key) return { required: false };
-  if (!sumsBuf || !sigText) throw new Error('This release is not signed, so it is not installed. Download it from the releases page only if you trust it.');
-  if (!crypto.verify(null, sumsBuf, key, Buffer.from(String(sigText).trim(), 'base64'))) throw new Error('The signature of this release is not valid. It was not installed.');
-  const lines = sumsBuf.toString('utf8').trim().split(/\r?\n/);
-  if (lines[0].trim() !== `project-workspace v${version}`) throw new Error('The signed checksum list belongs to another version. It was not installed.');
-  const want = lines.slice(1).map(l => l.trim().split(/\s+/)).find(([, n]) => n === fileName);
-  if (!want) throw new Error(`${fileName} is not in the signed checksum list. It was not installed.`);
-  if (crypto.createHash('sha256').update(zipBuf).digest('hex') !== want[0].toLowerCase()) throw new Error('The download does not match its signed checksum. It was not installed.');
-  return { required: true, ok: true };
-}
-
 function view(st = readState()) {
   const s = settings(); const latest = st.latest || null;
   const available = !!(latest && newer(latest.version, PKG.version) && st.skipped !== latest.version);
-  return { current: PKG.version, signing: !!releaseKey(), enabled: s.check, repo: s.repo, lastCheck: st.lastCheck || null, latest, available,
+  return { current: PKG.version, enabled: s.check, repo: s.repo, lastCheck: st.lastCheck || null, latest, available,
     snoozedUntil: st.snoozedUntil || null, snoozed: !!(st.snoozedUntil && Date.now() < st.snoozedUntil), error: st.updateError || null };
 }
 
@@ -73,12 +54,8 @@ async function check({ force = false } = {}) {
     // The Windows exe package for installations started from the exe, the plain package otherwise.
     const asset = pickAsset(rel.assets || []);
     if (process.env.PW_EXE && !asset) return view(writeState({ lastCheck: Date.now(), latest: null, updateError: null }));
-    const find = n => (rel.assets || []).find(a => a.name === n);
     const latest = { version: String(rel.tag_name || '').replace(/^v/i, ''), name: rel.name || rel.tag_name, notes: rel.body || '', published: rel.published_at,
-      page: rel.html_url, zip: asset ? asset.browser_download_url : rel.zipball_url, file: asset ? asset.name : null,
-      sums: find('SHA256SUMS.txt') ? find('SHA256SUMS.txt').browser_download_url : null,
-      sig: find('SHA256SUMS.txt.sig') ? find('SHA256SUMS.txt.sig').browser_download_url : null };
-    latest.signed = !!(latest.sums && latest.sig);
+      page: rel.html_url, zip: asset ? asset.browser_download_url : rel.zipball_url };
     return view(writeState({ lastCheck: Date.now(), latest, updateError: null }));
   } catch (e) {
     return view(writeState({ lastCheck: Date.now(), updateError: 'Could not check for updates: ' + e.message }));
@@ -168,12 +145,6 @@ async function apply() {
     const r = await fetch(latest.zip, { headers: { 'User-Agent': 'project-workspace/' + PKG.version }, signal: AbortSignal.timeout(300000) });
     if (!r.ok) throw new Error(`Download failed (${r.status})`);
     const buf = Buffer.from(await r.arrayBuffer());
-    // only signed packages, once the app knows the maintainer's key
-    if (releaseKey()) {
-      const get = async u => { if (!u) return null; const x = await fetch(u, { headers: { 'User-Agent': 'project-workspace/' + PKG.version }, signal: AbortSignal.timeout(30000) }); if (!x.ok) throw new Error(`Download failed (${x.status})`); return Buffer.from(await x.arrayBuffer()); };
-      const sums = await get(latest.sums); const sig = await get(latest.sig);
-      checkSigned(sums, sig && sig.toString('utf8'), latest.version, latest.file || '', buf);
-    }
     fs.mkdirSync(unpacked, { recursive: true });
     unzip(buf, unpacked);
     const src = findRoot(unpacked);
@@ -219,4 +190,4 @@ async function apply() {
   }
 }
 
-module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset, runSwap, checkSigned };
+module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset, runSwap };

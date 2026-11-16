@@ -35,8 +35,7 @@ Workspace/                   ← the program: replaced on update (desktop app: s
     lib/files.js             explorer (file operations inside a project or the data folder)
     lib/ide.js               in-app VS Code: start/stop and the /ide proxy
     lib/secrets.js           encrypted secrets (7e)
-    lib/updater.js           weekly update check, signed install (7b)
-    lib/release-key.pem      the maintainer's public signing key (once set up, 7g)
+    lib/updater.js           weekly update check and install (7b)
     lib/github.js            GitHub issues feature
     lib/exif.js              reads the "date taken" from photos
     public/                  the user interface (HTML/CSS/JS)
@@ -45,7 +44,7 @@ Workspace/                   ← the program: replaced on update (desktop app: s
     starter/examples/        example projects (added on request)
     test/smoke.js            automated checks (npm test)
   docs/                      this document, requirements, getting started, wiki pages, release notes
-  tools/                     vendor.json (bundled library versions), signing/ (release signing), build helpers
+  tools/                     vendor.json (bundled library versions), build helpers
   start.bat / start.sh       start with Node.js
   data/                      ← the client's data: never replaced, not in git
     .workspace.json          installed starter features, update state
@@ -331,15 +330,14 @@ Live installations never use git; they are updated from **GitHub Releases** (#26
 - **Banner:** *Version X is available* · **What's new** (the release notes) · **Update now** · **Later** (a week) · **Skip this version**. The sidebar shows the version and a dot when an update is waiting; *v… · Updates* opens the same dialog with *Check now*.
 - **Update now:**
   1. downloads the release zip that fits the installation (`pickAsset`: Windows/Linux package for the desktop app, the plain zip for Node.js)
-  2. once the app has the maintainer's public key (`lib/release-key.pem`): checks the signature of `SHA256SUMS.txt` and the zip's checksum, and refuses unsigned or changed packages (7g)
-  3. unpacks it with the app's own unzip (paths are checked, Unix file modes kept) and checks that it really is Project Workspace
-  4. moves the current program into `.update/backup-<version>-<time>/`, then copies the new program in (desktop app: the runtime only when its Electron version changes, 7c). `data/` is never touched
-  5. restarts
+  2. unpacks it with the app's own unzip (paths are checked, Unix file modes kept) and checks that it really is Project Workspace
+  3. moves the current program into `.update/backup-<version>-<time>/`, then copies the new program in (desktop app: the runtime only when its Electron version changes, 7c). `data/` is never touched
+  4. restarts
 
   If anything fails, the old program is put back.
 - **Restart:** the desktop app restarts itself (`app.relaunch`, or the runtime swap script). `start.bat` / `start.sh` run the server in a loop and start it again on exit code 75. A server started without them starts a new process itself, which waits for the port. The page reloads once the new version answers.
 - **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
-- **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* builds the version in `package.json`. It runs the tests, zips the program (`git archive`, so no client data), builds the Windows and Linux apps and creates a **draft** release with `SHA256SUMS.txt`; the notes come from `docs/releases/vX.Y.Z.md` (else generated). The maintainer signs and publishes it (7g); only then do installed apps see it.
+- **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* releases the version in `package.json`. It runs the tests, zips the program (`git archive`, so no client data), builds the Windows and Linux apps and publishes the release; the notes come from `docs/releases/vX.Y.Z.md` (else generated).
 
 ## 7c. Desktop app (Windows and Linux)
 
@@ -421,7 +419,7 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 
 | Component | Source of CVEs | How it is kept current |
 |---|---|---|
-| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and built automatically as a draft to sign (together with whatever is already on main; notes collected in `docs/releases/vX.Y.Z.md` are kept); the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
+| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and released automatically (together with whatever is already on main; notes collected in `docs/releases/vX.Y.Z.md` are kept); the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
 | Bundled libraries (yaml, Mermaid, highlight.js) | few | `tools/vendor.json` lists the versions; the same workflow checks npm for newer versions and known advisories → issue (security: right away, plain updates: monthly). |
 | Our own code | logic mistakes | CodeQL (`.github/workflows/codeql.yml`: JavaScript + workflows, on every push and weekly); tests in `app/test/smoke.js`. |
 | Build workflows | supply chain | Dependabot (`.github/dependabot.yml`) for GitHub Actions. |
@@ -429,19 +427,7 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 
 **Reporting:** `SECURITY.md` — private reports through GitHub (*Security → Report a vulnerability*). Only the latest release gets fixes.
 
-**Signed releases (#49).** The private key never leaves the maintainer's PC (decision 2026-11-16: no key on GitHub).
-
-- `tools/signing/signing.js` (runs with Node or the app's runtime via `ELECTRON_RUN_AS_NODE`). On Windows, `new-signing-key.cmd` / `sign-release.cmd` call `signing.ps1`, which asks the questions (password hidden) and passes them on (`PW_SIGN_PASSWORD`, `--yes`), because the app's exe has no console of its own:
-  `new-key` makes an Ed25519 key pair, the private key as encrypted PKCS#8 PEM (AES-256-CBC, PBKDF2, password), the public key as SPKI PEM.
-  `sign` shows the checksum list, asks for *yes* and the password, writes `SHA256SUMS.txt.sig` (base64 Ed25519 signature over the file's exact bytes).
-- `release.yml` creates the release as a **draft** (apps don't see drafts), builds all packages, then attaches `SHA256SUMS.txt`
-  (`project-workspace vX.Y.Z` + `sha256  file` lines) and opens an issue *Sign and publish vX.Y.Z*. The maintainer signs, attaches the `.sig`, publishes.
-- `app/lib/release-key.pem` holds the public key. When it is there, `updater.js` installs a package only if the signature over
-  `SHA256SUMS.txt` is valid, its first line names the offered version, and the downloaded zip's SHA-256 is in it (`checkSigned`).
-- The weekly security check prepares Electron patch releases the same way (draft + issue) and starts no new one while a draft waits.
-- Not covered: the maintainer signs what GitHub built; a tampered build on a hijacked GitHub account would still need the maintainer's signature, and the issue asks to sign only releases they started.
-
-**Not done yet:** code signing of the exe (#31).
+**Not done yet:** signed updates and a code-signed exe (#49, #31). A first attempt (a signing key on the maintainer's PC, scripts to sign each release) was removed again on 2026-11-16 as too cumbersome; the new plan is [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).
 
 ## 7a. Documentation
 
@@ -521,6 +507,7 @@ The UI can be rebuilt freely on top of the API in section 7.
 |---|---|---|
 | Ticketsystem (GLPI 11, osTicket) — v1.1, Rust | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
 | Versions (Git or SVN, local or own server) — v1.2, Rust | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
+| Trusted releases (signed exe, update check) | [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) | #49, #31 |
 | macOS app | after 1.0 | #56 |
 | Chat: answer permission prompts inline | | #10 |
 
@@ -565,8 +552,7 @@ app/public    unchanged screens, served by pw-server
 **Security work that comes with it**
 - `cargo-deny` / `cargo-audit` in CI (advisories, licences, duplicate crates), `Cargo.lock` committed, rustls instead of OpenSSL,
   minimal crate features. Weekly check like 7g, for crates.
-- **Signed release packages:** every zip gets an ed25519 signature (minisign); the updater only installs signed packages
-  (public key in the program). Worth bringing to 0.x first.
+- **Trusted releases:** see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md); whatever is chosen there carries over to 1.0.
 - The security check of 7g then watches crates and the bundled JS libraries; there is no browser engine of our own to patch.
 
 **Moving from 0.x.** The 0.x updater installs 1.0 like any release (program files + new runtime). The last 0.x release removes
