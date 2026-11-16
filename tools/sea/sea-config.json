@@ -1,0 +1,7 @@
+{
+  "main": "tools/sea/launcher.js",
+  "output": "build/sea-prep.blob",
+  "disableExperimentalSEAWarning": true,
+  "useCodeCache": false,
+  "useSnapshot": false
+}

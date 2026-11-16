@@ -99,7 +99,7 @@ function renderHome() {
   features/   what each feature means (${S.features.length})
   projects/   one folder per project (${ps.length})</pre></div>
       <div class="card"><b>Use it from Claude CLI</b><p class="muted small" style="margin:6px 0 10px">Register the workspace MCP server once — then Claude can list, create and edit projects from any terminal.</p>
-        <pre class="code">claude mcp add workspace --scope user -- node "${esc(S.info.mcpScript)}"</pre></div></div></div>`;
+        <pre class="code">claude mcp add workspace --scope user -- ${esc(S.info.mcpCommand)}</pre></div></div></div>`;
   $$('[data-new-project]').forEach(b => b.onclick = () => newProjectDialog());
   const ex = $('[data-examples]'); if (ex) ex.onclick = async () => { ex.disabled = true; const r = await api('/api/examples', { body: {} }); await App.refreshProjects(); toast(`Added ${r.added.length} example projects`); route(); };
 }
@@ -172,14 +172,14 @@ async function renderProject(tab, sub, query) {
 async function renderIde(body) {
   const p = S.project;
   const st = await api(`/api/projects/${enc(p.slug)}/ide`);
-  const src = st.url.replace('{host}', location.hostname).replace('{folder}', st.folder);
+  const src = st.url.replace('{host}', location.hostname).replace('{folder}', st.folder); // normally a same-origin /ide/... address (proxied)
   if (st.running) {
     body.innerHTML = `<div class="row" style="margin-bottom:10px"><span class="chip ok">VS Code is running</span><span class="faint small">${esc(p.path)}</span><span class="sp"></span>
         <a class="btn sm" href="${esc(src)}" target="_blank" rel="noopener">Open in new window</a>
         <button class="btn sm" type="button" data-desk>${icon('terminal', 14)} Desktop VS Code</button>
         ${st.managed ? `<button class="btn sm ghost danger" type="button" data-stop>Stop</button>` : ''}</div>
       <iframe class="ide" src="${esc(src)}" title="VS Code — ${esc(p.name)}" allow="clipboard-read; clipboard-write"></iframe>
-      <p class="faint small">Nothing showing? Some browsers block embedded pages — use “Open in new window”.</p>`;
+      <p class="faint small">VS Code is shown through this app's own address (<span class="mono">${esc(st.base)}/</span>), so the browser doesn't block it. You can also open it in its own window.</p>`;
     $('[data-desk]', body).onclick = () => openVSCode('p/' + p.slug, '');
     const stop = $('[data-stop]', body); if (stop) stop.onclick = async () => { await api('/api/ide/stop', { body: {} }); toast('VS Code stopped'); setTimeout(route, 800); };
     return;

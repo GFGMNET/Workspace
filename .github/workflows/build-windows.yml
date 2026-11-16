@@ -1,0 +1,92 @@
+# Builds the portable Windows app: "ProjectWorkspace.exe" (contains Node, made with Node's
+# single executable application feature) + the app folder, zipped. Nothing to install.
+#  - Run by hand: Actions → "Build Windows app" → Run workflow  (zip appears under the run's Artifacts)
+#  - Called by the Release workflow: the zip is attached to the release
+name: Build Windows app
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to attach the zip to
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Version
+        id: v
+        run: |
+          $v = node -p "require('./package.json').version"
+          "version=$v" >> $env:GITHUB_OUTPUT
+          node --version
+      - name: Tests
+        run: node app/test/smoke.js
+      - name: Assemble the package folder
+        run: |
+          $out = "dist/ProjectWorkspace"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          git archive --format=tar HEAD app docs tools README.md LICENSE package.json | tar -x -C $out
+          Remove-Item -Recurse -Force "$out/tools/sea" -ErrorAction SilentlyContinue
+      - name: Build the executable (Node single executable application)
+        run: |
+          New-Item -ItemType Directory -Force -Path build | Out-Null
+          node --experimental-sea-config tools/sea/sea-config.json
+          $exe = "dist/ProjectWorkspace/ProjectWorkspace.exe"
+          Copy-Item (Get-Command node).Source $exe
+          # icon and file details first, then the app is injected
+          npx --yes rcedit@4.0.1 $exe --set-icon tools/sea/icon.ico `
+            --set-version-string "ProductName" "Project Workspace" `
+            --set-version-string "FileDescription" "Project Workspace" `
+            --set-version-string "CompanyName" "GFGMNET" `
+            --set-version-string "LegalCopyright" "MIT License" `
+            --set-file-version "${{ steps.v.outputs.version }}" --set-product-version "${{ steps.v.outputs.version }}"
+          npx --yes postject@1.0.0-alpha.6 $exe NODE_SEA_BLOB build/sea-prep.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --overwrite
+      - name: Check the executable starts
+        run: |
+          $exe = Resolve-Path "dist/ProjectWorkspace/ProjectWorkspace.exe"
+          $v = & $exe --version
+          if ("$v".Trim() -ne "${{ steps.v.outputs.version }}") { throw "exe --version said '$v'" }
+          $env:WORKSPACE_DIR = Join-Path $env:RUNNER_TEMP "pw-data"
+          $p = Start-Process -FilePath $exe -ArgumentList "--no-open","4399" -PassThru -WindowStyle Hidden
+          $ok = $false
+          for ($i = 0; $i -lt 30 -and -not $ok; $i++) {
+            Start-Sleep -Seconds 1
+            try { $r = Invoke-RestMethod http://localhost:4399/api/info; if ($r.version -eq "${{ steps.v.outputs.version }}" -and $r.exe) { $ok = $true } } catch {}
+          }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { throw "The exe did not answer on http://localhost:4399" }
+          Write-Host "exe OK: version $($r.version), data $($r.root)"
+      - name: Zip
+        id: zip
+        run: |
+          $name = "project-workspace-v${{ steps.v.outputs.version }}-windows-x64.zip"
+          Compress-Archive -Path dist/ProjectWorkspace -DestinationPath "dist/$name"
+          "name=$name" >> $env:GITHUB_OUTPUT
+          Get-Item "dist/$name" | Select-Object Name, Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.zip.outputs.name }}
+          path: dist/${{ steps.zip.outputs.name }}
+          if-no-files-found: error
+      - name: Attach to the release
+        if: inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.tag }}" "dist/${{ steps.zip.outputs.name }}" --clobber

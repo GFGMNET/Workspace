@@ -88,7 +88,8 @@ function watchExternal() {
 const P = '/api/projects/([^/]+)';
 const routes = [
   ['GET', /^\/api\/info$/, async () => ({ version: VERSION, root: ws.ROOT, examples: ws.listExamples().length, projectsDir: ws.PROJECTS_DIR, featuresDir: ws.FEATURES_DIR,
-    stores: ws.STORES, layouts: ws.LAYOUTS, fieldTypes: ws.FIELD_TYPES, platform: process.platform, mcpScript: path.join(__dirname, 'mcp.js') })],
+    stores: ws.STORES, layouts: ws.LAYOUTS, fieldTypes: ws.FIELD_TYPES, platform: process.platform, mcpScript: path.join(__dirname, 'mcp.js'), exe: process.env.PW_EXE || null,
+    mcpCommand: process.env.PW_EXE ? `"${process.env.PW_EXE}" --mcp` : `node "${path.join(__dirname, 'mcp.js')}"` })],
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
   ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],
   ['GET', /^\/api\/search$/, (m, q) => ws.search(q.get('q'), q.get('project') || undefined)],
@@ -161,6 +162,7 @@ const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin;
   if (req.method !== 'GET' && origin && !/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origin)) return send(res, 403, { error: 'Forbidden origin' });
   try {
+    if (ide.isIdePath(url.pathname)) return ide.proxy(req, res);
     if (url.pathname === '/api/events') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
       res.write(': hello\n\n'); clients.add(res);
@@ -211,9 +213,12 @@ function restart() {
   try { ide.stop(); } catch {}
   server.close();
   if (process.env.PW_LAUNCHER === 'loop') return process.exit(75);
-  const args = [path.join(__dirname, 'server.js'), ...ARGS.filter(a => a !== '--open')];
-  if (process.platform === 'win32') exec(`start "Project Workspace" "${process.execPath}" ${args.map(a => `"${a}"`).join(' ')}`, { cwd: ws.INSTALL_DIR });
-  else require('child_process').spawn(process.execPath, args, { cwd: ws.INSTALL_DIR, detached: true, stdio: 'inherit' }).unref();
+  // The Windows exe was moved into the backup folder by the update: start the new one in its place.
+  const exe = process.env.PW_EXE ? path.join(ws.INSTALL_DIR, path.basename(process.env.PW_EXE)) : null;
+  const cmd = exe || process.execPath;
+  const args = [...(exe ? [] : [path.join(__dirname, 'server.js')]), ...ARGS.filter(a => a !== '--open'), ...(exe ? ['--no-open'] : [])];
+  if (process.platform === 'win32') exec(`start "Project Workspace" "${cmd}" ${args.map(a => `"${a}"`).join(' ')}`, { cwd: ws.INSTALL_DIR });
+  else require('child_process').spawn(cmd, args, { cwd: ws.INSTALL_DIR, detached: true, stdio: 'inherit' }).unref();
   setTimeout(() => process.exit(0), 300);
 }
 
@@ -223,6 +228,17 @@ function openBrowser() {
   const cmd = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
   exec(cmd, { windowsHide: true }, () => {});
 }
+
+// WebSockets of the embedded VS Code (same host checks as normal requests)
+server.on('upgrade', (req, socket, head) => {
+  const host = (req.headers.host || '').replace(/:\d+$/, '');
+  const origin = req.headers.origin;
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/;
+  if ((HOST === '127.0.0.1' && !local.test(host)) || (origin && !/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origin))) return socket.destroy();
+  const p = new URL(req.url, 'http://localhost').pathname;
+  if (ide.isIdePath(p)) return ide.upgrade(req, socket, head);
+  socket.destroy();
+});
 
 server.on('error', e => {
   if (e.code === 'EADDRINUSE' && OPEN) { console.log(`\n  The workspace is already running — opening http://localhost:${PORT}\n`); openBrowser(); setTimeout(() => process.exit(0), 500); return; }

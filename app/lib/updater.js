@@ -41,7 +41,11 @@ async function check({ force = false } = {}) {
     if (r.status === 404) return view(writeState({ lastCheck: Date.now(), latest: null, updateError: null }));
     if (!r.ok) throw new Error(`GitHub answered ${r.status}`);
     const rel = await r.json();
-    const asset = (rel.assets || []).find(a => /\.zip$/i.test(a.name));
+    // The Windows exe package for installations started from the exe, the plain package otherwise.
+    const zips = (rel.assets || []).filter(a => /\.zip$/i.test(a.name));
+    const isExe = !!process.env.PW_EXE;
+    const asset = zips.find(a => /windows/i.test(a.name) === isExe) || (isExe ? null : zips[0]);
+    if (isExe && !asset) return view(writeState({ lastCheck: Date.now(), latest: null, updateError: null }));
     const latest = { version: String(rel.tag_name || '').replace(/^v/i, ''), name: rel.name || rel.tag_name, notes: rel.body || '', published: rel.published_at,
       page: rel.html_url, zip: asset ? asset.browser_download_url : rel.zipball_url };
     return view(writeState({ lastCheck: Date.now(), latest, updateError: null }));
