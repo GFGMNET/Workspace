@@ -55,7 +55,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W6a | VS Code tab must work without changing browser settings (served through the app's own address) | ✅ checked on a runner (Chromium + Electron) · to re-test on Windows | #30, #33, #34, #57 |
 | W7 | Collapsible left sidebar | ✅ | #15 |
 | W8 | Rename and archive projects in the app; delete = delete the project folder | ✅ | #11 |
-| W9 | Answer chat permission prompts inline | 📋 | #10 |
+| W9 | Answer chat permission prompts inline | ✅ | #10 |
 | W10 | Version history with git inside the app | ❌ not wanted: git is only for developing the tool | |
 | W11 | A project can live in an existing folder (`location:`), e.g. a git clone | ✅ | #27 |
 | W12 | Manage this workspace itself as a project (example *Workspace (development)*) | ✅ | #29 |

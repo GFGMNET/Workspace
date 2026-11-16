@@ -47,7 +47,7 @@ Every setting can also be set **for one project only**, under the feature key in
 | `search` | Show the search box | false |
 | `new_item` | Label of the **+ New** button | Chat |
 | `aliases` | Other keys in project.yaml that mean this feature | none |
-| `permissions` | `ask` — Claude asks before changing files (*Allow and continue*) · `auto` — may change files · `read-only` — only reads | `ask` |
+| `permissions` | `ask` — Claude asks in the chat before changing files or running commands (**Allow** · **Always allow in this chat** · **Don't allow**) · `auto` — may change files · `read-only` — only reads | `ask` |
 | `allowed_tools` | Tools always allowed, e.g. `[Read, Grep, "Bash(git status)"]` | none |
 | `context` | Features Claude should look at first, e.g. `[wiki, knowledge]` | none |
 | `instructions` | Extra instructions sent with the first message | none |

@@ -102,6 +102,9 @@ const routes = [
   ['POST', /^\/api\/update\/skip$/, async (m, q, req) => updater.skip((await json(req)).version)],
   ['POST', /^\/api\/update\/later$/, () => updater.later()],
   ['POST', /^\/api\/update\/apply$/, async () => { const r = await updater.apply(); setTimeout(() => restart(r.swap), 600); return { ...r, restarting: true }; }],
+  // chat permission questions: asked by lib/permission-mcp.js (token), answered from the chat
+  ['POST', /^\/api\/chat-permission\/([a-f0-9]+)$/, async (m, q, req) => chat.requestPermission(m[1], req.headers['x-pw-token'], await json(req))],
+  ['POST', /^\/api\/chat-permission\/([a-f0-9]+)\/([a-f0-9]+)\/answer$/, async (m, q, req) => chat.answerPermission(m[1], m[2], await json(req))],
   // secrets (values are never sent back)
   ['GET', /^\/api\/secrets$/, () => secrets.status()],
   ['PUT', /^\/api\/secrets\/([^/]+)$/, async (m, q, req) => { const r = secrets.set(d(m[1]), (await json(req)).value); refreshAllClaudeFiles(); return r; }],
@@ -277,6 +280,7 @@ server.on('error', e => {
   if (e.code === 'EADDRINUSE') { console.error(`\n  Port ${PORT} is already in use. Is the workspace already running? Open http://localhost:${PORT}\n  (or start with another port: node app/server.js 4322)\n`); process.exit(1); }
   throw e;
 });
+process.env.PW_PORT = String(PORT); // lib/chat.js tells the permission helper where to ask
 server.listen(PORT, HOST, () => {
   delete process.env.PW_RESTARTED;
   watch(); watchExternal(); setInterval(watchExternal, 30000);

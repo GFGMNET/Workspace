@@ -585,6 +585,20 @@ VIEWS.chat = async ctx => {
           if (ev.type === 'text') { reply.text += ev.delta; draw(); }
           if (ev.type === 'tool') { reply.tools.push(ev); toolsEl.insertAdjacentHTML('beforeend', `<span class="tool" data-t="${esc(ev.id)}" title="${esc(ev.input)}">${esc(ev.name)}${ev.input ? ' · ' + esc(ev.input) : ''}</span>`); }
           if (ev.type === 'tool_result' && ev.error) { const el = $(`[data-t="${CSS.escape(ev.id)}"]`, toolsEl); if (el) el.classList.add('err'); }
+          if (ev.type === 'permission') {
+            // Claude asks to use a tool: answer right here (mode "ask")
+            const box = document.createElement('div'); box.className = 'deny permq'; box.dataset.req = ev.req;
+            box.innerHTML = `<b>Claude wants to use ${esc(ev.tool)}</b>${ev.input ? `<span class="mono small">${esc(ev.input)}</span>` : ''}
+              ${ev.detail && ev.detail !== ev.input ? `<pre class="code small" style="max-height:220px;overflow:auto;margin:6px 0">${esc(ev.detail)}</pre>` : ''}
+              <div class="row"><button class="btn sm primary" type="button" data-a="once">Allow</button><button class="btn sm" type="button" data-a="always" title="Don't ask again for ${esc(ev.tool)} in this chat">Always allow in this chat</button><button class="btn sm ghost" type="button" data-a="no">Don't allow</button></div>`;
+            live.insertBefore(box, out); msgs.scrollTop = msgs.scrollHeight;
+            $$('[data-a]', box).forEach(b => b.onclick = async () => {
+              $$('button', box).forEach(x => (x.disabled = true));
+              try { await api(`/api/chat-permission/${ev.turn}/${ev.req}/answer`, { body: { allow: b.dataset.a !== 'no', always: b.dataset.a === 'always' } }); }
+              catch (e) { box.insertAdjacentHTML('beforeend', `<div class="err small">${esc(e.message)}</div>`); }
+            });
+          }
+          if (ev.type === 'permission_done') { const box = $(`[data-req="${CSS.escape(ev.req)}"]`, live); if (box) box.outerHTML = `<div class="faint small">${ev.allow ? '✓ allowed' : '✗ not allowed'}</div>`; }
           if (ev.type === 'done') { reply.denials = ev.denials; reply.stopped = ev.stopped; if (ev.error) reply.error = ev.error; }
           if (ev.type === 'error') reply.error = ev.message;
         }

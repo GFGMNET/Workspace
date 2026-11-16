@@ -217,7 +217,7 @@ For each message the server runs:
 
 ```
 claude -p --output-format stream-json --verbose --include-partial-messages
-       [--resume <session>] [--model <m>] [--mcp-config .mcp.json] <permission flags>
+       [--resume <session>] [--model <m>] [--mcp-config .mcp.json <permission helper>] [--permission-prompt-tool mcp__pw_permission__approve] <permission flags>
 ```
 
 - The working directory is the project folder, and the message is sent on stdin, so no shell quoting is involved.
@@ -229,7 +229,7 @@ Permissions are set per project in `project.yaml` (`chat: { permissions: … }`)
 
 | Mode | Claude CLI flags | Behaviour |
 |---|---|---|
-| `ask` | default permission mode (+ tools allowed so far in this chat) | When Claude needs a tool that isn't allowed, the run ends with `permission_denials`. The UI shows "Claude asked for permission", and **Allow and continue** resumes the session with `--allowedTools <tool>`. Allowed tools stay allowed in that chat |
+| `ask` | default permission mode (+ tools allowed so far in this chat) + `--permission-prompt-tool` | When Claude needs a tool that isn't allowed, Claude CLI calls the small MCP server `lib/permission-mcp.js` (a temporary `--mcp-config` file per turn, with a random token). It asks the app (`POST /api/chat-permission/<turn>`), the chat shows the question with what Claude wants to run or change, and **Allow** / **Always allow in this chat** (added to the chat's allowed tools) / **Don't allow** answers it (`POST …/<turn>/<question>/answer`); no answer in 10 minutes = not allowed. If anything is still refused (`permission_denials`), **Allow and continue** resumes the session with `--allowedTools <tool>` as before (#10) |
 | `auto` | `--permission-mode acceptEdits` | Claude may change files directly |
 | `read-only` | `--disallowedTools Write,Edit,MultiEdit,NotebookEdit,Bash` | Claude can only read |
 
@@ -509,7 +509,6 @@ The UI can be rebuilt freely on top of the API in section 7.
 | Versions (Git or SVN, local or own server) — v1.2, Rust | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
 | Trusted releases (signed exe, update check) | [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) | #49, #31 |
 | macOS app | after 1.0 | #56 |
-| Chat: answer permission prompts inline | | #10 |
 | VS Code tab: focused layout (editor + explorer) | | #62 |
 
 ## 10. Version 1.0: Rust + Tauri (planned, #41)

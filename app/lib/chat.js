@@ -6,6 +6,8 @@ const { spawn, execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const ws = require('./workspace');
+const crypto = require('crypto');
+const os = require('os');
 
 const IS_WIN = process.platform === 'win32';
 const CLAUDE = process.env.CLAUDE_COMMAND || 'claude';
@@ -66,6 +68,39 @@ function summarizeInput(input) {
   return JSON.stringify(input).slice(0, 200);
 }
 
+// ---------- permission questions answered in the chat (mode "ask") ----------
+// Claude CLI asks lib/permission-mcp.js (--permission-prompt-tool); that asks the app over HTTP;
+// the question is shown in the chat stream and waits for Allow / Always / Deny.
+const turns = new Map(); // turnId → { token, emit, pending: Map(reqId → resolve), allowAlways(tool) }
+function requestPermission(turnId, token, body) {
+  const t = turns.get(turnId);
+  if (!t || !token || token !== t.token) return Promise.resolve({ allow: false, message: 'This chat turn is over.' });
+  const req = crypto.randomBytes(6).toString('hex');
+  return new Promise(resolve => {
+    const timer = setTimeout(() => { t.pending.delete(req); resolve({ allow: false, message: 'No answer in time.' }); t.emit({ type: 'permission_done', req }); }, 10 * 60 * 1000);
+    t.pending.set(req, a => { clearTimeout(timer); resolve(a); });
+    t.emit({ type: 'permission', turn: turnId, req, tool: String(body.tool || ''), input: summarizeInput(body.input), detail: detailOf(body.tool, body.input) });
+  });
+}
+function answerPermission(turnId, req, { allow, always } = {}) {
+  const t = turns.get(turnId); const r = t && t.pending.get(req);
+  if (!r) throw ws.httpError(404, 'This question was already answered or has expired');
+  t.pending.delete(req);
+  if (allow && always && t.tool(req)) t.allowAlways(t.tool(req));
+  r(allow ? { allow: true } : { allow: false, message: 'The person did not allow this.' });
+  t.emit({ type: 'permission_done', req, allow: !!allow });
+  return { ok: true };
+}
+function detailOf(tool, input) {
+  if (!input || typeof input !== 'object') return '';
+  if (tool === 'Bash' && input.command) return String(input.command).slice(0, 2000);
+  if ((tool === 'Edit' || tool === 'MultiEdit') && input.old_string != null) return `- ${String(input.old_string).slice(0, 600)}\n+ ${String(input.new_string || '').slice(0, 600)}`;
+  if (tool === 'Write' && input.content != null) return String(input.content).slice(0, 1200);
+  return '';
+}
+// Windows starts Claude CLI through cmd.exe: arguments with spaces need quotes.
+const q = a => (IS_WIN && /[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a);
+
 // Runs one turn. `emit(event)` gets {type:'text'|'tool'|'tool_result'|'done'|'error'|'status', ...}.
 // Returns a handle with stop().
 function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
@@ -96,8 +131,28 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   if (chat.sessionId) args.push('--resume', chat.sessionId);
   if (f.def.model) args.push('--model', String(f.def.model).replace(/[^\w.\-]/g, ''));
   // Headless runs don't show the "trust project MCP servers" prompt, so pass the project's servers explicitly.
-  try { const mj = JSON.parse(fs.readFileSync(path.join(p.dir, '.mcp.json'), 'utf8')); if (mj && mj.mcpServers && Object.keys(mj.mcpServers).length) args.push('--mcp-config', '.mcp.json'); } catch {}
+  const mcpConfigs = [];
+  try { const mj = JSON.parse(fs.readFileSync(path.join(p.dir, '.mcp.json'), 'utf8')); if (mj && mj.mcpServers && Object.keys(mj.mcpServers).length) mcpConfigs.push('.mcp.json'); } catch {}
+  // mode "ask": questions come to the chat instead of being refused
+  const turnId = crypto.randomBytes(8).toString('hex'); let permFile = null;
+  if (mode === 'ask' && process.env.PW_PORT) {
+    const toolOf = new Map();
+    const turn = { token: crypto.randomBytes(16).toString('hex'), emit: ev => { if (ev.type === 'permission') toolOf.set(ev.req, ev.tool); emit(ev); }, pending: new Map(), tool: r => toolOf.get(r),
+      allowAlways: tool => { if (!chat.allowedTools.includes(tool)) { chat.allowedTools.push(tool); save(); } } };
+    turns.set(turnId, turn);
+    permFile = path.join(os.tmpdir(), `pw-permission-${turnId}.json`);
+    fs.writeFileSync(permFile, JSON.stringify({ mcpServers: { pw_permission: { type: 'stdio', command: process.execPath, args: [path.join(__dirname, 'permission-mcp.js')],
+      env: { PW_PERMISSION_URL: `http://127.0.0.1:${process.env.PW_PORT}/api/chat-permission/${turnId}`, PW_PERMISSION_TOKEN: turn.token, ELECTRON_RUN_AS_NODE: '1' } } } }), { mode: 0o600 });
+    mcpConfigs.push(permFile);
+    args.push('--permission-prompt-tool', 'mcp__pw_permission__approve');
+  }
+  if (mcpConfigs.length) args.push('--mcp-config', ...mcpConfigs.map(q));
   args.push(...permissionArgs(mode, [...f.def.allowed_tools, ...chat.allowedTools]));
+  const cleanup = () => {
+    const t = turns.get(turnId);
+    if (t) { for (const r of t.pending.values()) r({ allow: false, message: 'The chat turn ended.' }); turns.delete(turnId); }
+    if (permFile) { try { fs.unlinkSync(permFile); } catch {} }
+  };
 
   const reply = { role: 'assistant', text: '', tools: [], time: now() };
   let gotDelta = false, finished = false, stderr = '', buf = '';
@@ -108,7 +163,7 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   child.stdin.end(prompt);
 
   const finish = (extra) => {
-    if (finished) return; finished = true;
+    if (finished) return; finished = true; cleanup();
     Object.assign(reply, extra || {});
     if (reply.text || reply.tools.length || reply.error || (reply.denials && reply.denials.length)) chat.messages.push(reply);
     save();
@@ -174,4 +229,4 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   return { id, stop: () => { if (!finished) { try { child.kill(); } catch {} } } };
 }
 
-module.exports = { claudeVersion, runTurn };
+module.exports = { claudeVersion, runTurn, requestPermission, answerPermission };
