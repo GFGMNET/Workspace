@@ -36,13 +36,15 @@ On the first start a `data` folder is created next to the program. **All your pr
 ## 3. Create your first project
 
 1. Click **+ New project** in the sidebar.
-2. Give it a name and tick the features you want, for example *Wiki*, *Tasks* and *Gallery*.
+2. Give it a name and tick the features you want, for example *Wiki*, *Tasks* and *Gallery*. If you saved a template, choose it under **Start from** instead.
 3. The right side shows the `project.yaml` that will be written. You can edit it there before you create the project.
 4. Click **Create project**.
 
 The project opens on its **Overview**. Every feature you picked is a tab: write a wiki page, add a task to the board, drop some pictures into the gallery.
 
 Everything you do is a normal file in `data/projects/<your project>/`. You can also open that folder in Explorer or VS Code and edit files there; the app updates by itself.
+
+Tasks with a due date and calendar events show up on the home page under **Coming up in all projects**. The desktop app also reminds you of what's due today (tray icon next to the clock). A project you want to reuse: **Manage → Save as template**.
 
 ## 4. Understand the two YAML files
 
@@ -103,7 +105,7 @@ The layouts you can use are:
    chat:
      permissions: ask   # ask before changing files · auto · read-only
    ```
-4. The **Skills** feature writes `SKILL.md` files Claude CLI uses automatically. The **MCP** feature writes `.mcp.json` with MCP server connections.
+4. The **Skills** feature writes `SKILL.md` files Claude CLI uses automatically. The **MCP** feature writes `.mcp.json` with MCP server connections. Put API keys under **Secrets** in the sidebar and write `${secret:name}` in the connection instead of the key.
 5. *Optional:* let Claude manage the whole workspace from any terminal:
 
    ```
@@ -134,7 +136,9 @@ Updating by hand works too: download the new version and replace everything **ex
 | "Node.js is needed" | Install Node.js LTS, then start again |
 | "Port 4321 is already in use" | The workspace is already running: just open http://localhost:4321 |
 | Chat says *Claude CLI not found* | Install Claude CLI and sign in once with `claude` in a terminal |
+| Chat says to use */login* | Sign in with `claude` in a terminal (`/login`). If you just did, send the message again; if it persists, quit the app (tray → Quit) and start it again |
 | VS Code button does nothing | In VS Code run *Shell Command: Install 'code' command in PATH* (macOS), or reinstall VS Code with "Add to PATH" ticked (Windows) |
-| VS Code tab stays blank | Use *Open in new window*. Some browsers block embedded pages |
+| VS Code tab stays blank or black | Click **Reload** in the tab, or *Open in new window*. Check that VS Code is installed (`code --version` in a terminal) |
+| Windows says *Windows protected your PC* | The app isn't code-signed yet (#31): **More info → Run anyway** |
 
 More help is in the [wiki](https://github.com/GFGMNET/Workspace/wiki), and you can report problems at [Issues](https://github.com/GFGMNET/Workspace/issues).

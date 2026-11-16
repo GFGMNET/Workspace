@@ -20,10 +20,11 @@ Workspace/          ← the program: replaced on update
 ## Updating
 
 **Automatic:** the workspace checks GitHub once a week. When a new version is out, a bar appears at the top: **What's new** · **Update now** · **Later** · **Skip this version**. *Update now*:
-1. downloads the new version
-2. moves the old program into `.update/backup-…`
-3. installs the new one
-4. restarts
+1. downloads the new version for your system
+2. checks the maintainer's signature, so only genuine releases are installed (from v0.6.2; see [[Security]])
+3. moves the old program into `.update/backup-…`
+4. installs the new one
+5. restarts
 
 `data/` is never touched, and if anything goes wrong the old version is put back. **v… · Updates** in the sidebar checks right away. Turn the weekly check off in `data/settings.yaml`:
 
@@ -33,7 +34,7 @@ updates:
 ```
 
 **By hand:**
-1. Download the new version from GitHub (release zip or **Code → Download ZIP**).
+1. Download the new version from the [releases page](https://github.com/GFGMNET/Workspace/releases) (the zip for your system).
 2. Replace everything **except `data/`**.
 3. Start as usual.
 
@@ -53,5 +54,7 @@ Version 0.1 kept `features/` and `projects/` next to `app/`. Newer versions move
 | Data folder | `WORKSPACE_DIR` | `data/` |
 | Claude CLI command | `CLAUDE_COMMAND` | `claude` |
 | VS Code command | `VSCODE_COMMAND` | `code` |
-| In-app VS Code | `data/settings.yaml` → `ide:` | `code serve-web` on port 8740 |
+| In-app VS Code | `data/settings.yaml` → `ide:` (keep the values in quotes) | `code serve-web` on port 8740 |
+| GitHub token (private repositories) | `data/settings.yaml` → `github: token: ${secret:github-token}` | none |
+| Tray, reminders, start with Windows | tray icon menu (desktop app), stored in `data/.desktop.json` | tray and reminders on, autostart off |
 | Update check | `data/settings.yaml` → `updates: check:` / `repo:` | weekly, GFGMNET/Workspace |

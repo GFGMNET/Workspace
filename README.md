@@ -25,7 +25,7 @@ The workspace opens in its own app window.
 
 On the first start a `data/` folder is created for your projects. The home page offers to add the example projects.
 
-**Updating:** the app checks GitHub once a week and offers new versions with one click (*Update now*), keeping a backup and never touching `data/`. By hand: replace everything **except the `data/` folder**.
+**Updating:** the app checks GitHub once a week and offers new versions with one click (*Update now*), keeping a backup and never touching `data/`. Releases are signed by the maintainer, and the app installs only signed updates. By hand: replace everything **except the `data/` folder**.
 
 The chat feature also needs [Claude CLI](https://docs.claude.com/en/docs/claude-code), installed and signed in (`claude` in a terminal).
 
@@ -56,7 +56,9 @@ Each feature key becomes a tab on the project page. The content lives in the pro
 
 Every project also has an **Overview**, an **Explorer** with all its files, and **VS Code** (buttons for the installed VS Code, and the full VS Code in a tab). A project can live in an existing folder (`location:`), so the workspace can even manage itself: see the example *Workspace (development)*.
 
-**Starter features:** wiki, knowledge, gallery, files, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices. You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
+**Also:** projects can be renamed, archived and saved as **templates**; the home page shows what's **coming up in all projects**; API keys and passwords are kept as encrypted **secrets** (`${secret:name}` in YAML); the desktop app has a **tray icon, reminders** and can start with Windows.
+
+**Starter features:** wiki, knowledge, gallery, files, scripts, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices, github (issues). You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
 
 | | |
 |---|---|
@@ -76,12 +78,14 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
   ```
   claude mcp add project-workspace --scope user -- node "C:\path\to\Workspace\app\mcp.js"
   ```
+  With the desktop app, the home page shows the exact command for your folder.
 
 ## More
 
 - **New here?** [Getting started](docs/GETTING-STARTED.md) · [Wiki](https://github.com/GFGMNET/Workspace/wiki)
 - Full design and rebuild guide: [docs/DESIGN.md](docs/DESIGN.md)
 - Requirements and their status: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
+- Security, reporting a vulnerability: [SECURITY.md](SECURITY.md) · plan for version 1.0 in Rust: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md)
 - Bugs and ideas: [Issues](https://github.com/GFGMNET/Workspace/issues)
 - Tests: `npm test`
 - Settings (environment variables): `PORT` (default 4321), `WORKSPACE_DIR` (data folder, default `data/`), `CLAUDE_COMMAND` (default `claude`)

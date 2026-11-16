@@ -21,28 +21,42 @@ Principles:
 ## 2. Folder structure
 
 ```
-Workspace/                   ← the program: replace it completely on update
+Workspace/                   ← the program: replaced on update (desktop app: see 7c for the runtime files)
+  ProjectWorkspace.exe …     the desktop app's runtime (Electron), only in the Windows/Linux packages
   app/
     server.js                local web server + API
     mcp.js                   MCP server for Claude CLI
+    electron/main.js         desktop app: window, menu, single instance (7c)
+    electron/desktop.js      desktop app: tray, reminders, start with Windows (7c)
+    lib/workspace.js         all file logic (features, projects, items, templates, due, first start)
     lib/yaml.js              YAML for the app: full YAML 1.2 (bundled "yaml" library in lib/vendor/yaml,
                              ISC), lenient fallback lib/yaml-lenient.js, comment-preserving record updates
-    lib/exif.js              reads the "date taken" from photos
-    lib/workspace.js         all file logic (features, projects, items, first start)
     lib/chat.js              runs Claude CLI for the chat feature
+    lib/files.js             explorer (file operations inside a project or the data folder)
+    lib/ide.js               in-app VS Code: start/stop and the /ide proxy
+    lib/secrets.js           encrypted secrets (7e)
+    lib/updater.js           weekly update check, signed install (7b)
+    lib/release-key.pem      the maintainer's public signing key (once set up, 7g)
+    lib/github.js            GitHub issues feature
+    lib/exif.js              reads the "date taken" from photos
     public/                  the user interface (HTML/CSS/JS)
-      vendor/mermaid.min.js  Mermaid 11 (MIT) for diagrams, bundled for offline use
+      vendor/                Mermaid (MIT), highlight.js (BSD-3), bundled for offline use
     starter/features/        starter feature definitions (copied into data/ on first start)
     starter/examples/        example projects (added on request)
     test/smoke.js            automated checks (npm test)
-  docs/                      this document, screenshots
-  start.bat / start.sh       start the app
+  docs/                      this document, requirements, getting started, wiki pages, release notes
+  tools/                     vendor.json (bundled library versions), signing/ (release signing), build helpers
+  start.bat / start.sh       start with Node.js
   data/                      ← the client's data: never replaced, not in git
-    .workspace.json          which starter features were installed (so deleted ones stay deleted)
-    settings.yaml            workspace settings (e.g. how the in-app VS Code is started)
+    .workspace.json          installed starter features, update state
+    settings.yaml            workspace settings (in-app VS Code, updates, GitHub token)
+    .secrets.json            encrypted secrets (7e)
     .ide-token               random access token for the in-app VS Code
+    .desktop.json  .window.json  .app/   desktop app: tray/reminder settings, window size, Electron's cache
     features/                what each feature means — one YAML file per feature
+    templates/               project templates (7f)
     projects/                one folder per project
+      _archive/              archived projects
       <project>/
         project.yaml         which features this project has
         <feature folder>/... the content
@@ -269,6 +283,12 @@ Plain Node `http` with no framework. It binds to `127.0.0.1:4321` (override with
 | `GET /api/fs/tree`, `GET/PUT /api/fs/file`, `POST /api/fs/mkdir`, `…/rename`, `…/trash`, `…/upload`, `GET /api/fs/raw` (all with `?scope=workspace` or `?scope=p/<project>` and `&path=`) | explorer |
 | `POST /api/fs/vscode?scope=&path=` | open in VS Code (desktop) |
 | `GET /api/ide`, `POST /api/ide/start`, `POST /api/ide/stop`, `GET /api/projects/<p>/ide` | in-app VS Code (status, start, stop, URL for a project) |
+| `GET /api/due?days=` | what is due in all projects (home page, desktop reminders) |
+| `GET /api/templates`, `POST /api/projects/<p>/template`, `DELETE /api/templates/<id>` | project templates; `POST /api/projects` takes `template` |
+| `GET/DELETE /api/secrets`, `PUT/DELETE /api/secrets/<name>` | secrets (names only are ever sent back) |
+| `GET /api/projects/<p>/f/<feature>/github?state=&refresh=` | GitHub issues feature |
+| `GET /api/update`, `POST /api/update/check`, `…/skip`, `…/later`, `…/apply` | updates (7b) |
+| `/ide/…` (HTTP and WebSockets) | reverse proxy to the in-app VS Code |
 | `GET /api/events` | live refresh (server-sent events from a recursive `fs.watch`) |
 | `GET /files/<p>/<path>` | raw project files (images, downloads) |
 
@@ -288,14 +308,15 @@ Vanilla JavaScript with no build step and no framework.
 
 Screens (from the accepted mockup, issue #2):
 
-1. **Workspace home:** project cards with feature chips and counts.
+1. **Workspace home:** *Coming up in all projects* (overdue tasks first, next 14 days), project cards with feature chips and counts, archived projects, the Claude CLI command for the workspace MCP server.
 2. **Project page:** an **Overview** tab first (a tile per feature with its count, *coming up* in the next 30 days from every date field, open Kanban tasks with overdue ones marked, recently changed items; hide it with `overview: false` in project.yaml), then a tab per feature from `project.yaml`, a note saying which `features/*.yaml` defines it, and a `project.yaml` tab with an editor.
 3. **Features:** list, YAML editor with validation, a sketch of the layout, fields, and which projects use it.
-4. **New project:** name, feature tick boxes, and a live `project.yaml` preview you can edit.
+4. **New project:** name, *Start from* a template or blank, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.
-5a. **Manage** (project header): rename (optionally the folder too), remove features from the project (files stay), archive (moves the folder to `projects/_archive/`, hidden from the list; *Archived projects* on the home page restores or deletes them), delete (type the name to confirm; deletes `projects/<slug>` only).
+5b. **Secrets** (sidebar): names of the stored secrets, add/replace/delete, which protection is in use (7e).
+5a. **Manage** (project header): rename (optionally the folder too), remove features from the project (files stay), save as template (7f), archive (moves the folder to `projects/_archive/`, hidden from the list; *Archived projects* on the home page restores or deletes them), delete (type the name to confirm; deletes `projects/<slug>` only).
 6. **Explorer:** every project has an *Explorer* tab with the whole project folder as a tree (incl. `project.yaml`, `.claude/`, `.mcp.json`), and the sidebar has a workspace explorer (features + all projects). Text files open in the code editor (Markdown with preview, images shown); new file/folder, upload, rename/move, delete (to `.trash`), download. Saving a `project.yaml` or feature YAML is validated first.
-7. **VS Code tab (full VS Code in the app):** shows the browser version of VS Code, opened on the project folder, in an embedded frame. By default the app starts the installed VS Code's own web server (`code serve-web --server-base-path /ide`, downloads its web part once) on `127.0.0.1:8740` with a random connection token (kept in `data/.ide-token`), and stops it when the app exits. The browser never talks to that port directly: the app **reverse-proxies `/ide/…` (HTTP and WebSockets)** on its own address and removes frame-blocking headers, so the embedded VS Code is same-site and browsers don't block it (#30). Settings from v0.3.0 (direct `http://{host}:{port}` URLs) are upgraded automatically; code-server, which serves at its root, uses `strip_base: true`. The command, port and URL are set in `data/settings.yaml` (`ide:`), so code-server or OpenVSCode Server can be used instead. *Open in new window* is always offered in case the browser blocks the frame.
+7. **VS Code tab (full VS Code in the app):** (values in `settings.yaml` are quoted: a value starting with `{` would be read as a YAML mapping; files from older versions are repaired on read) shows the browser version of VS Code, opened on the project folder, in an embedded frame. By default the app starts the installed VS Code's own web server (`code serve-web --server-base-path /ide`, downloads its web part once) on `127.0.0.1:8740` with a random connection token (kept in `data/.ide-token`), and stops it when the app exits. The browser never talks to that port directly: the app **reverse-proxies `/ide/…` (HTTP and WebSockets)** on its own address and removes frame-blocking headers, so the embedded VS Code is same-site and browsers don't block it (#30). Settings from v0.3.0 (direct `http://{host}:{port}` URLs) are upgraded automatically; code-server, which serves at its root, uses `strip_base: true`. The command, port and URL are set in `data/settings.yaml` (`ide:`), so code-server or OpenVSCode Server can be used instead. *Open in new window* is always offered in case the browser blocks the frame.
 8. **VS Code buttons:** *VS Code* in the project header and *Open in VS Code* on every file run the `code` command (`VSCODE_COMMAND` to override) to open the project folder in the installed VS Code and jump to the file. If `code` is not on the PATH the browser is asked to open a `vscode://file/…` link.
 
 - **Theme:** light, dark or auto (follows the OS), switched in the sidebar and remembered in `localStorage`.
@@ -309,15 +330,16 @@ Live installations never use git; they are updated from **GitHub Releases** (#26
 - **Weekly check:** the server asks `https://api.github.com/repos/GFGMNET/Workspace/releases/latest` (public, no login, nothing sent about the client) at most once a week, and the UI shows the result. The last check, the latest release, *skip* and *later* are stored in `data/.workspace.json`. Turn checking off with `updates: check: false` in `data/settings.yaml`; `updates: repo:` points to another repository.
 - **Banner:** *Version X is available* · **What's new** (the release notes) · **Update now** · **Later** (a week) · **Skip this version**. The sidebar shows the version and a dot when an update is waiting; *v… · Updates* opens the same dialog with *Check now*.
 - **Update now:**
-  1. downloads the release zip (the `.zip` asset, else GitHub's source zip) and unpacks it with the app's own unzip (paths are checked)
-  2. checks that it really is Project Workspace
-  3. moves the current program into `.update/backup-<version>-<time>/`, then copies the new program in. `data/` is never touched
-  4. restarts
+  1. downloads the release zip that fits the installation (`pickAsset`: Windows/Linux package for the desktop app, the plain zip for Node.js)
+  2. once the app has the maintainer's public key (`lib/release-key.pem`): checks the signature of `SHA256SUMS.txt` and the zip's checksum, and refuses unsigned or changed packages (7g)
+  3. unpacks it with the app's own unzip (paths are checked, Unix file modes kept) and checks that it really is Project Workspace
+  4. moves the current program into `.update/backup-<version>-<time>/`, then copies the new program in (desktop app: the runtime only when its Electron version changes, 7c). `data/` is never touched
+  5. restarts
 
   If anything fails, the old program is put back.
-- **Restart:** `start.bat` / `start.sh` run the server in a loop and start it again on exit code 75. A server started without them starts a new process itself. The page reloads once the new version answers.
+- **Restart:** the desktop app restarts itself (`app.relaunch`, or the runtime swap script). `start.bat` / `start.sh` run the server in a loop and start it again on exit code 75. A server started without them starts a new process itself, which waits for the port. The page reloads once the new version answers.
 - **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
-- **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* releases the version in `package.json` (or push a tag `vX.Y.Z`). It runs the tests, zips the program (`git archive`, so no client data) and creates the release; the notes come from `docs/releases/vX.Y.Z.md` (else generated).
+- **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* builds the version in `package.json`. It runs the tests, zips the program (`git archive`, so no client data), builds the Windows and Linux apps and creates a **draft** release with `SHA256SUMS.txt`; the notes come from `docs/releases/vX.Y.Z.md` (else generated). The maintainer signs and publishes it (7g); only then do installed apps see it.
 
 ## 7c. Desktop app (Windows and Linux)
 
@@ -478,8 +500,11 @@ You need Node.js 18 or newer. Nothing else is installed.
 git clone https://github.com/GFGMNET/Workspace
 cd Workspace
 node app/server.js --open   # or start.bat / ./start.sh (--open opens the browser once ready)
-npm test                # smoke test, incl. the MCP server
+npm test                # automated checks, incl. the MCP server
 ```
+
+The desktop app is built by GitHub (*Build Windows app*, *Build Linux app*, 7c); to try it locally, install Electron
+(`npm i electron@45`) and run `npx electron tools/electron/bootstrap` from a folder laid out as in 7c.
 
 To port it to another stack, keep these contracts:
 - **Folder layout** (section 2)
