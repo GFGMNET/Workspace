@@ -1,0 +1,93 @@
+# Updates the libraries bundled with the app (tools/vendor.json): downloads them from npm, puts them
+# in place, runs the tests and checks in a browser that diagrams and code colouring still work.
+# Then commits to main. Actions → "Update bundled libraries" → Run workflow (leave a field empty to keep that one).
+name: Update bundled libraries
+
+on:
+  workflow_dispatch:
+    inputs:
+      yaml:
+        description: yaml version (e.g. 2.9.1)
+        required: false
+      mermaid:
+        description: mermaid version (e.g. 12.3.0)
+        required: false
+      highlight:
+        description: highlight.js version
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Download and put in place
+        env:
+          V_YAML: ${{ inputs.yaml }}
+          V_MERMAID: ${{ inputs.mermaid }}
+          V_HL: ${{ inputs.highlight }}
+        run: |
+          mkdir -p /tmp/v && cd /tmp/v && npm init -y >/dev/null
+          cd "$GITHUB_WORKSPACE"
+          set_version() { node -e "const f='tools/vendor.json';const j=require('./'+f);j[process.argv[1]].version=process.argv[2];require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'\n')" "$1" "$2"; }
+          if [ -n "$V_YAML" ]; then
+            (cd /tmp/v && npm i "yaml@$V_YAML" >/dev/null)
+            node tools/vendor-yaml.js /tmp/v/node_modules/yaml
+            set_version yaml "$V_YAML"
+          fi
+          if [ -n "$V_MERMAID" ]; then
+            (cd /tmp/v && npm i "mermaid@$V_MERMAID" >/dev/null)
+            f=/tmp/v/node_modules/mermaid/dist/mermaid.min.js
+            if [ ! -f "$f" ]; then echo "::error::mermaid $V_MERMAID has no dist/mermaid.min.js (the build the app loads). Files:"; ls /tmp/v/node_modules/mermaid/dist | head -40; exit 1; fi
+            cp "$f" app/public/vendor/mermaid.min.js
+            cp /tmp/v/node_modules/mermaid/LICENSE app/public/vendor/mermaid.LICENSE 2>/dev/null || true
+            set_version mermaid "$V_MERMAID"
+          fi
+          if [ -n "$V_HL" ]; then
+            (cd /tmp/v && npm i "highlight.js@$V_HL" >/dev/null)
+            node tools/build-highlight.js /tmp/v/node_modules/highlight.js
+            set_version highlight.js "$V_HL"
+          fi
+          git status --short
+      - name: Tests
+        run: node app/test/smoke.js
+      - name: Diagrams and code colouring in a browser
+        run: |
+          (cd /tmp/v && npm i playwright@1.48.2 >/dev/null && npx playwright install --with-deps chromium >/dev/null)
+          export WORKSPACE_DIR="$RUNNER_TEMP/data"
+          node app/server.js 4398 > /tmp/server.log 2>&1 &
+          for i in $(seq 1 20); do sleep 1; curl -fsS http://localhost:4398/api/info >/dev/null && break; done
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' http://localhost:4398/api/examples >/dev/null
+          cat > /tmp/v/check.js <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const b = await chromium.launch(); const p = await b.newPage(); const errs = [];
+            p.on('pageerror', e => errs.push(e.message));
+            // a Mermaid diagram from the example project, in the diagram feature
+            await p.goto('http://localhost:4398/#/p/home-lab/diagrams/network'); await p.waitForTimeout(4000);
+            const svg = await p.locator('svg[aria-roledescription], svg[id^="mermaid"]').count();
+            // code colouring in the scripts feature
+            await p.goto('http://localhost:4398/#/p/home-lab/scripts/backup-nas.ps1'); await p.waitForTimeout(2500);
+            const hl = await p.locator('[class*="hljs-"]').count();
+            console.log(JSON.stringify({ svg, hl, errs }));
+            await b.close();
+            if (!svg || !hl || errs.length) process.exit(1);
+          })();
+          JS
+          node /tmp/v/check.js
+      - name: Commit
+        env:
+          V: "${{ inputs.yaml && format('yaml {0} ', inputs.yaml) || '' }}${{ inputs.mermaid && format('mermaid {0} ', inputs.mermaid) || '' }}${{ inputs.highlight && format('highlight.js {0}', inputs.highlight) || '' }}"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A app/lib/vendor app/public/vendor tools/vendor.json
+          git diff --cached --quiet && { echo "Nothing changed"; exit 0; }
+          git commit -m "Bundled libraries: $V"
+          git push origin HEAD:main
