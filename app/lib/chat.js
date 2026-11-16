@@ -72,7 +72,10 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
 
   const reply = { role: 'assistant', text: '', tools: [], time: now() };
   let gotDelta = false, finished = false, stderr = '', buf = '';
-  const child = spawn(CLAUDE, args, { cwd: p.dir, shell: IS_WIN, windowsHide: true, env: { ...process.env, FORCE_COLOR: '0' } });
+  // secrets used by the project's MCP connections (${PW_SECRET_…} in .mcp.json)
+  let secretEnv = {};
+  try { secretEnv = require('./secrets').envFor(fs.readFileSync(path.join(p.dir, '.mcp.json'), 'utf8')).env; } catch {}
+  const child = spawn(CLAUDE, args, { cwd: p.dir, shell: IS_WIN, windowsHide: true, env: { ...process.env, ...secretEnv, FORCE_COLOR: '0' } });
   child.stdin.end(prompt);
 
   const finish = (extra) => {

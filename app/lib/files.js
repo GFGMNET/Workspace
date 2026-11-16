@@ -6,7 +6,9 @@ const path = require('path');
 const { exec } = require('child_process');
 const ws = require('./workspace');
 
-const SKIP = new Set(['.git', 'node_modules', '.trash']);
+// Private files of the app (secrets, VS Code token, the desktop app's cache) are never listed or opened.
+const PRIVATE = new Set(['.secrets.json', '.ide-token', '.app']);
+const SKIP = new Set(['.git', 'node_modules', '.trash', ...PRIVATE]);
 const MAX_TEXT = 2 * 1024 * 1024;
 const MAX_ENTRIES = 5000;
 
@@ -20,6 +22,7 @@ function rel2abs(b, rel) {
   const clean = String(rel || '').replace(/\\/g, '/').replace(/^\/+/, '');
   const p = path.resolve(b, clean);
   if (p !== b && !p.startsWith(b + path.sep)) throw ws.httpError(400, 'Path outside the folder');
+  if (path.relative(b, p).split(path.sep).some(s => PRIVATE.has(s))) throw ws.httpError(403, 'This file is private to the app');
   return p;
 }
 const relOf = (b, abs) => path.relative(b, abs).split(path.sep).join('/');

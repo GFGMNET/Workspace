@@ -12,7 +12,7 @@ const cache = new Map();
 
 function token() {
   if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-  try { const s = ws.YAML.parse(fs.readFileSync(path.join(ws.ROOT, 'settings.yaml'), 'utf8')) || {}; return s.github && s.github.token ? String(s.github.token) : null; } catch { return null; }
+  try { const s = ws.YAML.parse(fs.readFileSync(path.join(ws.ROOT, 'settings.yaml'), 'utf8')) || {}; return s.github && s.github.token ? require('./secrets').resolve(String(s.github.token)) : null; } catch { return null; }
 }
 const repoOk = r => /^[\w.-]+\/[\w.-]+$/.test(String(r || ''));
 

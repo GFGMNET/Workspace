@@ -16,6 +16,7 @@ const STARTER_DIR = path.join(APP_DIR, 'starter');
 const STATE_FILE = '.workspace.json';
 const FEATURES_DIR = path.join(ROOT, 'features');
 const PROJECTS_DIR = path.join(ROOT, 'projects');
+const TEMPLATES_DIR = path.join(ROOT, 'templates');
 const PROJECT_FILE = 'project.yaml';
 const TRASH = '.trash';
 
@@ -271,7 +272,7 @@ function latestMtime(dir, depth = 0) {
   return m;
 }
 
-function createProject({ name, yaml }) {
+function createProject({ name, yaml, template }) {
   let text = yaml && String(yaml).trim() ? String(yaml) : `name: ${JSON.stringify(name || 'New project')}\n`;
   const data = parseYamlSafe(text, 'project.yaml');
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw httpError(400, 'project.yaml must be key: value pairs with at least "name:"');
@@ -279,9 +280,57 @@ function createProject({ name, yaml }) {
   const finalName = name || data.name || 'New project';
   ensureDir(PROJECTS_DIR);
   const slug = uniqueName(PROJECTS_DIR, slugify(finalName), '');
+  // from a template: its starter content first (the project.yaml comes from the dialog)
+  if (template) {
+    const t = templateDir(template);
+    if (!isDir(t)) throw httpError(404, 'Template not found');
+    fs.cpSync(t, path.join(PROJECTS_DIR, slug), { recursive: true, filter: src => !['template.json', PROJECT_FILE].includes(path.relative(t, src)) });
+  }
   writeText(path.join(PROJECTS_DIR, slug, PROJECT_FILE), text.endsWith('\n') ? text : text + '\n');
   return syncProject(slug);
 }
+
+// ---------- templates: data/templates/<id>/ = project.yaml + template.json (+ starter content) ----------
+function templateDir(id) { checkId(id, 'template'); return safeJoin(TEMPLATES_DIR, id); }
+function listTemplates() {
+  if (!isDir(TEMPLATES_DIR)) return [];
+  return fs.readdirSync(TEMPLATES_DIR, { withFileTypes: true }).filter(e => e.isDirectory() && exists(path.join(TEMPLATES_DIR, e.name, PROJECT_FILE))).map(e => {
+    const d = path.join(TEMPLATES_DIR, e.name); let meta = {};
+    try { meta = JSON.parse(readText(path.join(d, 'template.json'))) || {}; } catch {}
+    const yaml = readText(path.join(d, PROJECT_FILE));
+    let features = []; try { const y = YAML.parse(yaml) || {}; features = Object.keys(y).filter(k => !META_KEYS.has(k)); } catch {}
+    return { id: e.name, name: meta.name || e.name, description: meta.description || '', content: !!meta.content, created: meta.created || null, from: meta.from || null, yaml, features };
+  }).sort((a, b) => a.name.localeCompare(b.name));
+}
+// Saves a project's structure (project.yaml) and, if wanted, its content as a template.
+// Never copied: chats, the trash, Claude's generated files, and location: (a template is not tied to a folder).
+const TEMPLATE_MAX = 200 * 1024 * 1024;
+function saveTemplate(slug, { name, description, content }) {
+  const p = loadProject(slug);
+  if (p.error) throw httpError(400, 'Fix project.yaml first: ' + p.error);
+  name = String(name || p.name).trim();
+  ensureDir(TEMPLATES_DIR);
+  const id = uniqueName(TEMPLATES_DIR, slugify(name), '');
+  const d = path.join(TEMPLATES_DIR, id);
+  let yaml = readText(p.file).replace(/^location:.*(\r?\n)?/m, '');
+  writeText(path.join(d, PROJECT_FILE), yaml);
+  if (content) try {
+    let size = 0;
+    for (const f of p.features) {
+      if (!f.def || !f.def.folder || ['chat', 'github'].includes(f.def.stores)) continue;
+      const src = safeJoin(p.dir, f.def.folder); if (!isDir(src)) continue;
+      fs.cpSync(src, path.join(d, f.def.folder), { recursive: true, filter: s => {
+        const b = path.basename(s); if (b === '.trash' || b === '.git' || b === 'node_modules') return false;
+        try { const st = fs.statSync(s); if (st.isFile()) size += st.size; } catch {}
+        if (size > TEMPLATE_MAX) throw httpError(413, 'The content is larger than 200 MB; save the template without content');
+        return true;
+      } });
+    }
+  } catch (e) { fs.rmSync(d, { recursive: true, force: true }); throw e; }
+  writeText(path.join(d, 'template.json'), JSON.stringify({ name, description: String(description || ''), content: !!content, from: p.name, created: new Date().toISOString() }, null, 2) + '\n');
+  return listTemplates().find(t => t.id === id);
+}
+function deleteTemplate(id) { const d = templateDir(id); if (!isDir(d)) throw httpError(404, 'Template not found'); fs.rmSync(d, { recursive: true, force: true }); return { ok: true }; }
 
 function saveProjectYaml(slug, text) {
   const p = loadProject(slug);
@@ -390,7 +439,8 @@ function writeMcpJson(p) {
       if (r.env && typeof r.env === 'object' && Object.keys(r.env).length) servers[name].env = r.env;
     }
   }
-  const json = JSON.stringify({ mcpServers: servers }, null, 2) + '\n';
+  // ${secret:name} → ${PW_SECRET_NAME}: the values never land in the project folder (see lib/secrets.js)
+  const json = JSON.stringify({ mcpServers: require('./secrets').toEnvRefs(servers) }, null, 2) + '\n';
   if (!exists(file) || readText(file) !== json) writeText(file, json);
 }
 
@@ -877,6 +927,7 @@ function addExamples() {
 function refreshClaudeFiles(slug) { const p = loadProject(slug); if (!p.error) writeMcpJson(p); }
 
 module.exports = {
+  listTemplates, saveTemplate, deleteTemplate, TEMPLATES_DIR,
   renameProject, archiveProject, listArchived, restoreProject, deleteProject, refreshClaudeFiles, projectIndex, resolveRef, backlinks, projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
   ROOT, FEATURES_DIR, PROJECTS_DIR, STORES, LAYOUTS, FIELD_TYPES, YAML,
   httpError, slugify, normalizeFeature,

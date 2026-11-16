@@ -291,6 +291,8 @@ function manageProject(p) {
       ${p.external ? `<p class="faint small" style="margin:0 0 12px">The content stays where it is (<span class="mono">${esc(p.path)}</span>).</p>` : ''}
       <div class="mgsec"><b>Features</b><div class="mgfeat">${p.features.map(f => `<div class="row"><span style="flex:1">${esc(f.def ? f.def.name : f.key)} <span class="mono faint small">${esc(f.key)}</span></span><button class="btn sm ghost danger" type="button" data-rmf="${esc(f.key)}">Remove</button></div>`).join('') || '<span class="faint small">None</span>'}</div>
         <span class="faint small">Removing a feature takes it out of project.yaml; its files stay in the folder.</span></div>
+      <div class="mgsec"><b>Template</b><span class="muted small">Start new projects like this one: saves its project.yaml and, if you like, its pages, records and files.</span>
+        <div><button class="btn" type="button" data-template>${icon('copy', 14)} Save as template…</button></div></div>
       <div class="mgsec"><b>Archive</b><span class="muted small">Hides the project from the list. Its folder moves to <span class="mono">projects/_archive/</span>; restore it any time from the home page.</span>
         <div><button class="btn" type="button" data-archive>${icon('folder', 14)} Archive project</button></div></div>
       <div class="mgsec danger-zone"><b>Delete</b><span class="muted small">Deletes the folder <span class="mono">projects/${esc(p.slug)}</span> for good${p.external ? ' — the content folder it points to is <b>not</b> touched' : ', with everything in it'}. This cannot be undone.</span>
@@ -303,6 +305,7 @@ function manageProject(p) {
     if (!confirm(`Remove “${b.dataset.rmf}” from this project? Its files stay in the folder.`)) return;
     S.project = await api(`/api/projects/${enc(p.slug)}/features/${enc(b.dataset.rmf)}`, { method: 'DELETE' }); m.close(); await App.refreshProjects(); go('#/p/' + enc(p.slug)); toast('Feature removed');
   });
+  $('[data-template]', m.el).onclick = () => { m.close(); saveTemplateDialog(p); };
   $('[data-archive]', m.el).onclick = async () => { await api(`/api/projects/${enc(p.slug)}/archive`, { body: {} }); m.close(); S.project = null; await App.refreshProjects(); go('#/'); toast(`“${p.name}” archived`); };
   $('[data-delete]', m.el).onclick = () => { m.close(); confirmDelete(p.name, () => api(`/api/projects/${enc(p.slug)}`, { method: 'DELETE' })); };
 }
@@ -312,25 +315,52 @@ function confirmDelete(name, run) {
     onOk: async f => { if (f.n.value.trim() !== name) throw new Error('The name does not match'); await run(); S.project = null; await App.refreshProjects(); go('#/'); toast(`“${name}” deleted`); } });
 }
 
+function saveTemplateDialog(p) {
+  modal({ title: 'Save as template', ok: 'Save template',
+    body: `<div class="field"><label for="tn">Template name</label><input id="tn" name="name" value="${esc(p.name)}" required></div>
+      <div class="field"><label for="td">Description <span class="faint" style="font-weight:400">(optional)</span></label><input id="td" name="description" placeholder="When to use it"></div>
+      <label class="check"><input type="checkbox" name="content"><span><b>Include the content</b><span>Pages, records, pictures, files and scripts are copied into every new project. Chats are never copied. Without it, only the features and their settings are saved.</span></span></label>
+      <p class="faint small" style="margin:10px 0 0">Templates are kept in <span class="mono">data/templates/</span>.</p>`,
+    onOk: async f => { const t = await api(`/api/projects/${enc(p.slug)}/template`, { body: { name: f.name.value.trim(), description: f.description.value.trim(), content: f.content.checked } }); toast(`Template “${t.name}” saved`); } });
+}
+
 // ---------- new project ----------
-function newProjectDialog() {
+async function newProjectDialog() {
   const pick = new Set(['wiki']);
+  let templates = []; try { templates = await api('/api/templates'); } catch {}
+  let tpl = null;
   const yamlFor = name => `name: ${name ? (/[:#'"{}[\],&*!|>%@`]/.test(name) ? JSON.stringify(name) : name) : 'New project'}\ndescription: ""\n` + [...pick].map(k => `${k}:\n`).join('');
   const m = modal({ title: 'New project', ok: 'Create project', wide: true,
     body: `<div class="fgrid" style="grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:0 20px">
       <div><div class="field"><label for="pn">Name</label><input id="pn" name="name" required placeholder="e.g. Home Lab, Thesis, Customer X"></div>
-        <div class="field"><span class="lab">Features <span class="faint" style="font-weight:400">— from features/</span></span>
+        ${templates.length ? `<div class="field"><label for="ptpl">Start from</label><select id="ptpl" name="template"><option value="">Blank project — pick features below</option>${templates.map(t => `<option value="${esc(t.id)}">Template: ${esc(t.name)}${t.content ? ' (with content)' : ''}</option>`).join('')}</select>
+          <span class="hint" data-tinfo></span></div>` : ''}
+        <div class="field" data-featpick><span class="lab">Features <span class="faint" style="font-weight:400">— from features/</span></span>
           <div class="checks">${S.features.map(f => `<label class="check"><input type="checkbox" value="${esc(f.key)}" ${pick.has(f.key) ? 'checked' : ''}><span><b>${esc(f.def.name)}</b><span>${esc(fdesc(f.yaml) || f.def.layout)}</span></span></label>`).join('')}</div></div></div>
       <div class="field"><label for="py">project.yaml <span class="faint" style="font-weight:400">— edit freely</span></label><textarea id="py" name="yaml" class="yaml" style="min-height:320px" spellcheck="false"></textarea>
         <span class="hint">You can also ask Claude: “create a project Home Lab with a wiki and devices”.</span></div></div>`,
     onOk: async form => {
       const name = form.name.value.trim(); if (!name) throw new Error('Please enter a name');
-      const p = await api('/api/projects', { body: { name, yaml: form.yaml.value } });
+      const p = await api('/api/projects', { body: { name, yaml: form.yaml.value, template: tpl ? tpl.id : undefined } });
       await App.refreshProjects(); S.project = null; go('#/p/' + enc(p.slug)); toast('Project created');
     } });
   const f = m.form; let touched = false;
-  const sync = () => { if (!touched) f.yaml.value = yamlFor(f.name.value.trim()); };
+  const nameLine = n => `name: ${/[:#'"{}[\],&*!|>%@`]/.test(n) ? JSON.stringify(n) : n}`;
+  const sync = () => {
+    if (touched) return;
+    const n = f.name.value.trim();
+    f.yaml.value = tpl ? (/^name:.*$/m.test(tpl.yaml) ? tpl.yaml.replace(/^name:.*$/m, n ? nameLine(n) : '$&') : (n ? nameLine(n) + '\n' : '') + tpl.yaml) : yamlFor(n);
+  };
   f.name.oninput = sync; f.yaml.oninput = () => (touched = true);
+  if (f.template) f.template.onchange = () => {
+    tpl = templates.find(t => t.id === f.template.value) || null; touched = false;
+    $('[data-featpick]', m.el).hidden = !!tpl;
+    const info = $('[data-tinfo]', m.el);
+    info.innerHTML = tpl ? `${esc(tpl.description || (tpl.from ? 'Saved from ' + tpl.from : ''))}${tpl.features.length ? ` · ${esc(tpl.features.join(', '))}` : ''} · <a href="#" data-tdel>Delete this template</a>` : '';
+    const del = $('[data-tdel]', info);
+    if (del) del.onclick = async e => { e.preventDefault(); if (!(await confirmBox(`Delete the template “${tpl.name}”? Projects made from it stay as they are.`))) return; await api(`/api/templates/${enc(tpl.id)}`, { method: 'DELETE' }); m.close(); newProjectDialog(); };
+    sync();
+  };
   $$('.checks input', m.el).forEach(c => c.onchange = () => { c.checked ? pick.add(c.value) : pick.delete(c.value); touched = false; sync(); });
   sync();
 }
@@ -495,6 +525,37 @@ async function runUpdate(u) {
     st.innerHTML = `The new version is installed. Please start the workspace again${S.info.exe ? '' : ' (start.bat / start.sh)'}.`;
   } catch (e) { st.innerHTML = `<span style="color:var(--err)">${esc(e.message)}</span>`; m.el.querySelector('.mf').innerHTML = '<span class="sp"></span><button class="btn" type="button" data-x>Close</button>'; $('[data-x]', m.el).onclick = m.close; }
 }
+// ---------- secrets (API keys, tokens, passwords) ----------
+async function secretsDialog() {
+  const st = await api('/api/secrets');
+  const prot = st.protection === 'os' ? `<span class="chip ok">Encrypted, protected by ${esc(S.info.platform === 'win32' ? 'Windows' : 'the operating system')}</span>`
+    : `<span class="chip warn">Encrypted, but the key is stored next to them</span> <span class="faint small">Use the desktop app to protect them with ${esc(S.info.platform === 'win32' ? 'Windows' : 'the operating system')}.</span>`;
+  const rows = st.items.map(s => `<div class="lrow" style="gap:10px"><span class="mono" style="flex:1">${esc(s.name)}</span>
+      <code class="small" title="Write this in YAML to use it">\${secret:${esc(s.name)}}</code>
+      <button class="btn sm ghost" type="button" data-copy="${esc(s.name)}" title="Copy the reference">${icon('copy', 14)}</button>
+      <button class="btn sm ghost" type="button" data-edit="${esc(s.name)}">Replace</button>
+      <button class="btn sm ghost danger" type="button" data-del="${esc(s.name)}" aria-label="Delete ${esc(s.name)}">${icon('trash', 14)}</button></div>`).join('');
+  const m = modal({ title: 'Secrets', wide: true, ok: 'Save secret', cancel: 'Close',
+    body: `<p class="muted small" style="margin-top:0">API keys, tokens and passwords. They are kept out of your YAML files, and values are never shown again.
+      Use one in YAML by name, e.g. in an MCP connection: <code>Authorization: Bearer \${secret:github-token}</code>.
+      The chat hands it to Claude CLI, and settings like <code>github: token:</code> in settings.yaml read it too.</p>
+      <p>${prot}</p>${st.locked ? `<div class="err">${esc(st.locked)} <button class="btn sm danger" type="button" data-reset>Remove all secrets</button></div>` : ''}
+      <div class="card list-rows" style="padding:0;margin-bottom:14px">${rows || '<div class="lrow faint">No secrets yet.</div>'}</div>
+      <div class="fgrid"><div class="field"><label for="sn">Name</label><input id="sn" name="name" placeholder="github-token" autocomplete="off" pattern="[A-Za-z0-9][A-Za-z0-9_.\-]*"></div>
+      <div class="field"><label for="sv">Value</label><input id="sv" name="value" type="password" autocomplete="new-password" placeholder="paste the key or password"></div></div>`,
+    onOk: async form => {
+      const name = form.name.value.trim(), value = form.value.value;
+      if (!name || !value) throw new Error('Enter a name and a value');
+      await api(`/api/secrets/${enc(name)}`, { method: 'PUT', body: { value } });
+      toast(`Secret “${name}” saved`); setTimeout(secretsDialog, 50);
+    } });
+  $$('[data-copy]', m.el).forEach(b => (b.onclick = async () => { try { await navigator.clipboard.writeText('${secret:' + b.dataset.copy + '}'); toast('Copied'); } catch { toast('Copy failed'); } }));
+  $$('[data-edit]', m.el).forEach(b => (b.onclick = () => { m.form.name.value = b.dataset.edit; m.form.value.focus(); }));
+  $$('[data-del]', m.el).forEach(b => (b.onclick = async () => { if (!(await confirmBox(`Delete the secret “${b.dataset.del}”? Connections that use it stop working.`))) return; await api(`/api/secrets/${enc(b.dataset.del)}`, { method: 'DELETE' }); m.close(); secretsDialog(); }));
+  const r = $('[data-reset]', m.el); if (r) r.onclick = async () => { if (!(await confirmBox('Remove all secrets? You will have to enter them again.', 'Remove all'))) return; await api('/api/secrets', { method: 'DELETE' }); m.close(); secretsDialog(); };
+}
+$('[data-action="secrets"]').onclick = () => secretsDialog().catch(e => toast(e.message));
+
 $('[data-action="updates"]').onclick = async () => { const u = await refreshUpdates(); if (u) updatesDialog(u); };
 
 // ---------- live refresh ----------

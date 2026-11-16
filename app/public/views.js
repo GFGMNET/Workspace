@@ -74,7 +74,7 @@ async function recordDialog(ctx, rec, preset = {}) {
   const m = modal({
     title: rec ? `${rec.title}` : `New ${def.new_item.toLowerCase()} · ${def.name}`, ok: rec ? 'Save' : 'Create', wide: fields.length > 6,
     body: `<div class="fgrid">${fields.map(f => fieldInput(f, data[f.name], fctx)).join('')}</div><div data-bl></div>
-      ${isMcp ? `<p class="faint small" style="margin:0">Local servers use <b>command</b> + <b>args</b> (on Windows, npx often needs command <code>cmd</code> and args <code>/c</code>, <code>npx</code>, …). Remote servers use <b>url</b>. Saved to <code>.mcp.json</code> for Claude CLI.</p>` : ''}
+      ${isMcp ? `<p class="faint small" style="margin:0">Local servers use <b>command</b> + <b>args</b> (on Windows, npx often needs command <code>cmd</code> and args <code>/c</code>, <code>npx</code>, …). Remote servers use <b>url</b>. Saved to <code>.mcp.json</code> for Claude CLI. Keys and passwords: save them under <a href="#" onclick="secretsDialog();return false">Secrets</a> and write <code>\${secret:name}</code>.</p>` : ''}
       ${rec ? `<p class="faint small" style="margin:8px 0 0"><span class="mono">${esc(rec.file)}</span></p>` : ''}`,
     extra: rec ? `<button type="button" class="btn ghost danger" data-del>${icon('trash', 14)} Delete</button>` : '',
     onOk: async form => {

@@ -58,6 +58,7 @@ function main() {
     // Use a workspace that is already running on this port (e.g. started with start.bat), else start our own.
     if (restarted || !(await answers(url))) {
       process.argv = [process.execPath, path.join(APP_DIR, 'server.js'), ...ARGS.filter(a => !['--browser', '--open', '--no-open'].includes(a))];
+      global.pwSafeStorage = require('electron').safeStorage; // protects the secrets' key (lib/secrets.js)
       try { require(path.join(APP_DIR, 'server.js')); } catch (e) { fail(e); return; }
       const until = Date.now() + 60000;
       while (Date.now() < until && !(await answers(url))) await wait(300);

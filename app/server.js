@@ -9,6 +9,8 @@ const ws = require('./lib/workspace');
 const chat = require('./lib/chat');
 const files = require('./lib/files');
 const ide = require('./lib/ide');
+const secrets = require('./lib/secrets');
+function refreshAllClaudeFiles() { for (const p of ws.listProjects()) { try { ws.refreshClaudeFiles(p.slug); } catch {} } }
 const updater = require('./lib/updater');
 const github = require('./lib/github');
 
@@ -100,6 +102,11 @@ const routes = [
   ['POST', /^\/api\/update\/skip$/, async (m, q, req) => updater.skip((await json(req)).version)],
   ['POST', /^\/api\/update\/later$/, () => updater.later()],
   ['POST', /^\/api\/update\/apply$/, async () => { const r = await updater.apply(); setTimeout(() => restart(r.swap), 600); return { ...r, restarting: true }; }],
+  // secrets (values are never sent back)
+  ['GET', /^\/api\/secrets$/, () => secrets.status()],
+  ['PUT', /^\/api\/secrets\/([^/]+)$/, async (m, q, req) => { const r = secrets.set(d(m[1]), (await json(req)).value); refreshAllClaudeFiles(); return r; }],
+  ['DELETE', /^\/api\/secrets\/([^/]+)$/, (m) => secrets.remove(d(m[1]))],
+  ['DELETE', /^\/api\/secrets$/, () => secrets.removeAll()],
   // full VS Code inside the app
   ['GET', /^\/api\/ide$/, () => ide.status()],
   ['POST', /^\/api\/ide\/start$/, () => ide.start()],
@@ -128,6 +135,9 @@ const routes = [
   ['PATCH', new RegExp(`^${P}$`), async (m, q, req) => projectView(ws.renameProject(d(m[1]), await json(req)))],
   ['POST', new RegExp(`^${P}/archive$`), (m) => ws.archiveProject(d(m[1]))],
   ['DELETE', new RegExp(`^${P}$`), (m) => ws.deleteProject(d(m[1]))],
+  ['GET', /^\/api\/templates$/, () => ws.listTemplates()],
+  ['POST', new RegExp(`^${P}/template$`), async (m, q, req) => ws.saveTemplate(d(m[1]), await json(req))],
+  ['DELETE', /^\/api\/templates\/([^/]+)$/, (m) => ws.deleteTemplate(d(m[1]))],
   ['GET', /^\/api\/archive$/, () => ws.listArchived()],
   ['POST', /^\/api\/archive\/([^/]+)\/restore$/, (m) => projectView(ws.restoreProject(d(m[1])))],
   ['DELETE', /^\/api\/archive\/([^/]+)$/, (m) => ws.deleteProject(d(m[1]), { archived: true })],

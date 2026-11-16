@@ -63,6 +63,39 @@ ok('mcp feature writes .mcp.json', () => {
   const j = JSON.parse(fs.readFileSync(path.join(tmp, 'projects', 'test-2', '.mcp.json'), 'utf8'));
   assert(j.mcpServers.filesystem && j.mcpServers.filesystem.command === 'npx');
 });
+ok('secrets: encrypted, ${secret:x} → env reference in .mcp.json, private to the app', () => {
+  const sec = require('../lib/secrets');
+  sec.set('gh-token', 's3cr3t-value');
+  assert(!fs.readFileSync(path.join(tmp, '.secrets.json'), 'utf8').includes('s3cr3t-value'));
+  assert.strictEqual(sec.get('gh-token'), 's3cr3t-value');
+  assert.strictEqual(sec.resolve('Bearer ${secret:gh-token}'), 'Bearer s3cr3t-value');
+  assert.strictEqual(sec.status().protection, 'none');
+  ws.createItem('test-2', 'mcp', { title: 'gh', data: { name: 'gh', transport: 'http', url: 'https://example.com/mcp', headers: { Authorization: 'Bearer ${secret:gh-token}' } } });
+  ws.refreshClaudeFiles('test-2');
+  const txt = fs.readFileSync(path.join(tmp, 'projects', 'test-2', '.mcp.json'), 'utf8');
+  assert(txt.includes('Bearer ${PW_SECRET_GH_TOKEN}') && !txt.includes('s3cr3t'));
+  assert.deepStrictEqual(sec.envFor(txt).env, { PW_SECRET_GH_TOKEN: 's3cr3t-value' });
+  assert.throws(() => require('../lib/files').readFile('workspace', '.secrets.json'), /private/);
+  // with an OS store (the desktop app), the key gets protected
+  global.pwSafeStorage = { isEncryptionAvailable: () => true, encryptString: s => Buffer.from('X' + s), decryptString: b => b.toString().slice(1) };
+  assert.strictEqual(sec.get('gh-token'), 's3cr3t-value');
+  assert.strictEqual(sec.status().protection, 'os');
+  delete global.pwSafeStorage;
+  assert(sec.status().locked);
+  sec.removeAll(); assert.strictEqual(sec.status().items.length, 0);
+});
+ok('templates: save with content (no chats, no location), new project from it', () => {
+  ws.createItem('test', 'wiki', { title: 'Template page', content: 'from the template' });
+  const t = ws.saveTemplate('test', { name: 'Starter', description: 'd', content: true });
+  assert(t && t.features.includes('wiki') && t.content);
+  assert(fs.existsSync(path.join(ws.TEMPLATES_DIR, t.id, 'wiki', 'template-page.md')));
+  const p = ws.createProject({ name: 'From template', yaml: t.yaml.replace(/^name:.*$/m, 'name: From template'), template: t.id });
+  assert.strictEqual(p.name, 'From template');
+  assert(fs.existsSync(path.join(p.dir, 'wiki', 'template-page.md')));
+  assert(!fs.existsSync(path.join(p.dir, 'template.json')));
+  ws.deleteTemplate(t.id); assert.strictEqual(ws.listTemplates().length, 0);
+  ws.deleteProject(p.slug);
+});
 ok('skills land in .claude/skills', () => assert(fs.existsSync(path.join(tmp, 'projects', 'test-2', '.claude', 'skills', 'an-skill-md-for-agent', 'SKILL.md'))));
 ok('path traversal is refused', () => assert.throws(() => ws.readItem('test', 'wiki', '../../features/wiki')));
 ok('links: [[Title]] across features + link fields -> mentioned in', () => {
