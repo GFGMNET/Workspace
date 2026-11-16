@@ -42,6 +42,14 @@ Register the workspace MCP server once:
 claude mcp add project-workspace --scope user -- node "C:\Workspace\app\mcp.js"
 ```
 
+With the desktop app (no Node.js installed), use the app's own runtime. The home page shows this command with your folder:
+
+```
+claude mcp add project-workspace --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\Workspace\ProjectWorkspace.exe" "C:\Workspace\app\mcp.js"
+```
+
+The name `workspace` is reserved in Claude CLI, so the server is called **project-workspace**.
+
 Claude can then list, create and edit projects, features, pages and records from anywhere, for example: *"create a project Office Move with a wiki, tasks and contacts"*.
 
 Tools: `list_projects`, `get_project`, `create_project`, `update_project_yaml`, `list_features`, `save_feature`, `list_items`, `read_item`, `create_item`, `write_item`, `backlinks`, `search`.

@@ -89,7 +89,7 @@ const P = '/api/projects/([^/]+)';
 const routes = [
   ['GET', /^\/api\/info$/, async () => ({ version: VERSION, root: ws.ROOT, examples: ws.listExamples().length, projectsDir: ws.PROJECTS_DIR, featuresDir: ws.FEATURES_DIR,
     stores: ws.STORES, layouts: ws.LAYOUTS, fieldTypes: ws.FIELD_TYPES, platform: process.platform, mcpScript: path.join(__dirname, 'mcp.js'), exe: process.env.PW_EXE || null, wiki: require('../package.json').wiki || null,
-    mcpCommand: process.env.PW_ELECTRON ? `"${process.env.PW_EXE}" "${path.join(__dirname, 'mcp.js')}"` : process.env.PW_EXE ? `"${process.env.PW_EXE}" --mcp` : `node "${path.join(__dirname, 'mcp.js')}"`,
+    mcpCommand: process.env.PW_ELECTRON ? `"${process.execPath}" "${path.join(__dirname, 'mcp.js')}"` : process.env.PW_EXE ? `"${process.env.PW_EXE}" --mcp` : `node "${path.join(__dirname, 'mcp.js')}"`,
     mcpEnv: process.env.PW_ELECTRON ? 'ELECTRON_RUN_AS_NODE=1' : null, desktop: !!process.env.PW_ELECTRON })],
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
   ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],

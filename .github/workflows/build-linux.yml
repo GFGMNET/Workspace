@@ -55,7 +55,17 @@ jobs:
           mkdir -p "$out"
           # 1. the Electron runtime, renamed, with our bootstrap instead of Electron's default app
           cp -a build/electron/node_modules/electron/dist/. "$out/"
-          mv "$out/electron" "$out/project-workspace"
+          mv "$out/electron" "$out/project-workspace-bin"
+          # start script: portable zips can't carry the root-owned sandbox helper, so Chromium needs
+          # --no-sandbox on the command line unless chrome-sandbox was set up (root, mode 4755)
+          cat > "$out/project-workspace" <<'SH'
+          #!/bin/sh
+          # Starts Project Workspace (desktop app). Options: a port number, --browser, --version.
+          d=$(dirname "$(readlink -f "$0")")
+          s=--no-sandbox
+          if [ -u "$d/chrome-sandbox" ] && [ "$(stat -c %u "$d/chrome-sandbox")" = 0 ]; then s=; fi
+          exec "$d/project-workspace-bin" $s "$@"
+          SH
           mv "$out/LICENSE" "$out/LICENSE.electron.txt"
           rm -f "$out/resources/default_app.asar"
           cp -r tools/electron/bootstrap "$out/resources/app"
@@ -65,12 +75,13 @@ jobs:
           #!/bin/sh
           # Runs the workspace without a window (servers without a desktop). Same options as the app.
           d=$(dirname "$(readlink -f "$0")")
-          PW_EXE="$d/project-workspace" PW_ELECTRON=1 PW_SERVER=1 ELECTRON_RUN_AS_NODE=1 exec "$d/project-workspace" "$d/app/server.js" "$@"
+          PW_EXE="$d/project-workspace" PW_ELECTRON=1 PW_SERVER=1 ELECTRON_RUN_AS_NODE=1 exec "$d/project-workspace-bin" "$d/app/server.js" "$@"
           SH
           sed -i 's/^          //' "$out/project-workspace-server"
           chmod 755 "$out/project-workspace-server"
           node -e "const fs=require('fs');fs.writeFileSync(process.argv[1]+'/runtime.json',JSON.stringify({electron:'${{ steps.e.outputs.electron }}',platform:'linux',arch:'${{ matrix.arch }}',files:fs.readdirSync(process.argv[1])},null,2))" "$out"
-          chmod 755 "$out/project-workspace" "$out/chrome_crashpad_handler" 2>/dev/null || true
+          sed -i 's/^          //' "$out/project-workspace"
+          chmod 755 "$out/project-workspace" "$out/project-workspace-bin" "$out/chrome_crashpad_handler" 2>/dev/null || true
           # 2. the program (replaced by updates; data/ is never in the package)
           git archive --format=tar HEAD app docs tools README.md LICENSE package.json | tar -x -C "$out"
           rm -rf "$out/tools/electron"
@@ -86,7 +97,7 @@ jobs:
         run: |
           export WORKSPACE_DIR="$RUNNER_TEMP/pw-data"
           out=$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
-            | ELECTRON_RUN_AS_NODE=1 dist/project-workspace/project-workspace dist/project-workspace/app/mcp.js)
+            | ELECTRON_RUN_AS_NODE=1 dist/project-workspace/project-workspace-bin dist/project-workspace/app/mcp.js)
           echo "$out"; echo "$out" | grep -q project-workspace
       - name: Check the server mode (no window)
         run: |

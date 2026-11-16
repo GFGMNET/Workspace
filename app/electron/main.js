@@ -18,7 +18,10 @@ const INSTALL = path.resolve(APP_DIR, '..');
 const PKG = require(path.join(INSTALL, 'package.json'));
 const ARGS = process.argv.slice(app.isPackaged ? 1 : 2).filter(a => !/^--(inspect|remote-debugging|no-sandbox)/.test(a));
 const has = f => ARGS.includes(f);
-process.env.PW_EXE = process.execPath;
+// Linux: "project-workspace" is a small start script (it adds --no-sandbox when needed) next to the binary.
+const LAUNCH = process.platform === 'linux' && fs.existsSync(path.join(path.dirname(process.execPath), 'project-workspace')) && path.basename(process.execPath) !== 'project-workspace'
+  ? path.join(path.dirname(process.execPath), 'project-workspace') : process.execPath;
+process.env.PW_EXE = LAUNCH;
 process.env.PW_ELECTRON = '1';
 
 // ---------- modes without a window ----------
@@ -27,8 +30,6 @@ else if (has('--mcp')) { app.whenReady().then(() => {}); require(path.join(APP_D
 else main();
 
 function main() {
-  // Portable Linux zips can't ship the setuid sandbox helper; the window only shows our own local page.
-  if (process.platform === 'linux') { try { const st = fs.statSync(path.join(path.dirname(process.execPath), 'chrome-sandbox')); if (st.uid !== 0 || !(st.mode & 0o4000)) app.commandLine.appendSwitch('no-sandbox'); } catch { app.commandLine.appendSwitch('no-sandbox'); } }
   app.setName('Project Workspace');
   if (process.platform === 'win32') app.setAppUserModelId('net.gfgm.projectworkspace');
   // Keep Electron's own cache etc. next to the data, so the app stays portable.
@@ -48,7 +49,7 @@ function main() {
   global.pwRestart = (opts = {}) => {
     process.env.PW_RESTARTED = '1';
     if (opts.swap) { require(path.join(APP_DIR, 'lib', 'updater.js')).runSwap(opts.swap); app.exit(0); return; }
-    app.relaunch({ args: ARGS.filter(a => a !== '--browser') });
+    app.relaunch({ execPath: LAUNCH, args: ARGS.filter(a => a !== '--browser') });
     app.exit(0);
   };
 

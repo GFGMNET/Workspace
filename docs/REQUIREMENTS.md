@@ -63,7 +63,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | ID | Requirement | Status | Issue |
 |---|---|---|---|
 | D1 | Connect via Claude CLI and different MCP servers | ✅ v0.1 | |
-| D2 | Runs like a real application, nothing to install (portable `ProjectWorkspace.exe`) | ✅ built · to test on Windows | #1 |
+| D2 | Runs like a real application, nothing to install (portable `ProjectWorkspace.exe`, desktop app since v0.6) | ✅ built · to test on Windows | #1 |
 | D3 | The .exe is built automatically by GitHub (workflow *Build Windows app*, by hand or with every release) | ✅ | #1 |
 | D4 | The git repository is only for developing the tool; live installations never use git and update by downloading a new version | ✅ | #17 |
 | D5 | Client data is kept separate from the program, so updates never overwrite it | ✅ | #17 |
@@ -79,6 +79,8 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D15 | Wiki: a details page per feature with all its options | ✅ | |
 | D16 | Link to the wiki inside the app (sidebar, Help on every feature) | ✅ | |
 | D17 | Linux variant in every release (x64 and arm64, nothing to install) | ✅ | #32 |
+| D18 | The app restarts by itself after an update | ✅ | #35 |
+| D19 | Desktop app in its own window instead of the browser (Electron, Windows and Linux) | 🚧 | #36 |
 
 ## Open questions
 

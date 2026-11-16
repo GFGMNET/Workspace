@@ -11,8 +11,11 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 | System | Download | Start |
 |---|---|---|
 | Windows | `project-workspace-…-windows-x64.zip` | double-click **ProjectWorkspace.exe** |
-| Linux (PC / server) | `project-workspace-…-linux-x64.zip` | `./project-workspace` |
+| Linux (PC) | `project-workspace-…-linux-x64.zip` | `./project-workspace` |
 | Linux (ARM, e.g. Raspberry Pi) | `project-workspace-…-linux-arm64.zip` | `./project-workspace` |
+| Linux server without a desktop | the Linux zip | `./project-workspace-server` |
+
+The workspace opens in its own app window.
 
 **With Node.js** (18 or newer, any system):
 

@@ -14,18 +14,20 @@ You need:
 
 **Easiest on Windows:** download `project-workspace-…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest) and unzip it anywhere, for example `C:\Workspace` or a folder in OneDrive. It contains **ProjectWorkspace.exe**, so you don't need Node.js.
 
-**Linux:** download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi), unzip it (`unzip project-workspace-…zip`), and run `./project-workspace` inside the folder. Node.js isn't needed there either. On a server without a desktop, use `./project-workspace --no-open` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
+**Linux:** download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi), unzip it (`unzip project-workspace-…zip`), and run `./project-workspace` inside the folder. Node.js isn't needed there either. On a server without a desktop, run `./project-workspace-server` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
 
 **Otherwise:** download the other zip of the release (or **Code → Download ZIP**) and install Node.js.
 
 ## 2. Start it
 
-- **Windows (exe):** double-click `ProjectWorkspace.exe`. The first time, Windows may say *Windows protected your PC*, because the exe isn't signed yet (#31). Click **More info → Run anyway**.
-- **Linux (executable):** `./project-workspace`
+- **Windows (app):** double-click `ProjectWorkspace.exe`. The first time, Windows may say *Windows protected your PC*, because the app isn't signed yet (#31). Click **More info → Run anyway**.
+- **Linux (app):** `./project-workspace`. On a server without a desktop: `./project-workspace-server`
 - **Windows (Node.js):** double-click `start.bat`
 - **macOS / Linux:** run `./start.sh`
 
-A console window opens and your browser shows **http://localhost:4321** as soon as the workspace is ready. Keep the console window open while you work; closing it stops the workspace.
+**The app** opens in its own window. Closing the window stops the workspace. To use it in a browser instead, choose **Workspace → Open in browser** in the menu (press Alt if the menu is hidden), or start the app with `--browser`.
+
+**With Node.js** (start.bat / start.sh) a console window opens and your browser shows **http://localhost:4321**. Keep the console window open while you work; closing it stops the workspace.
 
 On the first start a `data` folder is created next to the program. **All your projects live there.** It's the only folder you need to back up.
 
@@ -107,6 +109,8 @@ The layouts you can use are:
    ```
    claude mcp add project-workspace --scope user -- node "C:\Workspace\app\mcp.js"
    ```
+
+   With the app, the home page shows the exact command for your folder (it starts the server with the app's own runtime: `-e ELECTRON_RUN_AS_NODE=1 -- "C:\Workspace\ProjectWorkspace.exe" "C:\Workspace\app\mcp.js"`).
 
 ## 8. Use VS Code
 

@@ -16,12 +16,18 @@ The app tells you: once a week it checks GitHub and shows *Version X is availabl
 The exe isn't code-signed yet, so SmartScreen doesn't know the publisher. Click **More info → Run anyway**; Windows remembers it. Signing is planned ([#31](https://github.com/GFGMNET/Workspace/issues/31)).
 
 **Does it run on Linux?**
-Yes. Download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi), unzip it, and run `./project-workspace`. On a server without a desktop, add `--no-open`.
+Yes. Download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi), unzip it, and run `./project-workspace`. On a server without a desktop, run `./project-workspace-server` instead (no window).
 
 The app only listens on the machine itself (`127.0.0.1`). To reach it from another computer, use an SSH tunnel (`ssh -L 4321:localhost:4321 server`) rather than opening it to the network.
 
+**Why does it open in its own window and not in my browser?**
+Since v0.6 the downloads are a desktop app (Electron). It brings its own browser engine, so it works the same everywhere, including the VS Code tab. To use your browser instead, choose **Workspace → Open in browser** in the menu (press Alt if the menu is hidden), or start it with `--browser`. While the app runs, any browser on the same computer can open http://localhost:4321 too.
+
+**Updating from v0.5 to v0.6 on Linux**
+v0.5 can't keep the file permissions Electron needs when it updates itself. Download the v0.6 zip once, unzip it, and move your `data` folder into it. Later updates work in the app again.
+
 **Do I need start.bat?**
-Not with the Windows exe: **ProjectWorkspace.exe** replaces it. `start.bat` / `start.sh` are for running the program with Node.js, e.g. from a git clone while developing, or on macOS and Linux.
+Not with the Windows app: **ProjectWorkspace.exe** replaces it. `start.bat` / `start.sh` are for running the program with Node.js, e.g. from a git clone while developing, or on macOS and Linux.
 
 **"Port 4321 is already in use"**
 The workspace is already running. Open http://localhost:4321, or start a second one with `node app/server.js 4322`.

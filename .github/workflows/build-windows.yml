@@ -64,13 +64,16 @@ jobs:
           git archive --format=tar HEAD app docs tools README.md LICENSE package.json | tar -x -C $out
           Remove-Item -Recurse -Force "$out/tools/electron" -ErrorAction SilentlyContinue
           # 3. icon and file details
-          npx --yes rcedit@4.0.1 "$out/ProjectWorkspace.exe" --set-icon tools/electron/icon.ico `
+          npm install --prefix build/rcedit rcedit@4.0.1 --no-save --no-audit --no-fund
+          $rcedit = Get-ChildItem -Recurse build/rcedit/node_modules/rcedit -Filter "rcedit-x64.exe" | Select-Object -First 1
+          & $rcedit.FullName "$out/ProjectWorkspace.exe" --set-icon tools/electron/icon.ico `
             --set-version-string "ProductName" "Project Workspace" `
             --set-version-string "FileDescription" "Project Workspace" `
             --set-version-string "CompanyName" "GFGMNET" `
             --set-version-string "LegalCopyright" "MIT License" `
             --set-version-string "OriginalFilename" "ProjectWorkspace.exe" `
             --set-file-version "${{ steps.v.outputs.version }}" --set-product-version "${{ steps.v.outputs.version }}"
+          if ($LASTEXITCODE) { throw "rcedit failed" }
       - name: Check the app starts and shows the workspace
         run: |
           $exe = Resolve-Path "dist/ProjectWorkspace/ProjectWorkspace.exe"

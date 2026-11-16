@@ -234,6 +234,7 @@ This is a stdio JSON-RPC server with no dependencies. Register it once:
 
 ```
 claude mcp add project-workspace --scope user -- node "<path>/app/mcp.js"
+# desktop app: -e ELECTRON_RUN_AS_NODE=1 -- "<folder>/ProjectWorkspace.exe" "<folder>/app/mcp.js"
 ```
 
 Tools: `list_projects`, `get_project`, `create_project`, `update_project_yaml`, `list_features`, `save_feature`, `list_items`, `read_item`, `create_item`, `write_item`, `backlinks`, `search`.
@@ -318,24 +319,46 @@ Live installations never use git; they are updated from **GitHub Releases** (#26
 - **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
 - **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* releases the version in `package.json` (or push a tag `vX.Y.Z`). It runs the tests, zips the program (`git archive`, so no client data) and creates the release; the notes come from `docs/releases/vX.Y.Z.md` (else generated).
 
-## 7c. Windows and Linux apps (executables)
+## 7c. Desktop app (Windows and Linux)
 
-`.github/workflows/build-windows.yml` (runs on `windows-latest`, by hand or from the Release workflow) builds a portable package:
+The release packages are a desktop app built with **Electron**: the workspace opens in its own window
+(not a browser tab), with Node.js and the browser engine included. Nothing to install.
 
 ```
-ProjectWorkspace/
-  ProjectWorkspace.exe   Node + tools/sea/launcher.js (Node "single executable application")
-  app/ docs/ tools/ README.md LICENSE package.json
-  data/                  created on first start
+ProjectWorkspace/                      (Linux: project-workspace/)
+  ProjectWorkspace.exe                 Electron runtime, renamed   (Linux: project-workspace)
+  *.dll *.pak locales/ resources/ …    the rest of the runtime
+  resources/app/                       bootstrap: loads app/electron/main.js from the folder next to the exe
+  runtime.json                         Electron version, platform, arch, the runtime's file names
+  project-workspace-server             Linux only: the server without a window (for servers)
+  app/ docs/ tools/ README.md LICENSE package.json      the program
+  data/                                created on first start (Electron's own cache goes to data/.app)
 ```
 
-- The exe is a copy of `node.exe` with an icon and file details (`rcedit`) and the launcher injected (`postject`).
-- The launcher starts `app/server.js` from the folder next to the exe with `--open`, so updates only replace files.
-- Options: `--no-open`, a port number, `--mcp` (the workspace MCP server for Claude CLI) and `--version`.
-- The workflow tests the exe on the runner (`--version`, then `/api/info` must answer) before zipping it as `project-workspace-vX.Y.Z-windows-x64.zip`.
-- **Linux:** `.github/workflows/build-linux.yml` builds the same package with a `project-workspace` executable for **x64** (`ubuntu-latest`) and **arm64** (`ubuntu-24.04-arm`). It tests it the same way and zips it with the executable bit kept (`project-workspace-vX.Y.Z-linux-x64.zip` / `-linux-arm64.zip`).
-- **Updates** pick the package for the installation's own platform and processor (`pickAsset`). After an update the Linux executable is made runnable again (`chmod 755`).
-- Releases carry both zips. The updater picks the Windows zip when it runs from the exe (`PW_EXE` is set), and restarts the new exe after an update.
+- **app/electron/main.js** runs `app/server.js` inside the app and shows `http://localhost:<port>` in a window.
+  It keeps one instance (a second start focuses the window), remembers the window size (`data/.window.json`)
+  and uses a workspace that is already running on the port (e.g. from `start.bat`).
+  Pages of the workspace stay in the app ("Open in new window" opens an app window); other links
+  (wiki, GitHub, websites) open in the normal browser. Menu: *Open in browser*, *Open data folder*, zoom, DevTools.
+- **Options:** a port number, `--browser` (open a normal browser tab instead), `--version`, `--mcp`.
+- **MCP for Claude CLI:** the runtime can run as plain Node:
+  `claude mcp add project-workspace --scope user -e ELECTRON_RUN_AS_NODE=1 -- "<folder>\ProjectWorkspace.exe" "<folder>\app\mcp.js"`
+  (the app shows the exact command on the home page).
+- **Linux:** portable zips can't carry the setuid sandbox helper, so the window runs with `--no-sandbox`
+  unless `chrome-sandbox` is set up (owned by root, mode 4755). The window only shows the local workspace.
+  `project-workspace-server` runs the server without a window (`ELECTRON_RUN_AS_NODE`), for machines without a desktop.
+- **Builds:** `.github/workflows/build-windows.yml` (x64) and `build-linux.yml` (x64 on `ubuntu-latest`, arm64 on
+  `ubuntu-24.04-arm`) download Electron (major version in `tools/electron/electron-version`, latest patch),
+  rename it, set icon and file details (`rcedit`, Windows), add the bootstrap and the program, and check on the runner
+  that the window renders the workspace (`PW_SMOKE_FILE`), that the MCP server answers and (Linux) the server mode.
+  Zips: `project-workspace-vX.Y.Z-windows-x64.zip`, `-linux-x64.zip`, `-linux-arm64.zip` (Unix file modes kept).
+- **Updates:** the updater picks the package for its platform and processor (`pickAsset`). Program files are replaced
+  right away. The runtime's files (from `runtime.json`) stay as they are when the Electron version is the same;
+  otherwise the new runtime is put in place by a small script after the app has quit (`runSwap`), which then starts it again.
+  The app restarts itself after an update (`app.relaunch`); the new instance waits for the port.
+- Keeping Electron current: a release picks up the newest patch of the Electron major in `electron-version`;
+  raise the major before it reaches its end of life (every Electron major is supported for about 6 months).
+- Until v0.5 the packages used Node's single executable application feature instead (one exe, opened the browser).
 
 ## 7a. Documentation
 
@@ -377,7 +400,7 @@ Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text
 | Diagram | Mermaid text |
 | Chat | Claude CLI in the project folder; permissions per project |
 | Theme | Light, dark, or follow the OS |
-| App format | Node.js + browser; portable Windows exe and Linux executables (x64, arm64) built by GitHub Actions (#1, #32) |
+| App format | Desktop app (Electron, own window) for Windows and Linux (x64, arm64), built by GitHub Actions; Node.js + browser also works (#1, #32, #36) |
 | Licence | MIT (#13) |
 | Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
 | Dependencies | None to install: Mermaid, highlight.js and yaml are bundled |
