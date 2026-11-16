@@ -23,24 +23,37 @@ ide:
   # Default: the installed VS Code's own web server (needs internet once to download it).
   # {port}, {token}, {host} and {folder} are filled in by the app.
   # It is shown through the app's own address under {base} (default /ide), so browsers don't block it.
-  command: ${DEFAULTS.command}
+  # Keep the quotes: in YAML a value that starts with { would be read as a mapping.
+  command: "${DEFAULTS.command}"
   port: ${DEFAULTS.port}
-  url: ${DEFAULTS.url}
+  url: "${DEFAULTS.url}"
   # code-server instead (serves at its root, so the app strips /ide):
-  #   command: code-server --bind-addr 127.0.0.1:{port} --auth none --disable-telemetry
-  #   url: {base}/?folder={folder}
+  #   command: "code-server --bind-addr 127.0.0.1:{port} --auth none --disable-telemetry"
+  #   url: "{base}/?folder={folder}"
   #   strip_base: true
   # OpenVSCode Server instead:
-  #   command: openvscode-server --host 127.0.0.1 --port {port} --connection-token {token} --server-base-path {base}
-  #   url: {base}/?tkn={token}&folder={folder}
+  #   command: "openvscode-server --host 127.0.0.1 --port {port} --connection-token {token} --server-base-path {base}"
+  #   url: "{base}/?tkn={token}&folder={folder}"
 `;
 
 let child = null, starting = false, log = [];
 const settingsFile = () => path.join(ws.ROOT, 'settings.yaml');
+// Settings files written by v0.1–v0.6.0 have `url: {base}/…` without quotes. Since v0.5 reads full YAML,
+// that is a (broken) mapping, and the VS Code tab opened "/ide/[object Object]". Quote such lines once.
+function repairSettings(text) {
+  return text.replace(/^(\s*#?\s*(?:url|command):[ \t]*)(\{[^\n"']*?)[ \t]*$/gm, (m, k, v) => `${k}"${v.replace(/"/g, '\\"')}"`);
+}
 function settings() {
   let s = {};
-  try { s = (ws.YAML.parse(fs.readFileSync(settingsFile(), 'utf8')) || {}).ide || {}; }
+  try {
+    let text = fs.readFileSync(settingsFile(), 'utf8');
+    const fixed = repairSettings(text);
+    if (fixed !== text) { try { fs.writeFileSync(settingsFile(), fixed); text = fixed; } catch {} }
+    s = (ws.YAML.parse(text) || {}).ide || {};
+  }
   catch (e) { if (e.code === 'ENOENT') { try { fs.writeFileSync(settingsFile(), SETTINGS_TEMPLATE); } catch {} } }
+  // only text values count (anything else falls back to the defaults)
+  for (const k of ['command', 'url', 'base']) if (s[k] != null && typeof s[k] !== 'string') delete s[k];
   const port = parseInt(process.env.IDE_PORT || s.port || DEFAULTS.port, 10);
   const base = '/' + String(s.base || DEFAULTS.base).replace(/^\/+|\/+$/g, '');
   let command = String(process.env.IDE_COMMAND || s.command || DEFAULTS.command);
@@ -167,4 +180,4 @@ function upgrade(req, socket, head) {
   up.on('error', end); socket.on('error', end); up.on('close', end); socket.on('close', end);
 }
 
-module.exports = { base, rewriteLocation, withToken, status, start, stop, folderParam, isIdePath, proxy, upgrade };
+module.exports = { repairSettings, base, rewriteLocation, withToken, status, start, stop, folderParam, isIdePath, proxy, upgrade };

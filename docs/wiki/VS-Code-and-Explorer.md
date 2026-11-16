@@ -30,7 +30,7 @@ To use **code-server** or **OpenVSCode Server** instead, change `data/settings.y
 
 ```yaml
 ide:
-  command: code-server --bind-addr 127.0.0.1:{port} --auth none --disable-telemetry
+  command: "code-server --bind-addr 127.0.0.1:{port} --auth none --disable-telemetry"
   port: 8740
   url: "{base}/?folder={folder}"
   strip_base: true      # code-server serves at its root

@@ -178,6 +178,9 @@ ok('VS Code redirects stay under /ide', () => {
   assert.strictEqual(ide.rewriteLocation('http://127.0.0.1:8740/?folder=/x', s), '/ide/?folder=/x');
   assert.strictEqual(ide.rewriteLocation('/ide/?folder=/x', s), '/ide/?folder=/x');
   assert.strictEqual(ide.rewriteLocation('./x', s), './x');
+  const fixed = ide.repairSettings('ide:\n  command: code serve-web --port {port}\n  url: {base}/?tkn={token}&folder={folder}\n  # url: {base}/?folder={folder}\n');
+  assert.strictEqual(ws.YAML.parse(fixed).ide.url, '{base}/?tkn={token}&folder={folder}');
+  assert(fixed.includes('# url: "{base}/?folder={folder}"'));
   const c = ide.withToken('a=1; vscode-tkn=old'); assert(/^a=1; vscode-tkn=[a-f0-9]{32,}$/.test(c), c);
 });
 ok('UI scripts and the desktop app have no syntax errors', () => {
