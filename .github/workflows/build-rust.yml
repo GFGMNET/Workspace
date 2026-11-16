@@ -1,0 +1,146 @@
+# Builds version 1.0 (Rust + Tauri) for Windows x64, Linux x64 and Linux arm64 and publishes it as a
+# GitHub **pre-release** v<version> (version from rust/Cargo.toml). Installed 0.x apps only look at the
+# latest full release, so nobody gets a pre-release by accident. Run by hand: Actions → "Build 1.0 (Rust)".
+# Every package gets a build attestation (gh attestation verify <zip> -R GFGMNET/Workspace) and is listed
+# with its SHA-256 in SHA256SUMS, which the 1.0 updater checks on Linux (docs/plans/RELEASE-TRUST.md).
+name: Build 1.0 (Rust)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      v: ${{ steps.v.outputs.v }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        run: |
+          v=$(sed -n 's/^version = "\(.*\)"/\1/p' rust/Cargo.toml | head -1)
+          case "$v" in *-proto*|"") echo "::error::Set a real version in rust/Cargo.toml (now: $v)"; exit 1;; esac
+          if git ls-remote --exit-code --tags origin "v$v" >/dev/null; then echo "::error::v$v already exists — raise the version first"; exit 1; fi
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+
+  linux:
+    needs: version
+    strategy:
+      matrix:
+        include:
+          - { arch: x64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    env:
+      PW_INSTALL: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: System libraries for the window
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libdbus-1-dev > /dev/null
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build
+        working-directory: rust
+        run: cargo build --workspace --release
+      - name: Tests (unit, YAML corpus, API contract)
+        env:
+          PW_YAML_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server yaml
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server {port}
+          PW_MCP_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server mcp
+        run: |
+          (cd rust && cargo test -p pw-core -p pw-server --release)
+          node --test tests/yaml-corpus/yaml.test.js
+          node tests/contract/run.js
+      - name: Package
+        run: |
+          v=${{ needs.version.outputs.v }}
+          d=dist/project-workspace
+          mkdir -p $d/app
+          cp rust/target/release/project-workspace rust/target/release/project-workspace-server $d/
+          cp -r app/public app/starter $d/app/
+          cp LICENSE $d/ 2>/dev/null || true
+          (cd dist && zip -qry "project-workspace-v$v-linux-${{ matrix.arch }}.zip" project-workspace)
+          ls -l dist/*.zip
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux-${{ matrix.arch }}
+          path: dist/*.zip
+
+  windows:
+    needs: version
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PW_INSTALL: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build
+        working-directory: rust
+        run: cargo build --workspace --release
+      - name: Tests (unit, YAML corpus, API contract)
+        env:
+          PW_YAML_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe yaml
+          PW_SERVER_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe {port}
+          PW_MCP_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe mcp
+        run: |
+          Push-Location rust; cargo test -p pw-core -p pw-server --release; if ($LASTEXITCODE) { exit 1 }; Pop-Location
+          node --test tests/yaml-corpus/yaml.test.js; if ($LASTEXITCODE) { exit 1 }
+          node tests/contract/run.js; if ($LASTEXITCODE) { exit 1 }
+      - name: Package
+        run: |
+          $v = "${{ needs.version.outputs.v }}"
+          $d = "dist/ProjectWorkspace"
+          New-Item -ItemType Directory -Force "$d/app" | Out-Null
+          Copy-Item rust/target/release/project-workspace.exe "$d/ProjectWorkspace.exe"
+          Copy-Item rust/target/release/project-workspace-server.exe $d
+          Copy-Item -Recurse app/public, app/starter "$d/app"
+          if (Test-Path LICENSE) { Copy-Item LICENSE $d }
+          Compress-Archive -Path $d -DestinationPath "dist/project-workspace-v$v-windows-x64.zip"
+          Get-Item dist/*.zip | Select-Object Name, Length
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-x64
+          path: dist/*.zip
+
+  publish:
+    needs: [version, linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums and pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=${{ needs.version.outputs.v }}
+          cd dist && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS && cd ..
+          notes="docs/releases/v$v.md"
+          if [ -f "$notes" ]; then n=(--notes-file "$notes"); else n=(--generate-notes); fi
+          gh release create "v$v" dist/*.zip dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Project Workspace v$v (1.0 beta, Rust)" "${n[@]}"

@@ -4,7 +4,7 @@ resolver = "2"
 members = ["crates/pw-core", "crates/pw-server", "crates/pw-app"]
 
 [workspace.package]
-version = "0.9.0-proto"
+version = "0.9.0"
 edition = "2021"
 license = "MIT"
 

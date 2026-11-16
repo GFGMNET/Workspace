@@ -34,7 +34,7 @@ async fn main() {
     }
     let port: u16 = args.iter().find_map(|a| a.parse().ok()).or_else(|| std::env::var("PORT").ok().and_then(|p| p.parse().ok())).unwrap_or(4321);
     let ws = pw_server::workspace_from_env();
-    println!("\n  Project Workspace {} (Rust prototype)\n  → http://localhost:{port}\n  Your data: {}\n", pw_server::VERSION, ws.root.display());
+    println!("\n  Project Workspace {} (1.0 beta)\n  → http://localhost:{port}\n  Your data: {}\n", pw_server::VERSION, ws.root.display());
     if let Err(e) = pw_server::serve(ws, port).await {
         eprintln!("  Could not start on port {port}: {e}");
         std::process::exit(1);

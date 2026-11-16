@@ -523,11 +523,13 @@ The UI can be rebuilt freely on top of the API in section 7.
 | macOS app | after 1.0 | #56 |
 | VS Code tab: focused layout (editor + explorer) | | #62 |
 
-## 10. Version 1.0: Rust + Tauri (planned, #41)
+## 10. Version 1.0: Rust + Tauri (in progress, #41)
 
 The detailed plan (inventory, crates, phases with exit criteria, tests, risks, decisions) is in [MIGRATION-RUST.md](MIGRATION-RUST.md); milestone *v1.0 (Rust)*, issues #49–#55.
 
-**Status:** phase 0 (safety net) ✅, phase 1 (prototype) ✅ go — next: phase 2 (the core), then 3 (chat, VS Code, updater, MCP, desktop), 4 (beta), 5 (release). The code is in `rust/`.
+**Status:** phases 0–3 ✅ — the Rust server passes the whole API contract suite (32/32, incl. chat, VS Code proxy, updates,
+GitHub issues, MCP server) and the YAML corpus (33/33) on Linux and Windows. Next: phase 4, the beta **0.9.0** (pre-release,
+unsigned, built by `.github/workflows/build-rust.yml`), tested once by the maintainer; then SignPath (0.9.1) and 1.0.0. The code is in `rust/`.
 
 **Why.** Security, not speed: most CVEs we have to ship come from Chromium and Node.js inside Electron (7g).
 With Tauri the app uses the browser engine of the system — **WebView2** on Windows (updated by Windows/Edge, not by us),
@@ -545,14 +547,14 @@ Side effects: downloads of about 10–20 MB instead of 120–157 MB, less memory
 
 ```
 crates/
-  pw-core     projects, features, items, YAML (+ lenient reader), search, links, overview/due,
-              templates, archive, secrets (AES-256-GCM; key via DPAPI / Keychain / Secret Service)
-  pw-server   axum + tokio: the same routes as app/server.js; SSE; file watching (notify);
-              VS Code reverse proxy incl. WebSockets (hyper); chat (tokio::process → claude); updater
-  pw-mcp      the workspace MCP server (stdio JSON-RPC), same tools as app/mcp.js
-  pw-app      Tauri 2 shell: window on http://localhost:<port>, tray, notifications, autostart,
-              single instance; no Tauri IPC commands exposed to the page (capabilities: none)
-  pw-cli      project-workspace-server (no window, no WebKitGTK needed) and --mcp
+  pw-core     yaml (+ lenient reader, comment-keeping updates), workspace (features, projects), items (all storage
+              types, uploads, photo dates), files (explorer), links (search, backlinks, overview, due), projects
+              (create, rename, archive, templates), secrets (AES-256-GCM; key via Windows DPAPI or the Linux keyring)
+  pw-server   axum + tokio: the same routes as app/server.js; live refresh (notify); chat (Claude CLI, permission
+              helper `permission-mcp`); VS Code proxy incl. WebSockets (hyper); updater; GitHub issues;
+              the workspace MCP server (`mcp`). Binary: project-workspace-server (no window, no WebKitGTK needed)
+  pw-app      Tauri 2: window on http://localhost:<port>, tray, reminders, autostart, single instance, window size;
+              no Tauri IPC commands for the page (capabilities: none). Binary: ProjectWorkspace.exe / project-workspace
 app/public    unchanged screens, served by pw-server
 ```
 

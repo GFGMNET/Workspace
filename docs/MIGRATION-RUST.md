@@ -104,8 +104,8 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | 0 | Safety net: API contract tests, YAML corpus | ✅ done |
 | 1 | Prototype, go/no-go | ✅ done — **go** |
 | 2 | The core | ✅ done (2026-11-16) |
-| 3 | Chat, VS Code, updater, MCP, desktop extras | next |
-| 4 | Beta next to 0.x | |
+| 3 | Chat, VS Code, updater, MCP, desktop extras | ✅ done (2026-11-16) |
+| 4 | Beta next to 0.x | next: 0.9.0 pre-release, then the maintainer tests |
 | 5 | Release 1.0 | |
 
 **Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), SignPath signing last, just before 1.0.
@@ -155,9 +155,8 @@ In the prototype: project list, project pages, overview tiles, wiki/knowledge pa
 - `pw-server` routes for all of it, SSE file watching.
 - Done when: contract tests and YAML corpus green against the Rust server (`PW_SERVER_CMD=project-workspace-server`), except chat, VS Code, updates, MCP.
 
-**Result:** YAML corpus 33/33; contract tests 22/33 — every core test passes; the 11 left are phase 3
-(chat ×7 incl. the Claude CLI check in `info`, VS Code ×2, updates, GitHub issues). New modules: `pw-core::{items, files, links,
-projects, secrets}`, `pw-server::live`.
+**Result:** YAML corpus 33/33; every core contract test passes. New modules: `pw-core::{items, files, links, projects, secrets}`,
+`pw-server::live`.
 
 Steps, in this order (after each step: how many contract tests and YAML cases pass):
 
@@ -186,16 +185,30 @@ Steps, in this order (after each step: how many contract tests and YAML cases pa
   - **Linux:** if unwrapping fails, the app asks to enter the secrets again (as for a copied data folder).
 - Done when: the full contract suite is green against Rust; the MCP tools give the same answers as `app/mcp.js`.
 
+**Result of phase 3:** the full contract suite is green against Rust (32/32, also on Windows in CI), the MCP tools give the same
+answers (`project-workspace-server mcp`). How it was done:
+- chat: `pw-server::chat`; the permission helper is the program itself (`permission-mcp`), no Node.js needed;
+- VS Code: `pw-server::ide` (hyper client; WebSockets as raw bytes with the token cookie, then joined);
+- updater: `pw-server::updater` — Windows: the new `ProjectWorkspace.exe` must be signed by *SignPath Foundation* with product
+  name *Project Workspace* (checked with PowerShell's `Get-AuthenticodeSignature`); Linux: SHA-256 from `SHA256SUMS` of the
+  release; a backup of the program in `.update/`, the files are swapped after the app has quit, then it starts again;
+- secrets: the key is protected with **Windows DPAPI** (`protected: dpapi`) or the **Linux keyring** (`protected: keyring`,
+  desktop app). 0.x keys (`protected: os`) are taken over on Windows from `data/.app/Local State`; on Linux they are entered again;
+- desktop: tray menu (open, due today, keep in tray, reminders, start with the computer, open in browser, data folder, wiki,
+  quit), reminders every 30 minutes, single instance, window size in `data/.window.json`, links outside the workspace open
+  in the browser. Difference to 0.x: clicking a reminder doesn't open the item (Tauri can't do that on Windows/Linux yet).
+
 ### Phase 4: beta next to 0.x (2–4 weeks of use, little work)
 
-- `.github/workflows/build-rust.yml` builds Windows x64, Linux x64/arm64 and publishes **pre-releases** (`v1.0.0-beta.N`). The 0.x updater only looks at the latest *full* release, so nobody gets the beta by accident.
+- `.github/workflows/build-rust.yml` (ready) builds Windows x64, Linux x64/arm64, runs all tests, adds build attestations and `SHA256SUMS`, and publishes a **pre-release** (`v0.9.0`; version from `rust/Cargo.toml`). The 0.x updater only looks at the latest *full* release, so nobody gets the beta by accident.
 - You (and anyone who wants) run the beta on a **copy** of the data folder, then on the real one.
 - Security check (§7) runs for Rust too. Bugs → issues with label `v1.0`.
 - 0.x keeps getting automatic security releases.
 
 ### Phase 5: release 1.0 (1–2 days)
 
-- Last 0.x release (0.x.y) first: its updater removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
+- 0.9.0 (beta) and 0.9.1 (signed) are **pre-releases**; only 1.0.0 is a full release, so 0.x apps never see the betas.
+- Last 0.x release (0.x.y) first: its updater must recognise the 1.0 package (it has `project-workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
 - Release 1.0.0 as the latest release. 0.x apps offer the update; after the restart the Tauri app starts.
 - Docs: README, Getting started, wiki (Desktop App, Data and Updates, Security), DESIGN.md (the Node/Electron sections become "history").
 - macOS is not built (#56, later).

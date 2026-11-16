@@ -1,6 +1,6 @@
 //! HTTP API on 127.0.0.1 (same routes and answers as app/server.js; checked by tests/contract).
-//! Phase 1 prototype: info, features, projects, Markdown pages, static files, live-refresh stream;
-//! the other routes answer with empty data so the screens work.
+//! Also: chat (chat.rs), VS Code proxy (ide.rs), updates (updater.rs), GitHub issues (github.rs),
+//! live refresh (live.rs) and the workspace MCP server (mcp.rs).
 use axum::{
     body::{Body, Bytes},
     extract::{DefaultBodyLimit, Path, Query, Request, State},
