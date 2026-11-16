@@ -480,6 +480,8 @@ The UI can be rebuilt freely on top of the API in section 7.
 
 ## 10. Version 1.0: Rust + Tauri (planned, #41)
 
+The detailed plan (inventory, crates, phases with exit criteria, tests, risks, decisions) is in [MIGRATION-RUST.md](MIGRATION-RUST.md); milestone *v1.0 (Rust)*, issues #49–#55.
+
 **Why.** Security, not speed: most CVEs we have to ship come from Chromium and Node.js inside Electron (7g).
 With Tauri the app uses the browser engine of the system — **WebView2** on Windows (updated by Windows/Edge, not by us),
 **WebKitGTK** on Linux (updated by the distribution) — and the core becomes a Rust program (memory-safe, no runtime).
