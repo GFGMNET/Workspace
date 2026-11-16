@@ -33,6 +33,16 @@ function view(st = readState()) {
     snoozedUntil: st.snoozedUntil || null, snoozed: !!(st.snoozedUntil && Date.now() < st.snoozedUntil), error: st.updateError || null };
 }
 
+// Which download fits this installation: the exe package for its platform and processor when
+// running as an executable (Windows / Linux), otherwise the plain package that needs Node.js.
+function pickAsset(assets, platform = process.platform, arch = process.arch, isExe = !!process.env.PW_EXE) {
+  const zips = assets.filter(a => /\.zip$/i.test(a.name));
+  const osName = platform === 'win32' ? 'windows' : platform === 'darwin' ? 'macos' : 'linux';
+  const native = a => /-(windows|linux|macos)-/i.test(a.name);
+  if (isExe) return zips.find(a => new RegExp(`-${osName}-${arch}\\.zip$`, 'i').test(a.name)) || null;
+  return zips.find(a => !native(a)) || null;
+}
+
 async function check({ force = false } = {}) {
   const s = settings(); const st = readState();
   if (!force && (!s.check || (st.lastCheck && Date.now() - st.lastCheck < WEEK))) return view(st);
@@ -42,10 +52,8 @@ async function check({ force = false } = {}) {
     if (!r.ok) throw new Error(`GitHub answered ${r.status}`);
     const rel = await r.json();
     // The Windows exe package for installations started from the exe, the plain package otherwise.
-    const zips = (rel.assets || []).filter(a => /\.zip$/i.test(a.name));
-    const isExe = !!process.env.PW_EXE;
-    const asset = zips.find(a => /windows/i.test(a.name) === isExe) || (isExe ? null : zips[0]);
-    if (isExe && !asset) return view(writeState({ lastCheck: Date.now(), latest: null, updateError: null }));
+    const asset = pickAsset(rel.assets || []);
+    if (process.env.PW_EXE && !asset) return view(writeState({ lastCheck: Date.now(), latest: null, updateError: null }));
     const latest = { version: String(rel.tag_name || '').replace(/^v/i, ''), name: rel.name || rel.tag_name, notes: rel.body || '', published: rel.published_at,
       page: rel.html_url, zip: asset ? asset.browser_download_url : rel.zipball_url };
     return view(writeState({ lastCheck: Date.now(), latest, updateError: null }));
@@ -123,6 +131,8 @@ async function apply() {
         continue;
       }
       fs.cpSync(path.join(src, e), path.join(install, e), { recursive: true });
+      // zips don't always keep the executable bit: make the Linux/macOS executable runnable again
+      if (process.platform !== 'win32' && process.env.PW_EXE && e === path.basename(process.env.PW_EXE)) { try { fs.chmodSync(path.join(install, e), 0o755); } catch {} }
     }
     fs.rmSync(unpacked, { recursive: true, force: true });
     writeState({ updatedFrom: PKG.version, updatedTo: pkg.version, updatedAt: Date.now(), backup: path.relative(install, backup), updateError: null, skipped: null });
@@ -138,4 +148,4 @@ async function apply() {
   }
 }
 
-module.exports = { check, skip, later, apply, view, newer, unzip };
+module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset };

@@ -119,6 +119,14 @@ ok('rename (name + folder), archive, restore, delete', () => {
   ws.deleteProject('new-name');
   assert(!fs.existsSync(path.join(tmp, 'projects', 'new-name')));
 });
+ok('updates: each installation picks its own download', () => {
+  const up = require('../lib/updater');
+  const assets = ['project-workspace-v1.0.0.zip', 'project-workspace-v1.0.0-windows-x64.zip', 'project-workspace-v1.0.0-linux-x64.zip', 'project-workspace-v1.0.0-linux-arm64.zip'].map(name => ({ name }));
+  assert.strictEqual(up.pickAsset(assets, 'win32', 'x64', true).name, 'project-workspace-v1.0.0-windows-x64.zip');
+  assert.strictEqual(up.pickAsset(assets, 'linux', 'arm64', true).name, 'project-workspace-v1.0.0-linux-arm64.zip');
+  assert.strictEqual(up.pickAsset(assets, 'linux', 'x64', false).name, 'project-workspace-v1.0.0.zip');
+  assert.strictEqual(up.pickAsset(assets, 'darwin', 'arm64', true), null);
+});
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 
 // MCP server handshake
