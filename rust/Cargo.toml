@@ -1,0 +1,23 @@
+# Version 1.0 of Project Workspace in Rust (see docs/MIGRATION-RUST.md). Phase 1: prototype.
+[workspace]
+resolver = "2"
+members = ["crates/pw-core", "crates/pw-server", "crates/pw-app"]
+
+[workspace.package]
+version = "0.9.0-proto"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+yaml-rust2 = "0.10"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "fs", "time", "sync", "signal"] }
+axum = "0.8"
+tokio-stream = "0.1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

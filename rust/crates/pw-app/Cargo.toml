@@ -1,0 +1,17 @@
+[package]
+name = "pw-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "project-workspace"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+pw-server = { path = "../pw-server" }
+tokio.workspace = true
+tauri = { version = "2", features = [] }

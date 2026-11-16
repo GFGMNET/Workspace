@@ -1,0 +1,6 @@
+{
+  "identifier": "default",
+  "description": "The workspace page gets no native permissions (it only talks to the local server over HTTP).",
+  "windows": ["main"],
+  "permissions": []
+}

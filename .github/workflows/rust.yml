@@ -1,0 +1,115 @@
+# Version 1.0 in Rust (docs/MIGRATION-RUST.md): builds and checks the prototype on Linux and Windows.
+# The zips (artifacts of the run) hold the desktop app (Tauri), the server and the screens.
+name: Rust (1.0 prototype)
+
+on:
+  push:
+    branches: [main]
+    paths: ['rust/**', 'app/public/**', 'tests/**', '.github/workflows/rust.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    env:
+      PW_INSTALL: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: System libraries for the window (WebKitGTK)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev xvfb > /dev/null
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Unit tests
+        working-directory: rust
+        run: cargo test --workspace --release
+      - name: Build
+        working-directory: rust
+        run: cargo build --workspace --release
+      - name: Server answers
+        run: |
+          export WORKSPACE_DIR="$RUNNER_TEMP/data"
+          rust/target/release/project-workspace-server 4396 &
+          for i in $(seq 1 30); do sleep 0.5; curl -fsS http://localhost:4396/api/info >/dev/null && break; done
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' http://localhost:4396/api/examples
+          curl -fsS http://localhost:4396/api/projects | head -c 300; echo
+          curl -fsS http://localhost:4396/api/projects/home-lab/f/wiki/items | head -c 300; echo
+          curl -fsS http://localhost:4396/ | head -c 100; echo
+      - name: Desktop app starts (window on a virtual screen)
+        run: |
+          export WORKSPACE_DIR="$RUNNER_TEMP/data2"
+          xvfb-run -a rust/target/release/project-workspace 4395 > /tmp/app.log 2>&1 &
+          ok=0; for i in $(seq 1 40); do sleep 0.5; curl -fsS http://localhost:4395/api/info >/dev/null && { ok=1; break; }; done
+          sleep 3; cat /tmp/app.log; [ $ok = 1 ] && echo "app OK" || { echo "app did not answer"; exit 1; }
+      - name: YAML corpus against the Rust reader (progress, may fail)
+        continue-on-error: true
+        env:
+          PW_YAML_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server yaml
+        run: node --test tests/yaml-corpus/yaml.test.js 2>&1 | grep -E "^not ok|^# (pass|fail)"
+      - name: API contract tests against the Rust server (progress, may fail)
+        continue-on-error: true
+        env:
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server {port}
+        run: node tests/contract/run.js 2>&1 | grep -E "^✔|^✖|^ℹ (tests|pass|fail)" | head -80
+      - name: Package
+        run: |
+          d=dist/project-workspace-proto
+          mkdir -p $d/app
+          cp rust/target/release/project-workspace rust/target/release/project-workspace-server $d/
+          cp -r app/public app/starter $d/app/
+          (cd dist && zip -qry project-workspace-proto-linux-x64.zip project-workspace-proto)
+          ls -l dist/*.zip; du -sh rust/target/release/project-workspace rust/target/release/project-workspace-server
+      - uses: actions/upload-artifact@v7
+        with:
+          name: project-workspace-proto-linux-x64
+          path: dist/project-workspace-proto-linux-x64.zip
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build
+        working-directory: rust
+        run: cargo build --workspace --release
+      - name: Package
+        run: |
+          $d = "dist/ProjectWorkspace-proto"
+          New-Item -ItemType Directory -Force "$d/app" | Out-Null
+          Copy-Item rust/target/release/project-workspace.exe "$d/ProjectWorkspace.exe"
+          Copy-Item rust/target/release/project-workspace-server.exe $d
+          Copy-Item -Recurse app/public, app/starter "$d/app"
+          Get-ChildItem $d -File | Select-Object Name, Length
+      - name: Server and app answer
+        run: |
+          $env:WORKSPACE_DIR = Join-Path $env:RUNNER_TEMP 'data'
+          $s = Start-Process dist/ProjectWorkspace-proto/project-workspace-server.exe -ArgumentList 4396 -PassThru -WindowStyle Hidden
+          $ok = $false; for ($i = 0; $i -lt 30 -and -not $ok; $i++) { Start-Sleep -Milliseconds 500; try { Invoke-RestMethod http://localhost:4396/api/info | Out-Null; $ok = $true } catch {} }
+          Stop-Process -Id $s.Id -Force
+          if (-not $ok) { throw 'server did not answer' }
+          $env:WORKSPACE_DIR = Join-Path $env:RUNNER_TEMP 'data2'
+          $a = Start-Process dist/ProjectWorkspace-proto/ProjectWorkspace.exe -ArgumentList 4395 -PassThru
+          $ok = $false; for ($i = 0; $i -lt 40 -and -not $ok; $i++) { Start-Sleep -Milliseconds 500; try { $r = Invoke-RestMethod http://localhost:4395/api/info; $ok = $true } catch {} }
+          Start-Sleep 3; $alive = -not $a.HasExited
+          Stop-Process -Id $a.Id -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { throw 'app did not answer' }
+          Write-Host "app OK (window process alive: $alive), version $($r.version)"
+      - name: Zip
+        run: Compress-Archive -Path dist/ProjectWorkspace-proto -DestinationPath dist/project-workspace-proto-windows-x64.zip; Get-Item dist/*.zip | Select-Object Name, Length
+      - uses: actions/upload-artifact@v7
+        with:
+          name: project-workspace-proto-windows-x64
+          path: dist/project-workspace-proto-windows-x64.zip
