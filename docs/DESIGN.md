@@ -2,7 +2,7 @@
 
 This document describes what the workspace is, how it is built, and why. It has enough detail to rebuild it from scratch or port it to another stack.
 
-Status: version 0.3. Requirements and their status: [REQUIREMENTS.md](REQUIREMENTS.md). Open work is tracked in [GitHub Issues](https://github.com/GFGMNET/Workspace/issues).
+Status: version 0.4. Requirements and their status: [REQUIREMENTS.md](REQUIREMENTS.md). Open work is tracked in [GitHub Issues](https://github.com/GFGMNET/Workspace/issues).
 
 ---
 
