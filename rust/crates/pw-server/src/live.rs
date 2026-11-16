@@ -15,6 +15,10 @@ pub fn subscribe() -> Option<broadcast::Receiver<String>> { TX.get().map(|t| t.s
 
 enum Msg { Root(PathBuf), Ext(String, PathBuf) }
 
+/// Only real changes (reading a file is not one — the app reads files all the time).
+fn is_change(e: &notify::Event) -> bool {
+    matches!(e.kind, notify::EventKind::Create(_) | notify::EventKind::Modify(_) | notify::EventKind::Remove(_))
+}
 fn skipped(rel: &str) -> bool {
     rel.split('/').any(|p| p == ".git" || p == "node_modules" || p == ".trash" || p == ".update") || rel.starts_with("app/")
 }
@@ -32,7 +36,7 @@ pub fn start(ws: Arc<Workspace>) {
         let root = ws.root.canonicalize().unwrap_or_else(|_| ws.root.clone());
         let t = tx.clone();
         let mut root_watcher = match notify::recommended_watcher(move |r: notify::Result<notify::Event>| {
-            if let Ok(e) = r { for p in e.paths { let _ = t.send(Msg::Root(p)); } }
+            if let Ok(e) = r { if is_change(&e) { for p in e.paths { let _ = t.send(Msg::Root(p)); } } }
         }) { Ok(w) => w, Err(e) => { eprintln!("  (live refresh disabled: {e})"); return; } };
         if let Err(e) = root_watcher.watch(&root, RecursiveMode::Recursive) { eprintln!("  (live refresh disabled: {e})"); return; }
         let mut ext: BTreeMap<String, (PathBuf, notify::RecommendedWatcher)> = BTreeMap::new();
@@ -52,7 +56,7 @@ pub fn start(ws: Arc<Workspace>) {
                     if ext.contains_key(&slug) { continue; }
                     let t = tx.clone(); let s2 = slug.clone();
                     if let Ok(mut w) = notify::recommended_watcher(move |r: notify::Result<notify::Event>| {
-                        if let Ok(e) = r { for p in e.paths { let _ = t.send(Msg::Ext(s2.clone(), p)); } }
+                        if let Ok(e) = r { if is_change(&e) { for p in e.paths { let _ = t.send(Msg::Ext(s2.clone(), p)); } } }
                     }) {
                         if w.watch(&dir, RecursiveMode::Recursive).is_ok() { ext.insert(slug, (dir, w)); }
                     }
