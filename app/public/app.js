@@ -488,11 +488,11 @@ async function runUpdate(u) {
   try {
     const r = await api('/api/update/apply', { body: {} });
     st.innerHTML = `Installed version ${esc(r.to)}. Restarting…${r.notes && r.notes.length ? `<br><span class="faint small">${r.notes.map(esc).join('<br>')}</span>` : ''}`;
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 90; i++) {
       await new Promise(res => setTimeout(res, 1000));
       try { const info = await api('/api/info'); if (info.version === r.to) { location.reload(); return; } } catch {}
     }
-    st.innerHTML = 'The new version is installed. Please start the workspace again (start.bat).';
+    st.innerHTML = 'The new version is installed. Please start the workspace again${S.info.exe ? '' : ' (start.bat / start.sh)'}.';
   } catch (e) { st.innerHTML = `<span style="color:var(--err)">${esc(e.message)}</span>`; m.el.querySelector('.mf').innerHTML = '<span class="sp"></span><button class="btn" type="button" data-x>Close</button>'; $('[data-x]', m.el).onclick = m.close; }
 }
 $('[data-action="updates"]').onclick = async () => { const u = await refreshUpdates(); if (u) updatesDialog(u); };

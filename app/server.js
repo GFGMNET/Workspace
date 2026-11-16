@@ -228,8 +228,12 @@ function restart() {
   const exe = process.env.PW_EXE ? path.join(ws.INSTALL_DIR, path.basename(process.env.PW_EXE)) : null;
   const cmd = exe || process.execPath;
   const args = [...(exe ? [] : [path.join(__dirname, 'server.js')]), ...ARGS.filter(a => a !== '--open'), ...(exe ? ['--no-open'] : [])];
-  if (process.platform === 'win32') exec(`start "Project Workspace" "${cmd}" ${args.map(a => `"${a}"`).join(' ')}`, { cwd: ws.INSTALL_DIR });
-  else require('child_process').spawn(cmd, args, { cwd: ws.INSTALL_DIR, detached: true, stdio: 'inherit' }).unref();
+  // The new process waits for this one to free the port (PW_RESTARTED), so it can start right away.
+  const env = { ...process.env, PW_RESTARTED: '1' };
+  try {
+    const opts = { cwd: ws.INSTALL_DIR, env, detached: true, stdio: process.platform === 'win32' ? 'ignore' : 'inherit', windowsHide: false };
+    require('child_process').spawn(cmd, args, opts).unref(); // on Windows: its own console window
+  } catch (e) { console.error('  Could not restart: ' + e.message + '\n  Please start the workspace again.'); }
   setTimeout(() => process.exit(0), 300);
 }
 
@@ -251,12 +255,16 @@ server.on('upgrade', (req, socket, head) => {
   socket.destroy();
 });
 
+// After an update the new process may start before the old one has let go of the port: retry for a while.
+let listenTries = 0;
 server.on('error', e => {
+  if (e.code === 'EADDRINUSE' && process.env.PW_RESTARTED === '1' && listenTries++ < 60) { setTimeout(() => server.listen(PORT, HOST), 500); return; }
   if (e.code === 'EADDRINUSE' && OPEN) { console.log(`\n  The workspace is already running — opening http://localhost:${PORT}\n`); openBrowser(); setTimeout(() => process.exit(0), 500); return; }
   if (e.code === 'EADDRINUSE') { console.error(`\n  Port ${PORT} is already in use. Is the workspace already running? Open http://localhost:${PORT}\n  (or start with another port: node app/server.js 4322)\n`); process.exit(1); }
   throw e;
 });
 server.listen(PORT, HOST, () => {
+  delete process.env.PW_RESTARTED;
   watch(); watchExternal(); setInterval(watchExternal, 30000);
   console.log(`\n  Project Workspace ${VERSION}`);
   console.log(`  → http://localhost:${PORT}`);
