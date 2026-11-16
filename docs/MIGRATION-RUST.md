@@ -103,8 +103,8 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | S | Trusted releases (account protection now, signing with 1.0) | decided; account protection done |
 | 0 | Safety net: API contract tests, YAML corpus | ✅ done |
 | 1 | Prototype, go/no-go | ✅ done — **go** |
-| 2 | The core | next |
-| 3 | Chat, VS Code, updater, MCP, desktop extras | |
+| 2 | The core | ✅ done (2026-11-16) |
+| 3 | Chat, VS Code, updater, MCP, desktop extras | next |
 | 4 | Beta next to 0.x | |
 | 5 | Release 1.0 | |
 
@@ -154,6 +154,10 @@ In the prototype: project list, project pages, overview tiles, wiki/knowledge pa
 - `pw-core` complete: features (aliases, normalisation), projects (`location:`, overview, rename, archive, restore, delete), items for every storage type (markdown, images, files, records, diagram, chat history), search, links and backlinks, templates, due, explorer, photo dates, secrets.
 - `pw-server` routes for all of it, SSE file watching.
 - Done when: contract tests and YAML corpus green against the Rust server (`PW_SERVER_CMD=project-workspace-server`), except chat, VS Code, updates, MCP.
+
+**Result:** YAML corpus 33/33; contract tests 22/33 — every core test passes; the 11 left are phase 3
+(chat ×7 incl. the Claude CLI check in `info`, VS Code ×2, updates, GitHub issues). New modules: `pw-core::{items, files, links,
+projects, secrets}`, `pw-server::live`.
 
 Steps, in this order (after each step: how many contract tests and YAML cases pass):
 

@@ -20,6 +20,12 @@ aes-gcm = "0.10"
 base64 = "0.22"
 getrandom = "0.2"
 notify = "8"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "http2"] }
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["client-legacy", "http1", "tokio"] }
+http-body-util = "0.1"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+sha2 = "0.10"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 
 [profile.release]
