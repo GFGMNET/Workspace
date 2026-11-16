@@ -515,6 +515,15 @@ To port it to another stack, keep these contracts:
 
 The UI can be rebuilt freely on top of the API in section 7.
 
+## 9b. Planned features
+
+| Feature | Plan | Issue |
+|---|---|---|
+| Ticketsystem (GLPI, osTicket) | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
+| Versions (Git or SVN, local or own server) | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
+| macOS app | after 1.0 | #56 |
+| Chat: answer permission prompts inline | | #10 |
+
 ## 10. Version 1.0: Rust + Tauri (planned, #41)
 
 The detailed plan (inventory, crates, phases with exit criteria, tests, risks, decisions) is in [MIGRATION-RUST.md](MIGRATION-RUST.md); milestone *v1.0 (Rust)*, issues #49–#55.
