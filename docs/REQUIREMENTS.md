@@ -85,7 +85,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D16 | Link to the wiki inside the app (sidebar, Help on every feature) | ✅ | |
 | D17 | Linux variant in every release (x64 and arm64, nothing to install) | ✅ | #32 |
 | D18 | The app restarts by itself after an update | ✅ | #35 |
-| D19 | Desktop app in its own window instead of the browser (Electron, Windows and Linux) | ✅ built · to test on Windows | #36 |
+| D19 | Desktop app in its own window instead of the browser (Electron, Windows and Linux) | ✅ v0.6.0 · to test on Windows | #36 |
 
 ## Open questions
 
