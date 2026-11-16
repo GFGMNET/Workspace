@@ -102,7 +102,7 @@ Each phase ends with a check before the next starts. Estimates are working days 
 
 ### Phase S: trusted releases
 
-Moved out of this plan: see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) (#49, #31). The first attempt (2026-11-16: a key on the maintainer's PC and signing scripts) was removed as too cumbersome. 1.0 takes over whatever is decided there.
+Decided 2026-11-16, details in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) (#49, #31): free code signing by SignPath Foundation for the 1.0 Windows program (one *Approve* click per release), updater checks the signature (Windows) and checksum + GitHub build attestation (Linux). Work items: apply at SignPath before phase 4; signing in the Windows build of phase 4; updater checks in phase 3; *Code signing policy* section in README and wiki.
 
 ### Phase 0: the safety net (3–4 days)
 

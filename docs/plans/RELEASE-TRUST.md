@@ -1,6 +1,6 @@
 # Plan: trusted releases
 
-Status: **proposed** · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
+Status: **decided 2026-11-16** (one *Approve* click per release is fine) · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
 
 History: a first attempt (a signing key on the maintainer's PC, scripts to sign every release) was removed on 2026-11-16: too many steps. A paid certificate was the second idea; this plan replaces it with something **free, without keys or files to look after, and one click per release at most**.
 
@@ -70,6 +70,6 @@ What the project has to do once: a short **Code signing policy** section in the 
 | Part 2: signing in the Windows build of 1.0, code signing policy page | phase 4 of the Rust plan | 1 day |
 | Part 3: updater checks (Windows signature, Linux checksum + attestation) | phase 3 of the Rust plan | 1 day |
 
-## 6. Decision needed
+## 6. Decision (2026-11-16)
 
-Is **one click per release** (Approve in SignPath) acceptable? Then this is the plan for 1.0; otherwise: stay unsigned.
+Approved: part 1 now (by the maintainer), parts 2 and 3 with version 1.0 (SignPath Foundation, one *Approve* click per release; updater checks on Windows and Linux). 0.x stays unsigned.
