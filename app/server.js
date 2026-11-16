@@ -198,19 +198,19 @@ const server = http.createServer(async (req, res) => {
     }
     const cm = url.pathname.match(new RegExp(`^${P}/f/([^/]+)/chat$`));
     if (cm && req.method === 'POST') return chatRoute(req, res, d(cm[1]), d(cm[2]));
-    if (url.pathname.startsWith('/api/')) {
-      for (const [method, re, fn] of routes) {
-        const m = url.pathname.match(re);
-        if (m && req.method === method) return send(res, 200, await fn(m, url.searchParams, req));
-      }
-      return send(res, 404, { error: 'Not found' });
-    }
     if (url.pathname === '/api/fs/raw') {
       const f = files.absPath(url.searchParams.get('scope'), url.searchParams.get('path'));
       if (!fs.statSync(f).isFile()) return send(res, 404, { error: 'Not a file' });
       res.writeHead(200, { 'Content-Type': MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache',
         ...(url.searchParams.get('download') ? { 'Content-Disposition': `attachment; filename="${path.basename(f).replace(/"/g, '')}"` } : {}) });
       return fs.createReadStream(f).pipe(res);
+    }
+    if (url.pathname.startsWith('/api/')) {
+      for (const [method, re, fn] of routes) {
+        const m = url.pathname.match(re);
+        if (m && req.method === method) return send(res, 200, await fn(m, url.searchParams, req));
+      }
+      return send(res, 404, { error: 'Not found' });
     }
     const fm = url.pathname.match(/^\/files\/([^/]+)\/(.+)$/);
     if (fm) {
