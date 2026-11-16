@@ -7,7 +7,11 @@
 - [[Building Blocks|Building-Blocks]]
 - [[Claude]]
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
+- [[Desktop App|Desktop-App]]
+- [[Secrets]]
 - [[Data and Updates|Data-and-Updates]]
+- [[Backup]]
+- [[Import and Export|Import-and-Export]]
 - [[FAQ]]
 - [[Requirements]]
 

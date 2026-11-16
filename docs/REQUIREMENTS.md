@@ -57,6 +57,11 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W10 | Version history with git inside the app | ❌ not wanted: git is only for developing the tool | |
 | W11 | A project can live in an existing folder (`location:`), e.g. a git clone | ✅ | #27 |
 | W12 | Manage this workspace itself as a project (example *Workspace (development)*) | ✅ | #29 |
+| W13 | Secrets: API keys and passwords kept encrypted, used by name (`${secret:name}`) | ✅ | #38 |
+| W14 | Project templates: save a project (with or without content), start new projects from it | ✅ | #39 |
+| W15 | Everything due in all projects on the home page; reminders, tray icon, start with Windows (desktop app) | ✅ | #40 |
+| W16 | Backup of the data folder | ❌ not built: documented in the wiki (*Backup*) | |
+| W17 | Import / export | ❌ not built: files are copied in and out, documented in the wiki (*Import and Export*) | |
 
 ## Delivery and operations
 

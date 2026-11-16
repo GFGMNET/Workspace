@@ -5,6 +5,7 @@
 //   ProjectWorkspace            open the window (starts the server, or uses one that is already running)
 //   ProjectWorkspace 4322       use another port
 //   ProjectWorkspace --browser  open in the normal browser instead of the app window
+//   ProjectWorkspace --hidden   start in the tray (used when it starts with the computer)
 //   ProjectWorkspace --version  print the version
 //   ProjectWorkspace --mcp      run the workspace MCP server for Claude CLI (no window)
 'use strict';
@@ -40,16 +41,19 @@ function main() {
   if (!restarted && !app.requestSingleInstanceLock()) { app.exit(0); return; }
   const port = parseInt(process.env.PORT || ARGS.find(a => /^\d+$/.test(a)) || '4321', 10);
   const url = `http://localhost:${port}`;
-  let win = null;
+  let win = null, desktop = null, quitting = false;
+  const quit = () => { quitting = true; app.quit(); };
 
-  app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); } else openWindow(); });
-  app.on('window-all-closed', () => app.quit());
+  app.on('second-instance', () => showWindow());
+  app.on('before-quit', () => { quitting = true; });
+  // With the tray icon on, closing the window keeps the workspace (and its reminders) running.
+  app.on('window-all-closed', () => { if (!(desktop && desktop.settings().tray)) app.quit(); });
 
   // Called by the server after an update was installed.
   global.pwRestart = (opts = {}) => {
-    process.env.PW_RESTARTED = '1';
+    process.env.PW_RESTARTED = '1'; quitting = true;
     if (opts.swap) { require(path.join(APP_DIR, 'lib', 'updater.js')).runSwap(opts.swap); app.exit(0); return; }
-    app.relaunch({ execPath: LAUNCH, args: ARGS.filter(a => a !== '--browser') });
+    app.relaunch({ execPath: LAUNCH, args: ARGS.filter(a => a !== '--browser' && a !== '--hidden') });
     app.exit(0);
   };
 
@@ -57,7 +61,7 @@ function main() {
     Menu.setApplicationMenu(menu());
     // Use a workspace that is already running on this port (e.g. started with start.bat), else start our own.
     if (restarted || !(await answers(url))) {
-      process.argv = [process.execPath, path.join(APP_DIR, 'server.js'), ...ARGS.filter(a => !['--browser', '--open', '--no-open'].includes(a))];
+      process.argv = [process.execPath, path.join(APP_DIR, 'server.js'), ...ARGS.filter(a => !['--browser', '--open', '--no-open', '--hidden'].includes(a))];
       global.pwSafeStorage = require('electron').safeStorage; // protects the secrets' key (lib/secrets.js)
       try { require(path.join(APP_DIR, 'server.js')); } catch (e) { fail(e); return; }
       const until = Date.now() + 60000;
@@ -66,11 +70,21 @@ function main() {
     delete process.env.PW_RESTARTED;
     if (!(await answers(url))) { fail(new Error(`The workspace did not start on ${url}. Is another program using port ${port}?`)); return; }
     if (process.env.PW_SMOKE_FILE) return smoke();
+    desktop = require('./desktop').create({ dataDir, url, launch: LAUNCH, showWindow, quit });
+    desktop.start();
     if (has('--browser')) { shell.openExternal(url); return; }
+    if (has('--hidden') && desktop.settings().tray) return; // started with the computer: wait in the tray
     openWindow();
   });
 
-  function openWindow() {
+  function showWindow(hash) {
+    if (!win) return openWindow(hash);
+    if (win.isMinimized()) win.restore();
+    win.show(); win.focus();
+    if (hash) win.webContents.executeJavaScript(`location.hash = ${JSON.stringify(hash)}`).catch(() => {});
+  }
+
+  function openWindow(hash) {
     const state = readState();
     win = new BrowserWindow({
       title: 'Project Workspace', icon: path.join(__dirname, 'icon.png'),
@@ -80,10 +94,14 @@ function main() {
     });
     if (state.maximized) win.maximize();
     win.once('ready-to-show', () => win.show());
-    win.loadURL(url);
+    win.loadURL(url + '/' + (hash || ''));
     guard(win.webContents);
     const save = () => { try { if (!win.isMinimized()) writeState({ ...(win.isMaximized() ? readState() : win.getNormalBounds()), maximized: win.isMaximized() }); } catch {} };
-    win.on('resize', save); win.on('move', save); win.on('close', save);
+    win.on('resize', save); win.on('move', save);
+    win.on('close', e => {
+      save();
+      if (!quitting && desktop && desktop.settings().tray) { e.preventDefault(); win.hide(); desktop.hiddenToTray(); }
+    });
     win.on('closed', () => { win = null; });
     win.webContents.on('did-fail-load', (e, code, desc, failed, main) => { if (main && code !== -3) setTimeout(() => win && win.loadURL(url), 1500); });
   }
@@ -106,7 +124,7 @@ function main() {
       { label: 'Workspace', submenu: [
         { label: 'Open in browser', click: () => shell.openExternal(url) },
         { label: 'Open data folder', click: () => shell.openPath(dataDir) },
-        { type: 'separator' }, { role: 'quit' }] },
+        { type: 'separator' }, { label: 'Quit', accelerator: 'CmdOrCtrl+Q', click: () => quit() }] },
       { role: 'editMenu' },
       { label: 'View', submenu: [{ role: 'reload' }, { role: 'forceReload' }, { role: 'toggleDevTools' }, { type: 'separator' },
         { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' }] },
@@ -141,6 +159,9 @@ function main() {
         const n = await w.webContents.executeJavaScript('document.querySelectorAll("#side a, #main *").length');
         if (n > 5) {
           const info = await w.webContents.executeJavaScript('fetch("/api/info").then(r => r.json())');
+          require('./desktop'); // loads (tray, reminders)
+          const due = await w.webContents.executeJavaScript('fetch("/api/due").then(r => r.json())');
+          if (!Array.isArray(due.items)) return done('FAIL /api/due', 1);
           return done(`OK ${info.version} electron ${process.versions.electron} exe ${!!info.exe}`, 0);
         }
         await wait(500);

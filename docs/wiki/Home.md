@@ -7,12 +7,15 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 ## Start here
 
 - **[[Getting Started|Getting-Started]]**: install, first project, first feature (10 minutes)
-- [[Projects]]: how `project.yaml` works
+- [[Desktop App|Desktop-App]]: its own window, tray, reminders, start with Windows
+- [[Projects]]: how `project.yaml` works, templates
 - [[Features]]: define your own feature types (all settings), with a **page per feature** (e.g. [[Feature-Wiki]], [[Feature-Tasks]], [[Feature-Chat]])
 - [[Building Blocks|Building-Blocks]]: pages, tables, Kanban, calendar, org chart, map, diagrams, scripts, chat …
 - [[Claude]]: chat, skills, MCP, workspace MCP server
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
+- [[Secrets]]: API keys and passwords, kept encrypted
 - [[Data and Updates|Data-and-Updates]]: where your data lives, how to update
+- [[Backup]] · [[Import and Export|Import-and-Export]]: what to back up; bringing files in and out
 - [[FAQ]]
 - **[[Requirements]]**: everything the workspace should do, with status (done, planned, open) and the GitHub issue for each
 

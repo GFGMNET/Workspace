@@ -135,6 +135,7 @@ const routes = [
   ['PATCH', new RegExp(`^${P}$`), async (m, q, req) => projectView(ws.renameProject(d(m[1]), await json(req)))],
   ['POST', new RegExp(`^${P}/archive$`), (m) => ws.archiveProject(d(m[1]))],
   ['DELETE', new RegExp(`^${P}$`), (m) => ws.deleteProject(d(m[1]))],
+  ['GET', /^\/api\/due$/, (m, q) => ws.dueAll(Math.min(90, Math.max(1, parseInt(q.get('days') || '14', 10) || 14)))],
   ['GET', /^\/api\/templates$/, () => ws.listTemplates()],
   ['POST', new RegExp(`^${P}/template$`), async (m, q, req) => ws.saveTemplate(d(m[1]), await json(req))],
   ['DELETE', /^\/api\/templates\/([^/]+)$/, (m) => ws.deleteTemplate(d(m[1]))],

@@ -25,7 +25,7 @@ This is the starter definition. Change it under **Features** in the app, or in t
 ```yaml
 # Issues of a GitHub repository (bugs and ideas). Set the repository in each project:
 #   issues: { feature: github, repo: owner/name }
-# Private repositories need a token in data/settings.yaml:  github: { token: ... }
+# Private repositories need a token in data/settings.yaml:  github: { token: ${secret:github-token} }
 name: Issues
 icon: issue
 stores: github
@@ -50,12 +50,14 @@ Every setting can also be set **for one project only**, under the feature key in
 
 ## Private repositories
 
-Public repositories need no login. For a private one (or a higher rate limit) add a GitHub token to `data/settings.yaml`:
+Public repositories need no login. For a private one (or a higher rate limit) save a GitHub token under **Secrets** (e.g. as `github-token`) and refer to it in `data/settings.yaml`:
 
 ```yaml
 github:
-  token: ghp_...
+  token: ${secret:github-token}
 ```
+
+A token written directly (`token: ghp_...`) works too, but stays readable in the file. See [[Secrets]].
 
 or set the `GITHUB_TOKEN` environment variable. Results are cached for 5 minutes; **Refresh** reloads.
 

@@ -86,11 +86,25 @@ async function route() {
 window.addEventListener('hashchange', () => { if (App.dirty && !confirm('You have unsaved changes. Leave anyway?')) return; route(); });
 
 // ---------- home ----------
+// What's due in all projects: overdue tasks first, then the next 14 days.
+async function renderDue(box) {
+  let o; try { o = await api('/api/due?days=14'); } catch { return; }
+  if (!box || !box.isConnected || !o.items.length) return;
+  const day = d => { const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); };
+  const rel = d => { const n = Math.round((Date.parse(d + 'T00:00:00') - Date.parse(o.today + 'T00:00:00')) / 864e5); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? `${-n} day${n === -1 ? '' : 's'} overdue` : `in ${n} days`; };
+  const href = it => `#/p/${enc(it.project)}/${enc(it.feature)}/${String(it.id).split('/').map(enc).join('/')}`;
+  const over = o.items.filter(i => i.overdue).length;
+  box.hidden = false;
+  box.innerHTML = `<div class="row"><b>Coming up in all projects</b> <span class="faint small">next ${o.days} days${over ? ` · <span style="color:var(--err)">${over} overdue</span>` : ''}</span><span class="sp"></span>${S.info.desktop ? '<span class="faint small">The app reminds you of what is due today.</span>' : ''}</div>
+    <div class="ovlist" style="max-height:300px;overflow:auto">${o.items.map(it => `<a class="ovrow" href="${href(it)}"><span class="d ${it.overdue ? 'over' : ''}"><b>${esc(day(it.date))}</b><span>${esc(rel(it.date))}</span></span><span class="t">${esc(it.title)}<span>${esc(it.projectName)} · ${esc(it.featureName)} · ${esc(it.field)}</span></span></a>`).join('')}</div>
+    ${o.total > o.items.length ? `<div class="faint small">and ${o.total - o.items.length} more</div>` : ''}`;
+}
 function renderHome() {
   const ps = S.projects;
   $('#main').innerHTML = `<div class="wrap">
     <div class="hero"><div>${menuBtn}<h1>All projects</h1><p class="muted" style="margin:6px 0 0">Every project is a folder. Its <span class="mono">project.yaml</span> lists the features it uses; <a href="#/features">features</a> say what they mean.</p></div>
       <div class="row">${helpLink('Getting-Started', 'Getting started')}<button class="btn primary" type="button" data-new-project>${icon('plus', 14)} New project</button></div></div>
+    <section class="card ovcard" data-due hidden style="margin-bottom:18px"></section>
     <div class="grid">${ps.map(p => `<a class="card pcard" href="#/p/${enc(p.slug)}">
         <div class="top">${avatar(p.name, p.icon, p.color, p.slug)}<div style="min-width:0"><h3>${esc(p.name)}</h3><div class="mono faint small">projects/${esc(p.slug)}</div></div></div>
         <div class="desc">${p.error ? `<span style="color:var(--err)">⚠ ${esc(p.error)}</span>` : esc(p.description)}</div>
@@ -106,6 +120,7 @@ function renderHome() {
       <div class="card"><b>Use it from Claude CLI</b><p class="muted small" style="margin:6px 0 10px">Register the workspace MCP server once — then Claude can list, create and edit projects from any terminal.</p>
         <pre class="code">claude mcp add project-workspace --scope user ${S.info.mcpEnv ? '-e ' + esc(S.info.mcpEnv) + ' ' : ''}-- ${esc(S.info.mcpCommand)}</pre></div></div></div>`;
   $$('[data-new-project]').forEach(b => b.onclick = () => newProjectDialog());
+  renderDue($('[data-due]'));
   api('/api/archive').then(list => {
     const box = $('[data-archived]'); if (!box || !list.length) return;
     box.hidden = false;

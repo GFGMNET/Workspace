@@ -52,6 +52,7 @@ code,kbd,.mono{font-family:var(--mono);font-size:.92em}
 .side-new:hover{background:var(--side2)}
 .side-foot{border-top:1px solid var(--side2);padding-top:10px;display:flex;flex-direction:column;gap:10px}
 .side-link{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;color:var(--side-ink)}
+button.side-link{border:0;background:transparent;cursor:pointer;font:inherit;width:100%;text-align:left}
 .side-link:hover{background:var(--side2);text-decoration:none} .side-link.active{background:var(--side3)}
 .side-link .n{margin-left:auto;font-size:12px;color:var(--side-ink2)}
 .side-collapse{border:0;background:transparent;cursor:pointer;font:inherit;color:var(--side-ink2);width:100%;text-align:left}

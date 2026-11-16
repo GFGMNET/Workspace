@@ -360,6 +360,33 @@ ProjectWorkspace/                      (Linux: project-workspace/)
 - Keeping Electron current: a release picks up the newest patch of the Electron major in `electron-version`;
   raise the major before it reaches its end of life (every Electron major is supported for about 6 months).
 - Until v0.5 the packages used Node's single executable application feature instead (one exe, opened the browser).
+- **Tray, reminders, autostart** (`app/electron/desktop.js`, settings in `data/.desktop.json`): a tray icon
+  (closing the window hides it while the tray is on); every 30 minutes `GET /api/due?days=1`, a notification per item due
+  today or overdue (once per item and date, `notified` in `.desktop.json`; more than 3 → one summary), click opens the item;
+  *Start with Windows* via `app.setLoginItemSettings` (`--hidden`), on Linux `~/.config/autostart/project-workspace.desktop`.
+
+## 7e. Secrets
+
+`app/lib/secrets.js`. `data/.secrets.json` holds `{ key, items: { name: { iv, tag, data, updated } } }`; each value is
+AES-256-GCM encrypted with a random 32-byte key. The key is encrypted with Electron `safeStorage` (DPAPI on Windows,
+Keychain on macOS, the keyring on Linux; `basic_text` counts as unprotected) when the server runs inside the desktop app
+(`global.pwSafeStorage`), otherwise stored as is (`protected: none`, shown in the dialog). A plain key is upgraded as soon as
+the app can protect it. A key that can't be decrypted (other computer/user) makes the secrets *locked*: they can be removed and entered again.
+
+- In YAML: `${secret:name}`. `writeMcpJson` turns it into `${PW_SECRET_NAME}` (Claude CLI expands environment
+  variables in `.mcp.json`); `chat.js` passes exactly the secrets referenced there as environment variables.
+  `settings.yaml` values the app uses itself (`github: token:`) are resolved directly (`secrets.resolve`).
+- API: `GET /api/secrets` (names only), `PUT /api/secrets/<name> {value}`, `DELETE /api/secrets/<name>`, `DELETE /api/secrets`.
+- `.secrets.json`, `.ide-token` and `.app/` are private: the explorer (`files.js`) neither lists nor opens them.
+
+## 7f. Templates and what's due
+
+- **Templates:** `data/templates/<id>/` = `project.yaml` (without `location:`) + `template.json` (name, description, content, from, created)
+  + optionally the feature folders (not chat, not github, no `.trash`/`.git`/`node_modules`, max. 200 MB).
+  `POST /api/projects/<slug>/template`, `GET /api/templates`, `DELETE /api/templates/<id>`;
+  `POST /api/projects { name, yaml, template }` copies the template's files, then writes the given project.yaml.
+- **Due in all projects:** `ws.dueAll(days)` collects `projectOverview().upcoming` of every project (overdue Kanban
+  items + dated records in the next days), `GET /api/due?days=14`. Shown on the home page; used by the desktop reminders.
 
 ## 7a. Documentation
 

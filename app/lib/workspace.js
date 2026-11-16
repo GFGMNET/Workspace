@@ -816,6 +816,20 @@ function projectOverview(slug, days = 30) {
   return { name: p.name, meta: p.meta, today: t0, days, tiles, upcoming: upcoming.slice(0, 30), open: open.slice(0, 20), openTotal: open.length, recent: recent.slice(0, 12) };
 }
 
+// What's due in every project (home page, desktop notifications): overdue tasks and the next days.
+function dueAll(days = 14) {
+  const items = []; let today = null;
+  for (const p of listProjects()) {
+    if (p.error) continue;
+    try {
+      const o = projectOverview(p.slug, days); today = o.today;
+      for (const it of o.upcoming) items.push({ ...it, project: p.slug, projectName: p.name });
+    } catch {}
+  }
+  items.sort((a, b) => (b.overdue - a.overdue) || a.date.localeCompare(b.date) || a.projectName.localeCompare(b.projectName));
+  return { today, days, items: items.slice(0, 100), total: items.length };
+}
+
 // ---------- rename, archive, delete ----------
 const ARCHIVE = '_archive';
 const archiveDir = () => path.join(PROJECTS_DIR, ARCHIVE);
@@ -927,7 +941,7 @@ function addExamples() {
 function refreshClaudeFiles(slug) { const p = loadProject(slug); if (!p.error) writeMcpJson(p); }
 
 module.exports = {
-  listTemplates, saveTemplate, deleteTemplate, TEMPLATES_DIR,
+  listTemplates, saveTemplate, deleteTemplate, TEMPLATES_DIR, dueAll,
   renameProject, archiveProject, listArchived, restoreProject, deleteProject, refreshClaudeFiles, projectIndex, resolveRef, backlinks, projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
   ROOT, FEATURES_DIR, PROJECTS_DIR, STORES, LAYOUTS, FIELD_TYPES, YAML,
   httpError, slugify, normalizeFeature,

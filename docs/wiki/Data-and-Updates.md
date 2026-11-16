@@ -8,10 +8,12 @@ Workspace/          ← the program: replaced on update
   data/             ← YOUR data: never replaced
     features/       what each feature means
     projects/       one folder per project
+    templates/      project templates
     settings.yaml   workspace settings
+    .secrets.json   secrets, encrypted (see [[Secrets]])
 ```
 
-- **Back up only `data/`.** It's plain files, so you can copy it, sync it with OneDrive, or put it on a USB stick.
+- **Back up only `data/`.** It's plain files, so you can copy it, sync it with OneDrive, or put it on a USB stick. Details: [[Backup]].
 - **To keep the data somewhere else,** start with the environment variable `WORKSPACE_DIR` pointing to that folder.
 - **Deleted items** go to a `.trash` folder inside the project (or the workspace) instead of being removed.
 

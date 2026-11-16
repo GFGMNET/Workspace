@@ -49,6 +49,14 @@ The example project **Workspace (development)** manages the workspace itself thi
 
 Deleting the folder `data/projects/<name>` by hand does the same.
 
+## Templates
+
+**Manage → Save as template** keeps a project as a starting point: its `project.yaml` and, if you tick *Include the content*, its pages, records, pictures, files and scripts. Chats are never copied, and `location:` is left out.
+
+**New project → Start from** lists your templates. The `project.yaml` is filled in and can still be changed before you create the project. Delete a template from the same place.
+
+Templates are folders in `data/templates/`, so you can copy them to another workspace.
+
 ## Good to know
 
 - **The folder is the truth.** Files you put into a feature folder show up even if they are not listed in `project.yaml`.

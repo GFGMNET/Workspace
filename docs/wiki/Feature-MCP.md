@@ -78,6 +78,6 @@ projects/<project>/.mcp.json        (written by the app)
 ## Tips
 
 - On Windows, servers started with `npx` usually need `command: cmd` and `args: [/c, npx, -y, ...]`.
-- Tokens in `env`/`headers` are stored in plain text in the project folder — keep that folder private.
+- Keep tokens out of the records: save them under **Secrets** and write `${secret:name}` in `env`, `headers`, `args` or `url`. `.mcp.json` then only holds `${PW_SECRET_NAME}`, and the chat fills in the value. See [[Secrets]].
 
 See also: [[Features]] · [[Building Blocks|Building-Blocks]] · [[Projects]]
