@@ -478,6 +478,18 @@ Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text
 | Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |
 | Developing the tool | It can manage itself: the example project *Workspace (development)* uses `location: "{install}"` with docs, scripts, GitHub issues, chat and a *release* skill (#27–#29) |
 
+## 8b. Tests
+
+| What | Where | Runs |
+|---|---|---|
+| Unit checks (logic, YAML, updater, secrets, templates …) | `app/test/smoke.js` (`npm test`) | every push, every build |
+| API contract tests: every route, answers, errors, files on disk, security checks, chat stream with a fake Claude CLI, fakes for GitHub, updates and VS Code, the MCP server | `tests/contract/` (`npm run test:contract`) | every push, Linux + Windows |
+| YAML corpus: how each file is read (golden answers), comments kept on update | `tests/yaml-corpus/` (`npm run test:yaml`; regenerate with `tools/yaml-golden.js`) | every push |
+| Desktop app: window renders, MCP, server mode | build workflows (`PW_SMOKE_FILE`) | every build |
+| VS Code tab with the real `code serve-web` | *VS Code tab check* workflow | by hand |
+
+The contract tests and the corpus test any implementation: `PW_SERVER_CMD="… {port}"`, `PW_MCP_CMD`, `PW_YAML_CMD` (for the Rust version).
+
 ## 9. Rebuilding it
 
 You need Node.js 18 or newer. Nothing else is installed.

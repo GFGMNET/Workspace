@@ -106,6 +106,8 @@ Decided 2026-11-16, details in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) 
 
 ### Phase 0: the safety net (3–4 days)
 
+**Status (2026-11-16): done.** `tests/contract/` (32 tests: core, items, explorer + security, chat with a fake Claude CLI incl. permission questions, services with fake GitHub / update server / VS Code server, MCP) and `tests/yaml-corpus/` (33 cases with golden answers, record updates keep comments) run on every push on Linux and Windows (`.github/workflows/tests.yml`). The Rust parts plug in with `PW_SERVER_CMD`, `PW_MCP_CMD`, `PW_YAML_CMD`. Found and fixed on the way: explorer pictures/downloads (#63). Not covered yet: installing an update (`/api/update/apply`, restarts the server), opening the desktop VS Code (`/api/fs/vscode`). Crates can't be downloaded in Claude's work environment, so Rust is built and tested on GitHub's runners.
+
 - **API contract tests** in `tests/contract/`: start a server against a copy of a test data folder (`PW_SERVER_CMD`, default: today's Node server) and check every route: answers, status codes, errors, files written to disk, SSE events, refused hosts/origins, private files. Run in CI on every push.
 - **YAML corpus** in `tests/yaml-corpus/`: every YAML file from the starter features and examples, the sloppy original example, edge cases (anchors, merge keys, several documents, block scalars, broken files), each with the JSON that today's app reads from it, the warning it gives, and the text that a record update writes (comments kept).
 - **Data migration tests:** a data folder from 0.6 (with secrets, templates, archive, `location:` project) as a fixture.
