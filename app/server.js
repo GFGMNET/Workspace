@@ -169,6 +169,11 @@ const server = http.createServer(async (req, res) => {
   if (req.method !== 'GET' && origin && !/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origin)) return send(res, 403, { error: 'Forbidden origin' });
   try {
     if (ide.isIdePath(url.pathname)) return ide.proxy(req, res);
+    // The only frame in the app is VS Code. If VS Code navigates its frame outside /ide (e.g. to "/"),
+    // send it back under /ide instead of loading the Workspace app inside itself.
+    if (req.method === 'GET' && req.headers['sec-fetch-dest'] === 'iframe' && !url.pathname.startsWith('/api/')) {
+      res.writeHead(302, { Location: ide.base() + (url.pathname === '/' ? '/' : url.pathname) + url.search, 'Cache-Control': 'no-store' }); return res.end();
+    }
     if (url.pathname === '/api/events') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
       res.write(': hello\n\n'); clients.add(res);

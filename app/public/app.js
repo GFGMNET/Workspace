@@ -191,12 +191,14 @@ async function renderIde(body) {
   const src = st.url.replace('{host}', location.hostname).replace('{folder}', st.folder); // normally a same-origin /ide/... address (proxied)
   if (st.running) {
     body.innerHTML = `<div class="row" style="margin-bottom:10px"><span class="chip ok">VS Code is running</span><span class="faint small">${esc(p.path)}</span><span class="sp"></span>
+        <button class="btn sm ghost" type="button" data-reload>Reload</button>
         <a class="btn sm" href="${esc(src)}" target="_blank" rel="noopener">Open in new window</a>
         <button class="btn sm" type="button" data-desk>${icon('terminal', 14)} Desktop VS Code</button>
         ${st.managed ? `<button class="btn sm ghost danger" type="button" data-stop>Stop</button>` : ''}</div>
       <iframe class="ide" src="${esc(src)}" title="VS Code — ${esc(p.name)}" allow="clipboard-read; clipboard-write"></iframe>
       <p class="faint small">VS Code is shown through this app's own address (<span class="mono">${esc(st.base)}/</span>), so the browser doesn't block it. You can also open it in its own window.</p>`;
     $('[data-desk]', body).onclick = () => openVSCode('p/' + p.slug, '');
+    $('[data-reload]', body).onclick = () => { $('iframe.ide', body).src = src; };
     const stop = $('[data-stop]', body); if (stop) stop.onclick = async () => { await api('/api/ide/stop', { body: {} }); toast('VS Code stopped'); setTimeout(route, 800); };
     return;
   }
@@ -515,6 +517,11 @@ function listen() {
 
 // ---------- boot ----------
 (async () => {
+  // Never show the app inside its own VS Code frame (VS Code navigated outside /ide).
+  if (window.self !== window.top) {
+    $('#main').innerHTML = `<div class="wrap"><div class="err">VS Code tried to open a page outside its own address, so the Workspace app appeared here instead. Click <b>Reload</b> above. If it keeps happening, check <span class="mono">ide:</span> in <span class="mono">data/settings.yaml</span> (the <span class="mono">url</span> must start with <span class="mono">{base}/</span>).</div></div>`;
+    document.documentElement.classList.add('side-collapsed'); return;
+  }
   try {
     S.info = await api('/api/info');
     $('#rootPath').textContent = S.info.root; $('#rootPath').title = S.info.root;

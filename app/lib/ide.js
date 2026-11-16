@@ -109,8 +109,17 @@ process.on('exit', stop);
 ['SIGINT', 'SIGTERM'].forEach(sig => process.on(sig, () => { stop(); process.exit(0); }));
 
 // ---------- reverse proxy: /ide/... on the app's address → VS Code on 127.0.0.1:<port> ----------
+function base() { return settings().base; }
 function isIdePath(pathname) { const b = settings().base; return pathname === b || pathname.startsWith(b + '/'); }
 function targetPath(url, s) { if (!s.strip) return url; const rest = url.slice(s.base.length); return rest.startsWith('/') ? rest : '/' + rest; }
+// VS Code's redirects (e.g. after it takes the ?tkn= token) can point at the server root ("/?folder=…").
+// Through the proxy that would be the Workspace app itself, so keep every redirect under /ide.
+function rewriteLocation(loc, s) {
+  let l = String(loc).replace(/^https?:\/\/(127\.0\.0\.1|localhost|\[::1\]):\d+/i, '');
+  if (!l.startsWith('/') || l.startsWith('//')) return l; // relative or other site: leave as is
+  if (l === s.base || l.startsWith(s.base + '/') || l.startsWith(s.base + '?')) return l;
+  return s.base + l;
+}
 function proxy(req, res) {
   const s = settings();
   const up = http.request({ host: '127.0.0.1', port: s.port, method: req.method, path: targetPath(req.url, s), headers: req.headers }, r => {
@@ -119,7 +128,7 @@ function proxy(req, res) {
     for (const k of ['content-security-policy', 'content-security-policy-report-only']) {
       if (h[k]) { const v = String(h[k]).split(';').filter(x => !/^\s*frame-ancestors\b/i.test(x)).join(';'); if (v.trim()) h[k] = v; else delete h[k]; }
     }
-    if (h.location) h.location = String(h.location).replace(/^https?:\/\/(127\.0\.0\.1|localhost):\d+/, '').replace(/^\//, s.strip ? s.base + '/' : '/');
+    if (h.location) h.location = rewriteLocation(h.location, s);
     res.writeHead(r.statusCode, r.statusMessage, h);
     r.pipe(res);
   });
@@ -138,4 +147,4 @@ function upgrade(req, socket, head) {
   up.on('error', end); socket.on('error', end); up.on('close', end); socket.on('close', end);
 }
 
-module.exports = { status, start, stop, folderParam, isIdePath, proxy, upgrade };
+module.exports = { base, rewriteLocation, status, start, stop, folderParam, isIdePath, proxy, upgrade };

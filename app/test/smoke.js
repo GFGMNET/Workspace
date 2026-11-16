@@ -127,6 +127,12 @@ ok('updates: each installation picks its own download', () => {
   assert.strictEqual(up.pickAsset(assets, 'linux', 'x64', false).name, 'project-workspace-v1.0.0.zip');
   assert.strictEqual(up.pickAsset(assets, 'darwin', 'arm64', true), null);
 });
+ok('VS Code redirects stay under /ide', () => {
+  const ide = require('../lib/ide'); const s = { base: '/ide' };
+  assert.strictEqual(ide.rewriteLocation('http://127.0.0.1:8740/?folder=/x', s), '/ide/?folder=/x');
+  assert.strictEqual(ide.rewriteLocation('/ide/?folder=/x', s), '/ide/?folder=/x');
+  assert.strictEqual(ide.rewriteLocation('./x', s), './x');
+});
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 
 // MCP server handshake
