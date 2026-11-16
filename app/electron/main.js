@@ -128,7 +128,10 @@ function main() {
 
   // Build check (CI): open the window, wait for the page, write the result, quit.
   async function smoke() {
-    const w = new BrowserWindow({ show: false, webPreferences: { contextIsolation: true, sandbox: true } });
+    const w = new BrowserWindow({ show: false, webPreferences: { contextIsolation: true, sandbox: true, backgroundThrottling: false } });
+    const logs = [];
+    w.webContents.on('console-message', (...a) => { const m = a[0] && a[0].message !== undefined ? a[0].message : a[2]; logs.push(String(m).slice(0, 200)); });
+    w.webContents.on('render-process-gone', (e, d) => logs.push('renderer gone: ' + (d && d.reason)));
     const done = (msg, code) => { try { fs.writeFileSync(process.env.PW_SMOKE_FILE, msg); } catch {} app.exit(code); };
     setTimeout(() => done('FAIL timeout', 1), 45000);
     try {
@@ -141,7 +144,8 @@ function main() {
         }
         await wait(500);
       }
-      done('FAIL page did not render', 1);
+      const txt = await w.webContents.executeJavaScript('(document.title + " | " + document.body.innerText).slice(0, 300)').catch(e => e.message);
+      done('FAIL page did not render: ' + txt + ' | console: ' + logs.join(' / '), 1);
     } catch (e) { done('FAIL ' + e.message, 1); }
   }
 }
