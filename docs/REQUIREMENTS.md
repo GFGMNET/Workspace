@@ -39,7 +39,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B14 | Tables, lists, cards for records; files | ✅ v0.1 | |
 | B15 | Scripts: create scripts inside a project with a code editor | ✅ | #23 |
 | B16 | GitHub issues of a repository as a feature | ✅ | #28 |
-| B17 | Ticketsystem: GLPI and osTicket tickets of a project (plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md)) | 📋 planned | #59 |
+| B17 | Ticketsystem: GLPI and osTicket tickets of a project (plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md)) | 📋 v1.1 (Rust) | #59 |
 
 ## Working with projects
 
@@ -62,7 +62,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W14 | Project templates: save a project (with or without content), start new projects from it | ✅ | #39 |
 | W15 | Everything due in all projects on the home page; reminders, tray icon, start with Windows (desktop app) | ✅ | #40 |
 | W16 | Backup of the data folder | ❌ not built: documented in the wiki (*Backup*) | |
-| W18 | Versions: Git or SVN per project, local, on a share or an own server, no GitHub needed (plan: [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md)) | 📋 planned | #60 |
+| W18 | Versions: Git or SVN per project, local, on a share or an own server, no GitHub needed (plan: [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md)) | 📋 v1.2 (Rust) | #60 |
 | W17 | Import / export | ❌ not built: files are copied in and out, documented in the wiki (*Import and Export*) | |
 
 ## Delivery and operations

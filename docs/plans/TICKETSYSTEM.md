@@ -1,6 +1,6 @@
 # Plan: feature "ticketsystem" (GLPI, osTicket)
 
-Status: **planned** · Issue #59 · [REQUIREMENTS.md](../REQUIREMENTS.md) B17
+Status: **planned for v1.1 (Rust)** · Issue #59 · [REQUIREMENTS.md](../REQUIREMENTS.md) B17
 
 ## 1. Goal
 
@@ -88,15 +88,42 @@ So for osTicket: phase A = *New ticket* + a link to the osTicket staff panel; ph
 
 | Phase | What | Days |
 |---|---|---|
-| A | GLPI read (v2 + v1), list, details, filters, due dates, links, MCP read tools | 4–5 |
-| A | osTicket: *New ticket* (official API) | 1 |
+| A | GLPI 11 read (API v2), list, details, entity filter, due dates, links, MCP read tools | 4–5 |
+| A | osTicket: *New ticket* (official API), list of tickets created from the project | 1–2 |
 | B | GLPI write: new ticket, follow-up, status, assign, solution, attachment | 3–4 |
-| C | osTicket read, if a REST plugin is available on the server | 2–3 |
+| ~~C~~ | ~~osTicket read~~: not planned (no plugin on the server) | – |
 
-## 8. Questions
+## 8. Decisions (2026-11-16)
 
-1. Which **GLPI version** do you run (10 or 11)? It decides v1 or v2 first.
-2. **osTicket version**, and can a plugin be installed on that server?
-3. How do tickets belong to a project: by **entity** (customer), **category**, **group**, or a **tag**?
-4. Read first (phase A) and write later, or both right away?
-5. Build in 0.x now, or only in 1.0 (Rust)? *Proposal: now, small and covered by the contract tests, so the Rust port is mechanical.*
+1. **GLPI 11** → API v2 (OAuth2) is built first; the legacy API v1 only if someone needs GLPI 10.
+2. **osTicket: the latest version, nothing installed on the server.** So only the official API is used:
+   tickets are **created** from the workspace; reading tickets is not possible (see §4) and the tab links to the osTicket staff panel instead.
+3. Tickets belong to a project by **GLPI entity** (`filter: entity:`), optionally narrowed further by category or status.
+4. Built **with the Rust version** (after 1.0, see [MIGRATION-RUST.md](../MIGRATION-RUST.md)), not in 0.x.
+
+## 9. Connecting osTicket (no change on the server needed)
+
+What the osTicket admin does once, in the **admin panel**:
+
+1. **Admin Panel → Manage → API → Add New API Key.**
+2. **IP Address:** the address the workspace calls from. osTicket only accepts the key from this one address, so the PC needs a **fixed IP** (a DHCP reservation in the router) — or, for several PCs, the address of one machine that runs `project-workspace-server` for the team.
+3. Tick **Can Create Tickets**, add a note like *Project Workspace*, save, and copy the **API key**.
+
+What you do in the workspace:
+
+1. **Secrets → New secret**: name `osticket-key`, value: the API key.
+2. In the project:
+
+   ```yaml
+   tickets:
+     feature: ticketsystem
+     system: osticket
+     url: https://helpdesk.example.com      # where osTicket runs
+     key: ${secret:osticket-key}
+     topic: 2                               # optional: help topic id for new tickets
+   ```
+
+What you get: **New ticket** (subject, message, your name and e-mail, help topic, attachments) → osTicket answers with the **ticket number**. The workspace keeps a short list of the tickets created from this project (number, subject, date; no conversation), each with a link *Open in osTicket*. Everything else — replies, status, closing — happens in osTicket itself.
+
+If reading tickets is wanted later, it needs either a REST plugin on the osTicket server or a move to GLPI; neither is planned now.
+

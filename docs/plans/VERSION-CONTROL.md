@@ -1,6 +1,6 @@
 # Plan: feature "versions" (Git or SVN, local or on your own server)
 
-Status: **planned** · Issue #60 · [REQUIREMENTS.md](../REQUIREMENTS.md) W18
+Status: **planned for v1.2 (Rust)** · Issue #60 · [REQUIREMENTS.md](../REQUIREMENTS.md) W18
 
 > Not to be confused with the earlier decision (W10): the **tool's own** repository on GitHub is only for developing the app.
 > This feature is about **your projects**, and works without GitHub.
@@ -85,9 +85,23 @@ The **Versions** tab:
 | C | SVN: checkout, status, commit, log, update, restore, locks | 3–4 |
 | D | Claude: *Suggest message*, MCP tools | 1 |
 
-## 7. Questions
+## 7. Decisions (2026-11-16)
 
-1. **Git, SVN, or both?** Which one would you use first?
-2. Which **server**, if any: a network share, Gitea/Forgejo, GitLab, an SVN server you already have?
-3. Should the **whole data folder** be versionable too (as a backup with history), or only single projects?
-4. Build in 0.x now, or with 1.0 (Rust)? *Proposal: Git phase A now; it runs through the same CLI calls in both versions.*
+- No server yet: the feature works **without one** (history only on the PC) and can be connected to a server later without changing anything in the project.
+- Built **with the Rust version** (after 1.0, see [MIGRATION-RUST.md](../MIGRATION-RUST.md)), not in 0.x.
+- Git first (phases A, B), SVN after (phase C). Still open: whether the whole data folder should be versionable too.
+
+## 8. When you want a server later
+
+Smallest first; all of them stay in your network.
+
+| Option | Setup | Good for |
+|---|---|---|
+| **Shared folder / NAS** (Git bare repository) | `git init --bare \\nas\git\website.git`, then *Versions → Connect* with that path. Nothing to install on the NAS. | 1–5 people, no web page, permissions = the share's permissions |
+| **Forgejo / Gitea** (Git server) | one program (Windows, Linux or Docker), a small database (SQLite is enough), web interface, users, permissions, backups | a team, web access, issues |
+| **GitLab CE** | a Linux server or VM with 4+ GB RAM | larger teams, CI pipelines |
+| **VisualSVN Server** (SVN, Windows) | installer, uses Windows accounts | central history, file locking for Office/CAD files |
+| **Apache + mod_dav_svn / svnserve** (SVN, Linux) | package from the distribution | the same on Linux |
+
+The Versions tab will have *Connect to a server* with these choices and short instructions, and *Test connection*.
+

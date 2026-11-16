@@ -159,6 +159,15 @@ Useful now and needed for 1.0: the updater only installs packages the maintainer
 
 **Total:** about 6–8 weeks of work, plus the beta period.
 
+### After 1.0: new features in Rust
+
+Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
+
+| Version | Feature | Plan |
+|---|---|---|
+| 1.1 | Ticketsystem: GLPI 11 (read, then write), osTicket (create tickets) | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md), #59 |
+| 1.2 | Versions: Git (local, share, own server), then SVN | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md), #60 |
+
 ## 6. Testing
 
 | What | How |

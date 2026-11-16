@@ -519,8 +519,8 @@ The UI can be rebuilt freely on top of the API in section 7.
 
 | Feature | Plan | Issue |
 |---|---|---|
-| Ticketsystem (GLPI, osTicket) | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
-| Versions (Git or SVN, local or own server) | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
+| Ticketsystem (GLPI 11, osTicket) — v1.1, Rust | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
+| Versions (Git or SVN, local or own server) — v1.2, Rust | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
 | macOS app | after 1.0 | #56 |
 | Chat: answer permission prompts inline | | #10 |
 
