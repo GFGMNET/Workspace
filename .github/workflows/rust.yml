@@ -49,16 +49,15 @@ jobs:
           xvfb-run -a rust/target/release/project-workspace 4395 > /tmp/app.log 2>&1 &
           ok=0; for i in $(seq 1 40); do sleep 0.5; curl -fsS http://localhost:4395/api/info >/dev/null && { ok=1; break; }; done
           sleep 3; cat /tmp/app.log; [ $ok = 1 ] && echo "app OK" || { echo "app did not answer"; exit 1; }
-      - name: YAML corpus against the Rust reader (progress, may fail)
-        continue-on-error: true
+      - name: YAML corpus against the Rust reader
         env:
           PW_YAML_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server yaml
-        run: node --test tests/yaml-corpus/yaml.test.js 2>&1 | grep -E "^not ok|^# (pass|fail)"
-      - name: API contract tests against the Rust server (progress, may fail)
-        continue-on-error: true
+        run: node --test tests/yaml-corpus/yaml.test.js
+      - name: API contract tests against the Rust server (and its MCP server)
         env:
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server {port}
-        run: node tests/contract/run.js 2>&1 | grep -E "^✔|^✖|^ℹ (tests|pass|fail)" | head -80
+          PW_MCP_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server mcp
+        run: node tests/contract/run.js
       - name: Package
         run: |
           d=dist/project-workspace-proto
@@ -82,9 +81,25 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
       - name: Build
         working-directory: rust
         run: cargo build --workspace --release
+      - name: Unit tests
+        working-directory: rust
+        run: cargo test -p pw-core -p pw-server --release
+      - name: YAML corpus against the Rust reader
+        env:
+          PW_YAML_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe yaml
+        run: node --test tests/yaml-corpus/yaml.test.js
+      - name: API contract tests against the Rust server (and its MCP server)
+        env:
+          PW_INSTALL: ${{ github.workspace }}
+          PW_SERVER_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe {port}
+          PW_MCP_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe mcp
+        run: node tests/contract/run.js
       - name: Package
         run: |
           $d = "dist/ProjectWorkspace-proto"

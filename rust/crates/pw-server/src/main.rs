@@ -12,6 +12,7 @@ fn sort(v: serde_json::Value) -> serde_json::Value {
 async fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(|s| s.as_str()) == Some("permission-mcp") { pw_server::chat::permission_mcp_main(); return; }
+    if matches!(args.first().map(|s| s.as_str()), Some("mcp") | Some("--mcp")) { pw_server::mcp::main(); return; }
     if args.first().map(|s| s.as_str()) == Some("yaml") {
         let file = args.get(2).cloned().unwrap_or_default();
         let text = std::fs::read_to_string(&file).unwrap_or_default();

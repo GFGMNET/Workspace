@@ -20,7 +20,11 @@ type Q = Query<HashMap<String, String>>;
 use tokio_stream::StreamExt;
 
 pub mod chat;
+pub mod github;
+pub mod ide;
+pub mod updater;
 pub mod live;
+pub mod mcp;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -91,40 +95,99 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/archive/{p}/restore", post(archive_restore))
         .route("/api/secrets", get(secrets).delete(secrets_clear))
         .route("/api/secrets/{name}", put(secret_put).delete(secret_delete))
-        .route("/api/update", get(|| async { Json(json!({ "current": VERSION, "enabled": false, "repo": "GFGMNET/Workspace", "lastCheck": null, "latest": null, "available": false, "snoozedUntil": null, "snoozed": false, "error": null })) }))
-        .route("/api/ide", get(|| async { Json(json!({ "running": false, "starting": false, "managed": false, "port": 8740, "base": "/ide", "command": "", "url": "/ide/", "log": ["The VS Code tab is not in the Rust prototype yet"] })) }))
+        .route("/api/update", get(update_status))
+        .route("/api/update/check", post(update_check))
+        .route("/api/update/skip", post(update_skip))
+        .route("/api/update/later", post(update_later))
+        .route("/api/update/apply", post(update_apply))
+        .route("/api/ide", get(ide_status))
+        .route("/api/ide/start", post(ide_start))
+        .route("/api/ide/stop", post(|| async { Json(ide::stop()) }))
+        .route("/api/projects/{p}/ide", get(project_ide))
+        .route("/api/projects/{p}/f/{f}/github", get(github_issues))
         .route("/api/events", get(events))
         .fallback(static_files)
         .layer(DefaultBodyLimit::max(200 * 1024 * 1024))
-        .layer(middleware::from_fn(guard))
+        .layer(middleware::from_fn_with_state(ws.clone(), guard))
         .with_state(ws)
 }
 
 /// Same checks as app/server.js: only localhost (DNS rebinding), changes only from the app itself (CSRF).
-async fn guard(req: Request, next: Next) -> Response {
+fn local_origin(o: &str) -> bool {
+    let rest = o.strip_prefix("http://").or_else(|| o.strip_prefix("https://")).unwrap_or("-");
+    ["localhost", "127.0.0.1", "[::1]"].iter().any(|h| rest == *h || (rest.starts_with(h) && rest[h.len()..].starts_with(':') && rest.len() > h.len() + 1 && rest[h.len() + 1..].chars().all(|c| c.is_ascii_digit())))
+}
+/// Same checks as app/server.js: only localhost (DNS rebinding), changes and WebSockets only from the app
+/// itself (CSRF); then VS Code under /ide, and a frame that left /ide is sent back there.
+async fn guard(State(ws): S, req: Request, next: Next) -> Response {
     let host = req.headers().get(header::HOST).and_then(|h| h.to_str().ok()).unwrap_or("");
     let host_name = if host.starts_with('[') { host.split(']').next().map(|h| format!("{h}]")).unwrap_or_default() } else { host.split(':').next().unwrap_or("").to_string() };
     if !["127.0.0.1", "localhost", "[::1]"].contains(&host_name.as_str()) {
         return (StatusCode::FORBIDDEN, Json(json!({ "error": "Forbidden host" }))).into_response();
     }
-    if req.method() != axum::http::Method::GET {
+    let upgrade = req.headers().contains_key(header::UPGRADE);
+    if req.method() != axum::http::Method::GET || upgrade {
         if let Some(o) = req.headers().get(header::ORIGIN).and_then(|h| h.to_str().ok()) {
-            let ok = ["http://localhost", "http://127.0.0.1", "http://[::1]", "https://localhost", "https://127.0.0.1"].iter()
-                .any(|p| o == *p || (o.starts_with(p) && o[p.len()..].starts_with(':') && o[p.len() + 1..].chars().all(|c| c.is_ascii_digit())));
-            if !ok { return (StatusCode::FORBIDDEN, Json(json!({ "error": "Forbidden origin" }))).into_response(); }
+            if !local_origin(o) { return (StatusCode::FORBIDDEN, Json(json!({ "error": "Forbidden origin" }))).into_response(); }
         }
+    }
+    let path = req.uri().path().to_string();
+    let base = ide::settings(&ws).base;
+    if ide::is_ide_path(&base, &path) { return ide::proxy(&ws, req).await; }
+    if req.method() == axum::http::Method::GET && req.headers().get("sec-fetch-dest").map(|v| v == "iframe").unwrap_or(false) && !path.starts_with("/api/") {
+        let q = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
+        let loc = format!("{base}{}{q}", if path == "/" { "/" } else { &path });
+        let mut r = Response::new(Body::empty());
+        *r.status_mut() = StatusCode::FOUND;
+        if let Ok(v) = HeaderValue::from_str(&loc) { r.headers_mut().insert(header::LOCATION, v); }
+        r.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+        return r;
     }
     next.run(req).await
 }
 
+async fn update_status(State(ws): S) -> Json<Value> { Json(updater::check(&ws, false).await) }
+async fn update_check(State(ws): S) -> Json<Value> { Json(updater::check(&ws, true).await) }
+async fn update_skip(State(ws): S, b: Bytes) -> ApiResult { let body = body_json(&b)?; Ok(Json(updater::skip(&ws, &body["version"].as_str().map(|s| s.to_string()).unwrap_or_else(|| body["version"].to_string())))) }
+async fn update_later(State(ws): S) -> Json<Value> { Json(updater::later(&ws)) }
+async fn update_apply(State(ws): S) -> ApiResult {
+    let mut r = updater::apply(&ws).await?;
+    let swap = r["swap"].as_str().map(PathBuf::from);
+    r["restarting"] = json!(true);
+    let ws2 = ws.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(600)).await;
+        let _ = ide::stop();
+        if let Some(s) = swap { updater::run_swap(&ws2, &s); }
+        std::process::exit(0);
+    });
+    Ok(Json(r))
+}
+async fn ide_status(State(ws): S) -> Json<Value> { Json(ide::status(&ws).await) }
+async fn ide_start(State(ws): S) -> Json<Value> { Json(ide::start(&ws).await) }
+async fn project_ide(State(ws): S, Path(p): Path<String>) -> ApiResult {
+    let pr = ws.load_project(&p)?;
+    let mut st = ide::status(&ws).await;
+    st["folder"] = json!(ide::folder_param(&pr.dir));
+    Ok(Json(st))
+}
+async fn github_issues(State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q) -> ApiResult {
+    let pr = ws.load_project(&p)?;
+    let feat = pr.feature(&f)?;
+    let d = feat.def.clone().unwrap_or(json!({}));
+    let state = Some(qs(&q, "state")).filter(|s| !s.is_empty()).map(|s| s.to_string()).or_else(|| d["state"].as_str().map(|s| s.to_string())).unwrap_or_else(|| "open".into());
+    Ok(Json(github::issues(&ws, d["repo"].as_str().unwrap_or(""), &state, qs(&q, "refresh") == "1").await?))
+}
+
 async fn info(State(ws): S) -> Json<Value> {
+    let exe = std::env::var("PW_EXE").ok().or_else(|| std::env::current_exe().ok().map(|p| p.to_string_lossy().to_string()));
     Json(json!({
         "version": VERSION, "root": ws.root.to_string_lossy(), "examples": ws.list_examples().len(),
         "projectsDir": ws.projects_dir().to_string_lossy(), "featuresDir": ws.features_dir().to_string_lossy(),
         "stores": workspace::STORES, "layouts": workspace::layouts(), "fieldTypes": workspace::FIELD_TYPES,
         "platform": if cfg!(windows) { "win32" } else if cfg!(target_os = "macos") { "darwin" } else { "linux" },
-        "mcpScript": null, "exe": std::env::current_exe().ok().map(|p| p.to_string_lossy().to_string()),
-        "wiki": "https://github.com/GFGMNET/Workspace/wiki", "mcpCommand": "", "mcpEnv": null, "desktop": true, "prototype": true
+        "mcpScript": null, "exe": exe.clone(),
+        "wiki": "https://github.com/GFGMNET/Workspace/wiki", "mcpCommand": format!("\"{}\" mcp", exe.clone().unwrap_or_default()), "mcpEnv": null, "desktop": std::env::var_os("PW_EXE").is_some()
     }))
 }
 async fn examples(State(ws): S) -> Json<Value> { Json(json!({ "added": ws.add_examples() })) }
@@ -323,5 +386,17 @@ fn percent_decode(s: &str) -> String {
 pub async fn serve(ws: Workspace, port: u16) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", port)).await?;
     let _ = chat::PORT.set(listener.local_addr().map(|a| a.port()).unwrap_or(port));
+    // stop a VS Code we started when the program is closed
+    tokio::spawn(async {
+        #[cfg(unix)]
+        {
+            let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).expect("signal");
+            tokio::select! { _ = tokio::signal::ctrl_c() => {}, _ = term.recv() => {} }
+        }
+        #[cfg(not(unix))]
+        { let _ = tokio::signal::ctrl_c().await; }
+        let _ = ide::stop();
+        std::process::exit(0);
+    });
     axum::serve(listener, router(ws)).await
 }
