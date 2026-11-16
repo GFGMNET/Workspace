@@ -153,6 +153,7 @@ Useful now and needed for 1.0: the updater should only install packages we signe
 - Last 0.x release (0.x.y) first: its updater removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind. It also accepts signed packages only (from phase S).
 - Release 1.0.0 as the latest release. 0.x apps offer the update; after the restart the Tauri app starts.
 - Docs: README, Getting started, wiki (Desktop App, Data and Updates, Security), DESIGN.md (the Node/Electron sections become "history").
+- macOS is not built (#56, later).
 - `app/server.js`, `app/lib`, `app/electron`, `start.bat`/`start.sh` are removed from the package (kept in git history).
 
 **Total:** about 6–8 weeks of work, plus the beta period.
@@ -191,12 +192,12 @@ Useful now and needed for 1.0: the updater should only install packages we signe
 | Rust know-how for later changes | slower changes by hand | Claude does most changes; DESIGN.md explains the crates; screens stay JavaScript |
 | Time | 1.0 takes longer | phase 1 decides early; 0.x stays supported meanwhile |
 
-## 9. Decisions to make
+## 9. Decisions
 
-1. **Node.js package:** 1.0 drops the "run with Node.js" package (`start.bat`/`start.sh`). Users without the app use `project-workspace-server` instead. *Proposal: yes.*
-2. **macOS:** Tauri can build it cheaply (WebKit is part of macOS). *Proposal: add in phase 4 as an unsigned extra.*
-3. **Where the screens live:** served from `app/public` on disk (updates replace files as today) or built into the program. *Proposal: on disk, like today.*
-4. **Signing key custody:** who holds the private key for package signatures (GitHub secret, backup offline). *Needs you.*
+1. **Node.js package:** 1.0 drops the "run with Node.js" package (`start.bat`/`start.sh`); machines without a screen use `project-workspace-server`. **Decided: yes** (2026-11-16).
+2. **macOS:** not part of 1.0; later improvement (#56). **Decided** (2026-11-16).
+3. **Where the screens live:** served from `app/public` on disk, updates replace files as today. **Decided: on disk** (2026-11-16).
+4. **Signing key custody:** who holds the private key for package signatures. *Open.*
 
 ## 10. Tracking
 
