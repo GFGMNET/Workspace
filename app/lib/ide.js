@@ -120,26 +120,46 @@ function rewriteLocation(loc, s) {
   if (l === s.base || l.startsWith(s.base + '/') || l.startsWith(s.base + '?')) return l;
   return s.base + l;
 }
+// The proxy gives VS Code its connection token as the "vscode-tkn" cookie on every request
+// (pages, files, WebSockets), so it never depends on cookies VS Code sets in the browser
+// (their path, SameSite or a redirect can lose them: "Forbidden: missing or invalid connection token").
+// Only for requests from the app itself (same origin); other sites can't frame it (frame-ancestors 'self').
+const COOKIE = 'vscode-tkn';
+function withToken(cookieHeader) {
+  const rest = String(cookieHeader || '').split(/;\s*/).filter(c => c && !c.startsWith(COOKIE + '='));
+  return [...rest, `${COOKIE}=${token()}`].join('; ');
+}
+const fromApp = req => { const site = req.headers['sec-fetch-site']; return !site || site === 'same-origin' || site === 'none'; };
+function page(res, code, html) { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(`<div style="font:14px system-ui,sans-serif;padding:20px;max-width:640px;line-height:1.5">${html}</div>`); }
 function proxy(req, res) {
   const s = settings();
-  const up = http.request({ host: '127.0.0.1', port: s.port, method: req.method, path: targetPath(req.url, s), headers: req.headers }, r => {
-    const h = { ...r.headers };
-    delete h['x-frame-options'];
-    for (const k of ['content-security-policy', 'content-security-policy-report-only']) {
-      if (h[k]) { const v = String(h[k]).split(';').filter(x => !/^\s*frame-ancestors\b/i.test(x)).join(';'); if (v.trim()) h[k] = v; else delete h[k]; }
+  const headers = { ...req.headers };
+  if (fromApp(req)) headers.cookie = withToken(headers.cookie);
+  const nav = ['iframe', 'document'].includes(req.headers['sec-fetch-dest']);
+  const up = http.request({ host: '127.0.0.1', port: s.port, method: req.method, path: targetPath(req.url, s), headers }, r => {
+    if (r.statusCode === 403 && nav) {
+      r.resume();
+      return page(res, 403, `<b>VS Code refused the connection token.</b><br>It is probably still running from an earlier start with another token. Close VS Code's web server (or restart the computer), then click <b>Start VS Code</b> in the VS Code tab again.<br><span style="color:#888">If you set your own <code>ide:</code> command in data/settings.yaml, make sure it uses <code>--connection-token {token}</code>.</span>`);
     }
+    const h = { ...r.headers };
+    h['x-frame-options'] = 'SAMEORIGIN';
+    for (const k of ['content-security-policy', 'content-security-policy-report-only']) {
+      if (h[k]) { const v = String(h[k]).split(';').filter(x => !/^\s*frame-ancestors\b/i.test(x)).join(';'); h[k] = (v.trim() ? v + '; ' : '') + "frame-ancestors 'self'"; }
+    }
+    if (!h['content-security-policy']) h['content-security-policy'] = "frame-ancestors 'self'";
     if (h.location) h.location = rewriteLocation(h.location, s);
     res.writeHead(r.statusCode, r.statusMessage, h);
     r.pipe(res);
   });
-  up.on('error', () => { if (!res.headersSent) { res.writeHead(502, { 'Content-Type': 'text/html; charset=utf-8' }); res.end('<p style="font:14px sans-serif;padding:20px">VS Code is not running. Start it from the VS Code tab of a project.</p>'); } });
+  up.on('error', () => { if (!res.headersSent) page(res, 502, 'VS Code is not running. Start it from the VS Code tab of a project.'); });
   req.pipe(up);
 }
 function upgrade(req, socket, head) {
   const s = settings();
   const up = net.connect(s.port, '127.0.0.1', () => {
     let raw = `${req.method} ${targetPath(req.url, s)} HTTP/${req.httpVersion}\r\n`;
-    for (let i = 0; i < req.rawHeaders.length; i += 2) raw += `${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}\r\n`;
+    for (let i = 0; i < req.rawHeaders.length; i += 2) if (!/^cookie$/i.test(req.rawHeaders[i])) raw += `${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}\r\n`;
+    raw += `Cookie: ${withToken(req.headers.cookie)}\r\n`; // the server only lets same-site WebSockets through (Origin check)
     up.write(raw + '\r\n'); if (head && head.length) up.write(head);
     up.pipe(socket); socket.pipe(up);
   });
@@ -147,4 +167,4 @@ function upgrade(req, socket, head) {
   up.on('error', end); socket.on('error', end); up.on('close', end); socket.on('close', end);
 }
 
-module.exports = { base, rewriteLocation, status, start, stop, folderParam, isIdePath, proxy, upgrade };
+module.exports = { base, rewriteLocation, withToken, status, start, stop, folderParam, isIdePath, proxy, upgrade };
