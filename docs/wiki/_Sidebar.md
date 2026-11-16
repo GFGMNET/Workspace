@@ -9,6 +9,7 @@
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
 - [[Data and Updates|Data-and-Updates]]
 - [[FAQ]]
+- [[Requirements]]
 
 **Feature reference**
 
@@ -24,4 +25,3 @@
 **Developers**
 
 - [[Design]]
-- [[Requirements]]

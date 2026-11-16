@@ -13,8 +13,10 @@ fs.mkdirSync(out, { recursive: true });
 const fix = text => text
   .replace(/\]\((?:\.\/)?(GETTING-STARTED|DESIGN|REQUIREMENTS)\.md(#[^)]*)?\)/g, (m, n, h) => `](${PAGES[n + '.md'].replace(/\.md$/, '')}${h || ''})`)
   .replace(/\]\((?:\.\.\/)?(?:docs\/)?screenshots\/([^)]+)\)/g, (m, f) => `](${RAW}docs/screenshots/${f})`)
-  .replace(/\]\(\.\.\/([^)#]+)\)/g, (m, f) => `](https://github.com/GFGMNET/Workspace/blob/main/${f})`);
+  .replace(/\]\(\.\.\/([^)#]+)\)/g, (m, f) => `](https://github.com/GFGMNET/Workspace/blob/main/${f})`)
+  // issue numbers (#12) become links, except inside code
+  .replace(/(^|[\s|(,·/])#(\d{1,5})\b(?![^`\n]*`)/gm, (m, pre, n) => `${pre}[#${n}](https://github.com/GFGMNET/Workspace/issues/${n})`);
 let n = 0;
-for (const f of fs.readdirSync(path.join(root, 'docs', 'wiki'))) { fs.copyFileSync(path.join(root, 'docs', 'wiki', f), path.join(out, f)); n++; }
+for (const f of fs.readdirSync(path.join(root, 'docs', 'wiki'))) { fs.writeFileSync(path.join(out, f), fix(fs.readFileSync(path.join(root, 'docs', 'wiki', f), 'utf8'))); n++; }
 for (const [src, dst] of Object.entries(PAGES)) { fs.writeFileSync(path.join(out, dst), fix(fs.readFileSync(path.join(root, 'docs', src), 'utf8')) + NOTE); n++; }
 console.log(`${n} wiki pages → ${out}`);

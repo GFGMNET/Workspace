@@ -14,11 +14,11 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
 - [[Data and Updates|Data-and-Updates]]: where your data lives, how to update
 - [[FAQ]]
+- **[[Requirements]]**: everything the workspace should do, with status (done, planned, open) and the GitHub issue for each
 
 ## For developers
 
 - [[Design]]: architecture and rebuild guide
-- [[Requirements]]: every requirement with its status
 - [Issues](https://github.com/GFGMNET/Workspace/issues): bugs and ideas
 
 > These pages are generated from `docs/` in the repository. Edit them there, not here, or your changes are overwritten on the next update.
