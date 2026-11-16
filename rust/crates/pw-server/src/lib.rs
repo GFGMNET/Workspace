@@ -17,7 +17,9 @@ use pw_core::workspace::{self, HttpError, Workspace};
 use serde_json::{json, Value};
 use std::{collections::HashMap, convert::Infallible, path::PathBuf, sync::Arc, time::Duration};
 type Q = Query<HashMap<String, String>>;
-use tokio_stream::{wrappers::IntervalStream, StreamExt};
+use tokio_stream::StreamExt;
+
+pub mod live;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -46,6 +48,7 @@ pub fn workspace_from_env() -> Workspace {
 pub fn router(ws: Workspace) -> Router {
     ws.ensure();
     let ws = Arc::new(ws);
+    live::start(ws.clone());
     Router::new()
         .route("/api/info", get(info))
         .route("/api/claude", get(|| async { Json(json!({ "ok": false, "command": "claude", "error": "Chat is not in the Rust prototype yet" })) }))
@@ -251,9 +254,13 @@ async fn secret_put(State(ws): S, Path(name): Path<String>, b: Bytes) -> ApiResu
 }
 async fn secret_delete(State(ws): S, Path(name): Path<String>) -> ApiResult { Ok(Json(ws.secret_remove(&name)?)) }
 async fn events() -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
-    // live refresh: the prototype only keeps the connection open (file watching comes in phase 2)
-    let s = IntervalStream::new(tokio::time::interval(Duration::from_secs(25))).map(|_| Ok(Event::default().comment("ping")));
-    Sse::new(s).keep_alive(KeepAlive::default())
+    let hello = tokio_stream::once(Ok(Event::default().comment("hello")));
+    type Events = std::pin::Pin<Box<dyn tokio_stream::Stream<Item = Result<Event, Infallible>> + Send>>;
+    let changes: Events = match live::subscribe() {
+        Some(rx) => Box::pin(tokio_stream::wrappers::BroadcastStream::new(rx).filter_map(|m| m.ok()).map(|d| Ok(Event::default().data(d)))),
+        None => Box::pin(tokio_stream::pending()),
+    };
+    Sse::new(hello.chain(changes)).keep_alive(KeepAlive::new().interval(Duration::from_secs(25)).text("ping"))
 }
 
 fn mime(path: &str) -> &'static str {
