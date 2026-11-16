@@ -25,7 +25,8 @@ Workspace/                   ← the program: replace it completely on update
   app/
     server.js                local web server + API
     mcp.js                   MCP server for Claude CLI
-    lib/yaml.js              small YAML reader/writer
+    lib/yaml.js              YAML for the app: full YAML 1.2 (bundled "yaml" library in lib/vendor/yaml,
+                             ISC), lenient fallback lib/yaml-lenient.js, comment-preserving record updates
     lib/exif.js              reads the "date taken" from photos
     lib/workspace.js         all file logic (features, projects, items, first start)
     lib/chat.js              runs Claude CLI for the chat feature
@@ -347,6 +348,20 @@ ProjectWorkspace/
 
 The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and turns the three documents above into wiki pages (links and screenshots rewritten). The workflow `.github/workflows/wiki.yml` runs it on every push to `main` that touches `docs/` and pushes the result to the wiki. Edit the files in `docs/`, never in the wiki itself. One-time setup: the first wiki page must be created on GitHub once, because GitHub only creates the wiki repository then.
 
+## 7d. YAML
+
+All YAML (project.yaml, features, records, settings.yaml) is read with the bundled **yaml** library (eemeli/yaml 2.x, ISC licence, no dependencies, vendored by `tools/vendor-yaml.js`). It is full YAML 1.2 plus merge keys:
+- anchors and aliases
+- `<<:` merges
+- block (`|`, `>`) and flow styles
+- tags
+- several documents in one file, whose mappings are merged in order
+
+Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text. Errors are reported as `Line X, column Y: …`.
+
+- **Lenient fallback:** a file that isn't valid YAML is tried once more with the app's original forgiving reader (`yaml-lenient.js`), so hand-written files like the original example (` wiki:` indented by one space) still open. The project page and the Features page then show a warning asking to fix the file.
+- **Comments stay:** saving a record from a form only rewrites the changed values (`updateMapping`), keeping its comments, key order and style. Adding a feature appends text to project.yaml, and renaming changes only the `name:` line.
+
 ## 8. Decisions
 
 | Topic | Decision |
@@ -363,7 +378,8 @@ The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and 
 | App format | Node.js + browser; portable Windows exe built by GitHub Actions (#1) |
 | Licence | MIT (#13) |
 | Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
-| Dependencies | None at runtime (Mermaid and highlight.js are bundled) |
+| Dependencies | None to install: Mermaid, highlight.js and yaml are bundled |
+| YAML | Full YAML 1.2 (bundled library) with a lenient fallback and a warning for non-standard files (#12) |
 | Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |
 | Developing the tool | It can manage itself: the example project *Workspace (development)* uses `location: "{install}"` with docs, scripts, GitHub issues, chat and a *release* skill (#27–#29) |
 

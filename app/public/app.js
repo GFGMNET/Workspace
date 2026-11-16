@@ -155,6 +155,7 @@ async function renderProject(tab, sub, query) {
       <button class="btn" type="button" data-path title="${esc(p.path)}">${icon('copy', 14)} Copy path</button>
       <button class="btn" type="button" data-manage title="Rename, archive or delete this project" aria-label="Manage project">${icon('edit', 14)} Manage</button></div>
     ${p.error ? `<div class="err" style="margin-top:12px" role="alert">project.yaml has an error: ${esc(p.error)}. Fix it in the project.yaml tab.</div>` : ''}
+    ${!p.error && p.warning ? `<div class="note" style="margin-top:12px;background:var(--warn-bg)" role="status">${icon('warn', 14)} project.yaml: ${esc(p.warning)} <a href="${projectHref('_yaml')}">Open project.yaml</a></div>` : ''}
     <nav class="tabs" id="ptabs" role="tablist" aria-label="Features of ${esc(p.name)}"></nav>
     <div id="fnote"></div><section id="fbody"></section></div>`;
   $('[data-cli]').onclick = () => copy(cli); $('[data-path]').onclick = () => copy(p.path);
@@ -390,7 +391,7 @@ async function renderFeatures(key, query) {
       <button class="btn primary" type="button" data-newf>${icon('plus', 14)} New feature</button></div>
     <div class="split" style="grid-template-columns:280px minmax(0,1fr)">
       <div class="ilist">${S.features.map(f => `<a class="fitem ${sel && f.key === sel.key ? 'active' : ''}" href="#/features/${enc(f.key)}"><span class="r1">${featureIcon(f.def, 15)} ${esc(f.def.name)}<span class="mono faint small" style="margin-left:auto;font-weight:400">${esc(f.key)}.yaml</span></span>
-        <span class="r2">${f.error ? '<span style="color:var(--err)">⚠ YAML error</span>' : `${esc(f.def.stores)} · ${esc(f.def.layout)}${f.def.search ? ' · search' : ''}${f.def.for_claude ? ' · for Claude' : ''}`}</span></a>`).join('')}</div>
+        <span class="r2">${f.error ? '<span style="color:var(--err)">⚠ YAML error</span>' : f.warning ? '<span style="color:var(--warn)">⚠ not standard YAML</span>' : `${esc(f.def.stores)} · ${esc(f.def.layout)}${f.def.search ? ' · search' : ''}${f.def.for_claude ? ' · for Claude' : ''}`}</span></a>`).join('')}</div>
       <div id="fpane"></div></div></div>`;
   $('[data-newf]').onclick = () => newFeatureDialog();
   if ('new' in query) { newFeatureDialog(query.new); if (!sel) { $('#fpane').innerHTML = ''; return; } }
@@ -399,7 +400,7 @@ async function renderFeatures(key, query) {
   pane.innerHTML = `<div class="pane"><div class="bar"><b style="font-size:16px">${esc(sel.def.name)}</b><span class="path">${esc(sel.file)}</span>
       <button class="btn sm ghost danger" type="button" data-delf ${sel.usedBy.length ? 'disabled title="Still used by projects"' : ''}>${icon('trash', 14)} Delete</button>
       <button class="btn sm primary" type="button" data-savef>Save</button></div>
-    <div id="ferr" style="padding:0 16px"></div>
+    <div id="ferr" style="padding:0 16px">${sel.error ? `<div class="err" style="margin-top:10px">${esc(sel.error)}</div>` : sel.warning ? `<div class="note" style="margin-top:10px;background:var(--warn-bg)">${esc(sel.warning)}</div>` : ''}</div>
     <div class="fedit"><textarea class="yaml" spellcheck="false" aria-label="Feature YAML" data-fy>${esc(sel.yaml)}</textarea>
       <div class="info"><b>Looks like</b>${layoutSketch(sel.def.layout)}<span class="muted small">${esc({ pages: 'Page list with search on the left, the page on the right.', cards: 'Cards with summary and tags, search and tag filters.', list: 'A simple list.', grid: 'Picture grid with albums and drag & drop upload.', files: 'Folders and files with upload.', table: 'Sortable table; click a row to edit.', kanban: 'Columns; drag cards between them.', calendar: 'Month view; click a day to add.', orgchart: 'Tree of people; set who they report to.', map: 'Your own image with pins you can drag.', diagram: 'Mermaid text with live preview.', chat: 'Chat with Claude CLI inside the project folder.', issues: 'Issues of a GitHub repository: open/closed, labels, search.', code: 'Explorer with a code editor and script templates.' }[sel.def.layout] || '')}</span>
         ${sel.def.fields ? `<b>Fields</b><div class="chips">${sel.def.fields.map(f => `<span class="chip">${esc(f.name)} <span class="faint">${esc(f.type)}</span></span>`).join('')}</div>` : ''}

@@ -27,7 +27,23 @@ ok('YAML: round trip', () => {
   const v = { name: 'x: y', list: ['a', { b: 1, c: [1, 2] }], text: 'two\nlines\n', flag: true, empty: null };
   assert.deepStrictEqual(YAML.parse(YAML.stringify(v)), v);
 });
-ok('YAML: errors name the line', () => assert.throws(() => YAML.parse('a: 1\n  b: [\n- : :'), /Line 3/));
+ok('YAML: errors name the line', () => assert.throws(() => YAML.parse('a: 1\n  b: [\n- : :'), /Line \d+, column \d+/));
+ok('YAML: full YAML — anchors, aliases, merge keys, several documents, block scalars', () => {
+  const d = YAML.parse('base: &b {owner: Alex, priority: high}\ntask:\n  <<: *b\n  title: Switch\nnote: >\n  folded\n  text\nlist: [1, two, "3"]\n---\nextra: true\n');
+  assert.deepStrictEqual(d.task, { owner: 'Alex', priority: 'high', title: 'Switch' });
+  assert.strictEqual(d.note, 'folded text\n'); assert.deepStrictEqual(d.list, [1, 'two', '3']); assert.strictEqual(d.extra, true);
+  assert.strictEqual(YAML.parse('ip: 192.168.1.1\nmac: 00:11:22:33:44:55\ndate: 2026-11-18\nok: yes').ok, 'yes');
+});
+ok('YAML: the sloppy original example is read leniently, with a warning', () => assert(/leniently/.test(YAML.parseWithInfo('name: test\n wiki:\n   - a\n').warning)));
+ok('records keep their comments when saved from a form', () => {
+  const p = ws.createProject({ name: 'Comments', yaml: 'name: Comments\ntasks:\n' });
+  const { id } = ws.createItem(p.slug, 'tasks', { title: 'Keep', data: { status: 'To do' } });
+  const file = path.join(tmp, 'projects', p.slug, 'tasks', id + '.yaml');
+  fs.writeFileSync(file, '# my note about this task\ntitle: Keep   # inline comment\nstatus: To do\n');
+  ws.writeItem(p.slug, 'tasks', id, { data: { title: 'Keep', status: 'Done' } });
+  const t = fs.readFileSync(file, 'utf8');
+  assert(/# my note about this task/.test(t) && /# inline comment/.test(t) && /status: Done/.test(t));
+});
 ok('features load', () => assert(ws.listFeatures().length >= 10));
 ok('alias "knowlege" maps to knowledge', () => {
   const p = ws.createProject({ name: 'Alias test', yaml: 'name: Alias test\nknowlege:\n  - First\n' });

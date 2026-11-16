@@ -40,7 +40,7 @@ function readBody(req, limit = 200 * 1024 * 1024) {
 async function json(req) { const b = await readBody(req, 20 * 1024 * 1024); try { return b.length ? JSON.parse(b.toString('utf8')) : {}; } catch { throw ws.httpError(400, 'Bad JSON'); } }
 
 function projectView(p) {
-  return { slug: p.slug, name: p.name, meta: p.meta, yaml: p.yaml, error: p.error, path: p.dir, external: p.external, yamlPath: p.file,
+  return { slug: p.slug, name: p.name, meta: p.meta, yaml: p.yaml, error: p.error, warning: p.warning, path: p.dir, external: p.external, yamlPath: p.file,
     features: p.features.map(f => ({ key: f.key, feature: f.feature, missing: f.missing, def: f.def, overrides: f.overrides })) };
 }
 const d = decodeURIComponent;

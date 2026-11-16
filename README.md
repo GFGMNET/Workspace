@@ -77,4 +77,4 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 - Tests: `npm test`
 - Settings (environment variables): `PORT` (default 4321), `WORKSPACE_DIR` (data folder, default `data/`), `CLAUDE_COMMAND` (default `claude`)
 
-Bundled for offline use in `app/public/vendor/`: Mermaid (MIT) for diagrams, highlight.js (BSD-3-Clause) for syntax colours (rebuild with `node tools/build-highlight.js <path to highlight.js>`).
+Bundled for offline use: Mermaid (MIT) for diagrams and highlight.js (BSD-3-Clause) for syntax colours in `app/public/vendor/`, and yaml (ISC) for full YAML support in `app/lib/vendor/yaml/`. Rebuild them with `tools/build-highlight.js` and `tools/vendor-yaml.js`.

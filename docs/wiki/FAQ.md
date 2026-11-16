@@ -30,6 +30,9 @@ The `code` command isn't on the PATH. Reinstall VS Code with *Add to PATH*, or s
 **The VS Code tab stays blank**
 Some browsers block embedded pages. Use **Open in new window**.
 
+**Which YAML can I use?**
+Full YAML 1.2: anchors and aliases (`&name` / `*name`), merge keys (`<<: *name`), block text (`|`, `>`), flow lists `[a, b]`, comments, and several documents separated by `---`. Dates like `2026-11-18` and words like `yes` stay text. A file with an indentation mistake still opens, but shows a warning: fix it so it's standard YAML.
+
 **My `project.yaml` won't save**
 It has a YAML error; the message names the line. A common cause is indentation: list items need a `-` and the same number of spaces.
 

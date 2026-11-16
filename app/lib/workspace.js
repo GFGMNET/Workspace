@@ -161,8 +161,9 @@ function listFeatures() {
     const key = f.replace(/\.ya?ml$/, '');
     const text = readText(path.join(FEATURES_DIR, f));
     let raw = {}, error = null;
-    try { raw = YAML.parse(text) || {}; if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error('must be key: value pairs'); } catch (e) { error = e.message; raw = {}; }
-    out.push({ key, file: `features/${f}`, yaml: text, error, raw, def: normalizeFeature(key, raw) });
+    let warning = null;
+    try { const r = YAML.parseWithInfo(text); raw = r.value || {}; warning = r.warning; if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error('must be key: value pairs'); } catch (e) { error = e.message; raw = {}; }
+    out.push({ key, file: `features/${f}`, yaml: text, error, warning, raw, def: normalizeFeature(key, raw) });
   }
   return out;
 }
@@ -204,7 +205,8 @@ function loadProject(slug, features = null) {
   if (!exists(file)) throw httpError(404, `Project "${slug}" not found`);
   const yaml = readText(file);
   let data = {}, error = null;
-  try { data = YAML.parse(yaml) || {}; if (typeof data !== 'object' || Array.isArray(data)) throw new Error('project.yaml must be key: value pairs'); }
+  let warning = null;
+  try { const r = YAML.parseWithInfo(yaml); data = r.value || {}; warning = r.warning; if (typeof data !== 'object' || Array.isArray(data)) throw new Error('project.yaml must be key: value pairs'); }
   catch (e) { error = e.message; data = {}; }
   const fmap = new Map((features || listFeatures()).map(f => [f.key, f]));
   const meta = {}; const feats = [];
@@ -227,7 +229,7 @@ function loadProject(slug, features = null) {
     if (isDir(d)) { dir = d; external = true; }
     else error = error || `location: the folder "${d}" does not exist`;
   }
-  return { slug, dir, home, external, file, name: meta.name ? String(meta.name) : slug, meta, features: feats, yaml, data, error };
+  return { slug, dir, home, external, file, name: meta.name ? String(meta.name) : slug, meta, features: feats, yaml, data, error, warning };
 }
 
 function projectFeature(p, key) {
@@ -539,7 +541,8 @@ function writeItem(slug, key, id, { content, data }) {
   const file = itemPath(p, f, id);
   if (f.def.stores === 'records') {
     let text;
-    if (data && typeof data === 'object') text = YAML.stringify(cleanRecord(data, f.def));
+    // keep the file's comments, key order and style; only the changed values are rewritten
+    if (data && typeof data === 'object') text = exists(file) ? YAML.updateMapping(readText(file), cleanRecord(data, f.def)) : YAML.stringify(cleanRecord(data, f.def));
     else { text = String(content ?? ''); parseYamlSafe(text, 'Record YAML'); }
     writeText(file, text);
   } else if (f.def.stores === 'chat') {

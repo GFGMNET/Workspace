@@ -16,7 +16,8 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | R6 | Graphical interface | ✅ v0.1 | |
 | R7 | Dark mode (light / dark / follow Windows) | ✅ v0.1 | |
 | R9 | UI follows the accepted mockup | ✅ accepted 2026-11-16 | #2 |
-| R8 | The original example YAML works as written (incl. typos `knowlege`, `skils` and shifted indentation) | ✅ | #8 |
+| R8 | The original example YAML works as written (incl. typos `knowlege`, `skils` and shifted indentation) | ✅ (read leniently, with a warning) | #8 |
+| R10 | Full YAML support (anchors, aliases, merge keys, several documents, …) | ✅ | #12 |
 
 ## Building blocks (feature types)
 
@@ -80,4 +81,3 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 
 ## Open questions
 
-- The YAML reader covers the common subset only (#12).
