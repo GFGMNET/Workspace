@@ -108,6 +108,10 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | 4 | Beta next to 0.x | |
 | 5 | Release 1.0 | |
 
+**Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), SignPath signing last, just before 1.0.
+
+**Version numbers:** **0.9.0** = the Rust beta (unsigned, a GitHub pre-release: installed 0.6 apps don't pick it up), **0.9.1** = the same, signed via SignPath, **1.0.0** = the final release that 0.6 apps are offered.
+
 **About the effort figures:** the days below are working days of a human developer. Claude does the coding; what takes time are the build-and-check round-trips on GitHub (5–10 minutes each, crates can't be downloaded in Claude's work environment). Realistically phase 2 is a few working sessions (one to three days), depending mostly on the YAML details.
 
 Each phase ends with a check before the next starts. Estimates are working days for one developer with Claude.

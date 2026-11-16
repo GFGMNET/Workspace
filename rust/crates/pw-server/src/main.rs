@@ -22,7 +22,11 @@ async fn main() {
                 };
                 print!("{out}");
             }
-            _ => { eprintln!("not in the prototype yet"); std::process::exit(3); }
+            Some("update") => {
+                let data: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(args.get(3).cloned().unwrap_or_default()).unwrap_or_default()).unwrap_or(json!({}));
+                print!("{}", pw_core::yaml::update_mapping(&text, data.as_object().unwrap_or(&serde_json::Map::new())));
+            }
+            _ => { eprintln!("usage: yaml parse <file> | yaml update <file> <data.json>"); std::process::exit(2); }
         }
         return;
     }

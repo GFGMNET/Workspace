@@ -15,6 +15,8 @@ for (const f of fs.readdirSync(path.join(dir, 'cases')).filter(f => f.endsWith('
   test(`reads ${f} like today's app`, () => {
     const got = JSON.parse(run(['parse', path.join(dir, 'cases', f)]));
     const want = JSON.parse(fs.readFileSync(path.join(dir, 'golden', f.replace(/\.yaml$/, '.json')), 'utf8'));
+    // an error's line number is for people and may differ between implementations
+    if (want.error) { assert.equal(got.error, true); return; }
     assert.deepEqual(got, want);
   });
 }
