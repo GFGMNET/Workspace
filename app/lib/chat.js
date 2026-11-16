@@ -11,9 +11,38 @@ const IS_WIN = process.platform === 'win32';
 const CLAUDE = process.env.CLAUDE_COMMAND || 'claude';
 const EDIT_TOOLS = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'];
 
+// Windows: a program keeps the environment it was started with. When Claude CLI is installed or
+// updated while the app runs (its installer changes PATH), read the current PATH from the registry,
+// so the newly installed "claude" is found without restarting the app.
+let pathCache = { at: 0, value: null };
+function currentEnv() {
+  const env = { ...process.env };
+  if (!IS_WIN) return env;
+  if (Date.now() - pathCache.at > 60000) {
+    pathCache = { at: Date.now(), value: null };
+    try {
+      const { execFileSync } = require('child_process');
+      const q = key => { try { const m = /\bPath\s+REG_(?:EXPAND_)?SZ\s+(.*)$/im.exec(execFileSync('reg', ['query', key, '/v', 'Path'], { windowsHide: true, timeout: 5000 }).toString()); return m ? m[1].trim() : ''; } catch { return ''; } };
+      const expand = v => v.replace(/%([^%]+)%/g, (m, k) => { const hit = Object.keys(env).find(x => x.toLowerCase() === k.toLowerCase()); return hit ? env[hit] : m; });
+      const fresh = [q('HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment'), q('HKCU\\Environment')].filter(Boolean).map(expand).join(';');
+      if (fresh) pathCache.value = fresh;
+    } catch {}
+  }
+  if (pathCache.value) {
+    const k = Object.keys(env).find(x => x.toLowerCase() === 'path') || 'Path';
+    const seen = new Set(); env[k] = [...String(env[k] || '').split(';'), ...pathCache.value.split(';')].filter(x => x && !seen.has(x.toLowerCase()) && seen.add(x.toLowerCase())).join(';');
+  }
+  return env;
+}
+// Claude CLI says it isn't signed in: explain the usual cause.
+function loginHint(msg) {
+  if (!/\/login|not logged in|log in|invalid api key|authentication|unauthorized|oauth/i.test(String(msg || ''))) return msg;
+  return `${msg}\n\nClaude CLI says it is not signed in. Run \`claude\` in a terminal and sign in with /login. If you already did, start a new message; if it still fails, restart the app (Workspace → Quit, then start it again).`;
+}
+
 function claudeVersion() {
   return new Promise(resolve => {
-    execFile(CLAUDE, ['--version'], { shell: IS_WIN, timeout: 15000, windowsHide: true }, (err, stdout, stderr) => {
+    execFile(CLAUDE, ['--version'], { shell: IS_WIN, timeout: 15000, windowsHide: true, env: currentEnv() }, (err, stdout, stderr) => {
       if (err) resolve({ ok: false, command: CLAUDE, error: (stderr || err.message || '').trim().split('\n')[0] });
       else resolve({ ok: true, command: CLAUDE, version: String(stdout).trim() });
     });
@@ -75,7 +104,7 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   // secrets used by the project's MCP connections (${PW_SECRET_…} in .mcp.json)
   let secretEnv = {};
   try { secretEnv = require('./secrets').envFor(fs.readFileSync(path.join(p.dir, '.mcp.json'), 'utf8')).env; } catch {}
-  const child = spawn(CLAUDE, args, { cwd: p.dir, shell: IS_WIN, windowsHide: true, env: { ...process.env, ...secretEnv, FORCE_COLOR: '0' } });
+  const child = spawn(CLAUDE, args, { cwd: p.dir, shell: IS_WIN, windowsHide: true, env: { ...currentEnv(), ...secretEnv, FORCE_COLOR: '0' } });
   child.stdin.end(prompt);
 
   const finish = (extra) => {
@@ -114,7 +143,7 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
       const denials = (ev.permission_denials || []).map(d => ({ tool: d.tool_name, input: summarizeInput(d.tool_input) }));
       if (!reply.text && ev.result && typeof ev.result === 'string') { reply.text = ev.result; emit({ type: 'text', delta: ev.result }); }
       reply.text = reply.text.replace(/\n+$/, '');
-      finish({ denials, cost: ev.total_cost_usd, error: ev.is_error ? (ev.result || 'Claude reported an error') : undefined });
+      finish({ denials, cost: ev.total_cost_usd, error: ev.is_error ? loginHint(ev.result || 'Claude reported an error') : undefined });
       emit({ type: 'done', id, denials, cost: ev.total_cost_usd, error: reply.error, mode });
     }
   };
@@ -136,7 +165,7 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   });
   child.on('close', code => {
     if (!finished) {
-      const msg = stderr.trim().split('\n').slice(-3).join(' ') || `Claude CLI stopped (exit code ${code})`;
+      const msg = loginHint(stderr.trim().split('\n').slice(-3).join(' ') || `Claude CLI stopped (exit code ${code})`);
       const stopped = code === null || child.killed;
       finish(stopped ? { stopped: true } : { error: msg });
       emit(stopped ? { type: 'done', id, stopped: true, mode } : { type: 'error', message: msg });
