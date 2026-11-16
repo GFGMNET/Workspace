@@ -217,6 +217,9 @@ fn needs_quote(s: &str) -> bool {
     let u = s.strip_prefix(['-', '+']).unwrap_or(s);
     all_digits(u) || is_float(u) || (u.ends_with('.') && all_digits(&u[..u.len() - 1]))
 }
+fn block_style(s: &str) -> &'static str {
+    if s.ends_with("\n\n") { "|+" } else if s.ends_with('\n') { "|" } else { "|-" }
+}
 fn scalar_out(v: &Value) -> String {
     match v {
         Value::Null => "null".into(),
@@ -237,7 +240,7 @@ fn write(value: &Value, indent: usize) -> String {
         Value::Array(a) => {
             if a.is_empty() { return "[]".into(); }
             a.iter().map(|item| {
-                if let Value::String(s) = item { if s.contains('\n') { return format!("{pad}- |\n{}", block_lines(s, indent + 2)); } }
+                if let Value::String(s) = item { if s.contains('\n') { return format!("{pad}- {}\n{}", block_style(s), block_lines(s, indent + 2)); } }
                 if is_scalar(item) { return format!("{pad}- {}", scalar_out(item)); }
                 if item.is_array() { return format!("{pad}-\n{}", write(item, indent + 2)); }
                 let body = write(item, indent + 2);
@@ -249,7 +252,7 @@ fn write(value: &Value, indent: usize) -> String {
             if o.is_empty() { return "{}".into(); }
             o.iter().map(|(k, v)| {
                 let key = if needs_quote(k) { serde_json::to_string(k).unwrap() } else { k.clone() };
-                if let Value::String(s) = v { if s.contains('\n') { return format!("{pad}{key}: |\n{}", block_lines(s, indent + 2)); } }
+                if let Value::String(s) = v { if s.contains('\n') { return format!("{pad}{key}: {}\n{}", block_style(s), block_lines(s, indent + 2)); } }
                 if is_scalar(v) { return format!("{pad}{key}: {}", scalar_out(v)); }
                 if let Value::Array(a) = v { if !a.is_empty() && a.iter().all(is_scalar) && k == "args" { return format!("{pad}{key}: [{}]", a.iter().map(scalar_out).collect::<Vec<_>>().join(", ")); } }
                 let inner = write(v, indent + 2);

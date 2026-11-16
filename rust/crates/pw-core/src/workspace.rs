@@ -8,7 +8,7 @@ use std::time::UNIX_EPOCH;
 
 pub const STORES: [&str; 7] = ["markdown", "images", "files", "records", "diagram", "chat", "github"];
 pub const FIELD_TYPES: [&str; 13] = ["text", "longtext", "number", "date", "datetime", "select", "bool", "url", "email", "tags", "list", "keyvalue", "link"];
-const META_KEYS: [&str; 10] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location"];
+pub(crate) const META_KEYS: [&str; 10] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location"];
 
 pub fn layouts() -> Value {
     json!({
@@ -72,7 +72,7 @@ pub fn slugify(s: &str) -> String {
     if out.is_empty() { "item".into() } else { out }
 }
 
-fn check_id(id: &str, what: &str) -> Result<()> {
+pub(crate) fn check_id(id: &str, what: &str) -> Result<()> {
     if id.is_empty() || id.len() > 200 || id.contains('/') || id.contains('\\') || id.starts_with('.') || id.contains('\0') {
         return Err(err(400, format!("Invalid {what}")));
     }
@@ -90,10 +90,10 @@ pub fn safe_join(base: &Path, rel: &str) -> Result<PathBuf> {
     }
     Ok(p)
 }
-fn mtime_ms(p: &Path) -> f64 {
+pub(crate) fn mtime_ms(p: &Path) -> f64 {
     fs::metadata(p).and_then(|m| m.modified()).ok().and_then(|t| t.duration_since(UNIX_EPOCH).ok()).map(|d| d.as_secs_f64() * 1000.0).unwrap_or(0.0)
 }
-fn rel(base: &Path, p: &Path) -> String {
+pub(crate) fn rel(base: &Path, p: &Path) -> String {
     p.strip_prefix(base).map(|r| r.to_string_lossy().replace('\\', "/")).unwrap_or_default()
 }
 
@@ -333,46 +333,6 @@ impl Workspace {
         out
     }
 
-    pub fn list_items(&self, slug: &str, key: &str) -> Result<Value> {
-        let p = self.load_project(slug)?;
-        let f = p.feature(key)?;
-        let def = f.def.as_ref().unwrap();
-        let dir = safe_join(&p.dir, def["folder"].as_str().unwrap_or(key))?;
-        match def["stores"].as_str().unwrap_or("") {
-            "markdown" => Ok(json!({ "items": list_markdown(&p, def, &dir) })),
-            "images" | "files" => Ok(json!({ "folders": [], "files": [] })),
-            _ => Ok(json!({ "items": [] })),
-        }
-    }
-
-    pub fn read_item(&self, slug: &str, key: &str, id: &str) -> Result<Value> {
-        check_id(id, "id")?;
-        let p = self.load_project(slug)?;
-        let f = p.feature(key)?;
-        let def = f.def.as_ref().unwrap();
-        let file = item_path(&p, def, key, id)?;
-        let text = fs::read_to_string(&file).map_err(|_| err(404, format!("Item \"{id}\" not found")))?;
-        let mut base = json!({ "project": slug, "feature": key, "id": id, "file": rel(&p.dir, &file), "modified": mtime_ms(&file) });
-        if def["stores"] == "records" {
-            match yaml::parse(&text) { Ok(v) => { base["data"] = if v.is_null() { json!({}) } else { v }; } Err(e) => { base["error"] = json!(e.to_string()); } }
-        }
-        base["content"] = json!(text);
-        Ok(base)
-    }
-
-    pub fn write_item(&self, slug: &str, key: &str, id: &str, content: &str) -> Result<Value> {
-        check_id(id, "id")?;
-        let p = self.load_project(slug)?;
-        let f = p.feature(key)?;
-        let def = f.def.as_ref().unwrap();
-        if !["markdown", "diagram"].contains(&def["stores"].as_str().unwrap_or("")) {
-            return Err(err(501, "Not in the prototype yet: only pages and diagrams can be saved"));
-        }
-        let file = item_path(&p, def, key, id)?;
-        if let Some(parent) = file.parent() { let _ = fs::create_dir_all(parent); }
-        fs::write(&file, content).map_err(|e| err(500, e.to_string()))?;
-        self.read_item(slug, key, id)
-    }
 }
 
 pub struct ProjectFeature {
@@ -408,14 +368,7 @@ impl Project {
     }
 }
 
-fn item_path(p: &Project, def: &Value, key: &str, id: &str) -> Result<PathBuf> {
-    let dir = safe_join(&p.dir, def["folder"].as_str().unwrap_or(key))?;
-    let ext = match def["stores"].as_str().unwrap_or("") { "records" => "yaml", "diagram" => "mmd", "chat" => "json", _ => "md" };
-    if def["for_claude"] == "skills" { return safe_join(&dir, &format!("{id}/SKILL.md")); }
-    safe_join(&dir, &format!("{id}.{ext}"))
-}
-
-fn split_front_matter(text: &str) -> (Map<String, Value>, String) {
+pub(crate) fn split_front_matter(text: &str) -> (Map<String, Value>, String) {
     let t = text.replace("\r\n", "\n");
     if let Some(rest) = t.strip_prefix("---\n") {
         if let Some(end) = rest.find("\n---\n").or_else(|| if rest.ends_with("\n---") { Some(rest.len() - 4) } else { None }) {
@@ -426,7 +379,7 @@ fn split_front_matter(text: &str) -> (Map<String, Value>, String) {
     }
     (Map::new(), t)
 }
-fn md_title(meta: &Map<String, Value>, body: &str, fallback: &str) -> String {
+pub(crate) fn md_title(meta: &Map<String, Value>, body: &str, fallback: &str) -> String {
     if let Some(t) = meta.get("title").and_then(|t| t.as_str()) { return t.to_string(); }
     if let Some(n) = meta.get("name").and_then(|t| t.as_str()) {
         if !n.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-') { return n.to_string(); }
@@ -434,7 +387,7 @@ fn md_title(meta: &Map<String, Value>, body: &str, fallback: &str) -> String {
     for l in body.lines() { if let Some(h) = l.strip_prefix("# ") { return h.trim().to_string(); } }
     prettify(fallback)
 }
-fn md_summary(body: &str) -> String {
+pub(crate) fn md_summary(body: &str) -> String {
     let line = body.lines().map(|l| l.trim()).find(|l| !l.is_empty() && !["#", "```", "|", ">", "![", "---"].iter().any(|p| l.starts_with(p))).unwrap_or("");
     let mut out = String::new();
     let mut paren = 0;
@@ -443,7 +396,7 @@ fn md_summary(body: &str) -> String {
     }
     out.chars().take(220).collect()
 }
-fn list_markdown(p: &Project, def: &Value, dir: &Path) -> Vec<Value> {
+pub(crate) fn list_markdown(p: &Project, def: &Value, dir: &Path) -> Vec<Value> {
     let skills = def["for_claude"] == "skills";
     let mut out: Vec<Value> = vec![];
     for e in fs::read_dir(dir).map(|rd| rd.flatten().collect::<Vec<_>>()).unwrap_or_default() {
@@ -469,7 +422,7 @@ fn list_markdown(p: &Project, def: &Value, dir: &Path) -> Vec<Value> {
     out.sort_by(|a, b| a["title"].as_str().unwrap_or("").to_lowercase().cmp(&b["title"].as_str().unwrap_or("").to_lowercase()));
     out
 }
-fn count_items(p: &Project, f: &ProjectFeature) -> usize {
+pub(crate) fn count_items(p: &Project, f: &ProjectFeature) -> usize {
     let def = match &f.def { Some(d) => d, None => return 0 };
     let dir = match safe_join(&p.dir, def["folder"].as_str().unwrap_or(&f.key)) { Ok(d) => d, Err(_) => return 0 };
     let entries: Vec<PathBuf> = fs::read_dir(&dir).map(|rd| rd.flatten().filter(|e| { let n = e.file_name().to_string_lossy().to_string(); !n.starts_with('.') && !n.starts_with('_') }).map(|e| e.path()).collect()).unwrap_or_default();
@@ -484,10 +437,10 @@ fn count_items(p: &Project, f: &ProjectFeature) -> usize {
         _ => count_files(&dir),
     }
 }
-fn count_files(dir: &Path) -> usize {
+pub(crate) fn count_files(dir: &Path) -> usize {
     fs::read_dir(dir).map(|rd| rd.flatten().map(|e| if e.path().is_dir() { if e.file_name().to_string_lossy().starts_with('.') { 0 } else { count_files(&e.path()) } } else { 1 }).sum()).unwrap_or(0)
 }
-fn copy_dir(from: &Path, to: &Path) -> std::io::Result<()> {
+pub(crate) fn copy_dir(from: &Path, to: &Path) -> std::io::Result<()> {
     fs::create_dir_all(to)?;
     for e in fs::read_dir(from)? {
         let e = e?;

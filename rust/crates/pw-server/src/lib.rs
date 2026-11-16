@@ -2,20 +2,21 @@
 //! Phase 1 prototype: info, features, projects, Markdown pages, static files, live-refresh stream;
 //! the other routes answer with empty data so the screens work.
 use axum::{
-    body::Body,
-    extract::{Path, Request, State},
+    body::{Body, Bytes},
+    extract::{DefaultBodyLimit, Path, Query, Request, State},
     http::{header, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{
         sse::{Event, KeepAlive, Sse},
         IntoResponse, Response,
     },
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
 use pw_core::workspace::{self, HttpError, Workspace};
 use serde_json::{json, Value};
-use std::{convert::Infallible, path::PathBuf, sync::Arc, time::Duration};
+use std::{collections::HashMap, convert::Infallible, path::PathBuf, sync::Arc, time::Duration};
+type Q = Query<HashMap<String, String>>;
 use tokio_stream::{wrappers::IntervalStream, StreamExt};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -55,17 +56,22 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/projects/{p}/overview", get(overview))
         .route("/api/projects/{p}/index", get(|| async { Json(json!([])) }))
         .route("/api/projects/{p}/backlinks", get(|| async { Json(json!([])) }))
-        .route("/api/projects/{p}/f/{f}/items", get(items))
-        .route("/api/projects/{p}/f/{f}/items/{id}", get(item).put(write_item))
+        .route("/api/projects/{p}/f/{f}/items", get(items).post(create_item))
+        .route("/api/projects/{p}/f/{f}/items/{id}", get(item).put(write_item).delete(delete_item))
+        .route("/api/projects/{p}/f/{f}/trash", post(trash))
+        .route("/api/projects/{p}/f/{f}/upload", post(upload))
+        .route("/files/{p}/{*rest}", get(project_file))
         .route("/api/search", get(|| async { Json(json!([])) }))
         .route("/api/due", get(|| async { Json(json!({ "today": today(), "days": 14, "items": [], "total": 0 })) }))
         .route("/api/templates", get(|| async { Json(json!([])) }))
         .route("/api/archive", get(|| async { Json(json!([])) }))
-        .route("/api/secrets", get(|| async { Json(json!({ "protection": "none", "available": false, "locked": null, "items": [] })) }))
+        .route("/api/secrets", get(secrets).delete(secrets_clear))
+        .route("/api/secrets/{name}", put(secret_put).delete(secret_delete))
         .route("/api/update", get(|| async { Json(json!({ "current": VERSION, "enabled": false, "repo": "GFGMNET/Workspace", "lastCheck": null, "latest": null, "available": false, "snoozedUntil": null, "snoozed": false, "error": null })) }))
         .route("/api/ide", get(|| async { Json(json!({ "running": false, "starting": false, "managed": false, "port": 8740, "base": "/ide", "command": "", "url": "/ide/", "log": ["The VS Code tab is not in the Rust prototype yet"] })) }))
         .route("/api/events", get(events))
         .fallback(static_files)
+        .layer(DefaultBodyLimit::max(200 * 1024 * 1024))
         .layer(middleware::from_fn(guard))
         .with_state(ws)
 }
@@ -135,12 +141,57 @@ async fn overview(State(ws): S, Path(p): Path<String>) -> ApiResult {
     }).collect();
     Ok(Json(json!({ "name": pr.name, "meta": pr.meta, "today": today(), "days": 30, "tiles": tiles, "upcoming": [], "open": [], "openTotal": 0, "recent": [] })))
 }
-async fn items(State(ws): S, Path((p, f)): Path<(String, String)>) -> ApiResult { Ok(Json(ws.list_items(&p, &f)?)) }
-async fn item(State(ws): S, Path((p, f, id)): Path<(String, String, String)>) -> ApiResult { Ok(Json(ws.read_item(&p, &f, &id)?)) }
-async fn write_item(State(ws): S, Path((p, f, id)): Path<(String, String, String)>, Json(body): Json<Value>) -> ApiResult {
-    let content = body["content"].as_str().ok_or_else(|| ApiError(workspace::err(400, "content is missing")))?;
-    Ok(Json(ws.write_item(&p, &f, &id, content)?))
+async fn items(State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q) -> ApiResult {
+    Ok(Json(ws.list_items(&p, &f, q.get("folder").map(|s| s.as_str()).unwrap_or(""), q.get("all").map(|s| s == "1").unwrap_or(false))?))
 }
+fn body_json(b: &Bytes) -> Result<Value, ApiError> {
+    if b.is_empty() { return Ok(json!({})); }
+    serde_json::from_slice(b).map_err(|_| ApiError(workspace::err(400, "Bad JSON")))
+}
+async fn create_item(State(ws): S, Path((p, f)): Path<(String, String)>, b: Bytes) -> ApiResult { Ok(Json(ws.create_item(&p, &f, &body_json(&b)?)?)) }
+async fn item(State(ws): S, Path((p, f, id)): Path<(String, String, String)>) -> ApiResult { Ok(Json(ws.read_item(&p, &f, &id)?)) }
+async fn write_item(State(ws): S, Path((p, f, id)): Path<(String, String, String)>, b: Bytes) -> ApiResult {
+    let body = body_json(&b)?;
+    let data = body.get("data").filter(|d| !d.is_null());
+    Ok(Json(ws.write_item(&p, &f, &id, body["content"].as_str(), data)?))
+}
+async fn delete_item(State(ws): S, Path((p, f, id)): Path<(String, String, String)>) -> ApiResult { Ok(Json(ws.trash_item(&p, &f, Some(&id), None)?)) }
+async fn trash(State(ws): S, Path((p, f)): Path<(String, String)>, b: Bytes) -> ApiResult {
+    let body = body_json(&b)?;
+    Ok(Json(ws.trash_item(&p, &f, None, Some(body["path"].as_str().unwrap_or("")))?))
+}
+async fn upload(State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q, b: Bytes) -> ApiResult {
+    let g = |k: &str| q.get(k).map(|s| s.as_str()).unwrap_or("");
+    let name = if g("filename").is_empty() { "upload.bin" } else { g("filename") };
+    Ok(Json(ws.save_upload(&p, &f, g("folder"), name, &b, g("map") == "1")?))
+}
+/// App-private files are never served (CLAUDE.md, security).
+fn private(rel: &str) -> bool {
+    rel.split(['/', '\\']).any(|part| [".secrets.json", ".ide-token", ".app"].contains(&part))
+}
+async fn project_file(State(ws): S, Path((p, rest)): Path<(String, String)>) -> Response {
+    let not_found = || (StatusCode::NOT_FOUND, [(header::CONTENT_TYPE, "text/plain")], "Not found").into_response();
+    if private(&rest) { return not_found(); }
+    let file = match ws.file_path(&p, &rest) { Ok(f) if f.is_file() => f, Ok(_) => return not_found(), Err(e) => return ApiError(e).into_response() };
+    match tokio::fs::read(&file).await {
+        Ok(bytes) => {
+            let mut res = Response::new(Body::from(bytes));
+            res.headers_mut().insert(header::CONTENT_TYPE, HeaderValue::from_static(mime(&file.to_string_lossy())));
+            res.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-cache"));
+            res
+        }
+        Err(_) => not_found(),
+    }
+}
+async fn secrets(State(ws): S) -> Json<Value> { Json(ws.secrets_status()) }
+async fn secrets_clear(State(ws): S) -> ApiResult { Ok(Json(ws.secrets_remove_all()?)) }
+async fn secret_put(State(ws): S, Path(name): Path<String>, b: Bytes) -> ApiResult {
+    let body = body_json(&b)?;
+    let r = ws.secret_set(&name, body["value"].as_str().unwrap_or(""))?;
+    for x in ws.list_projects() { if let Some(s) = x["slug"].as_str() { if let Ok(pr) = ws.load_project(s) { ws.write_mcp_json(&pr); } } }
+    Ok(Json(r))
+}
+async fn secret_delete(State(ws): S, Path(name): Path<String>) -> ApiResult { Ok(Json(ws.secret_remove(&name)?)) }
 async fn events() -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
     // live refresh: the prototype only keeps the connection open (file watching comes in phase 2)
     let s = IntervalStream::new(tokio::time::interval(Duration::from_secs(25))).map(|_| Ok(Event::default().comment("ping")));
@@ -151,7 +202,9 @@ fn mime(path: &str) -> &'static str {
     match path.rsplit('.').next().unwrap_or("").to_lowercase().as_str() {
         "html" => "text/html; charset=utf-8", "js" => "text/javascript; charset=utf-8", "css" => "text/css; charset=utf-8",
         "json" => "application/json", "svg" => "image/svg+xml", "png" => "image/png", "jpg" | "jpeg" => "image/jpeg",
-        "gif" => "image/gif", "webp" => "image/webp", "ico" => "image/x-icon", "woff2" => "font/woff2", _ => "application/octet-stream",
+        "gif" => "image/gif", "webp" => "image/webp", "ico" => "image/x-icon", "woff2" => "font/woff2", "avif" => "image/avif", "bmp" => "image/bmp",
+        "md" | "txt" | "yaml" | "yml" | "mmd" => "text/plain; charset=utf-8", "pdf" => "application/pdf", "mp4" => "video/mp4", "webm" => "video/webm", "mp3" => "audio/mpeg",
+        _ => "application/octet-stream",
     }
 }
 async fn static_files(State(ws): S, req: Request) -> Response {
