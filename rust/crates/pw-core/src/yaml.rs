@@ -20,8 +20,8 @@ impl std::fmt::Display for YamlError {
     }
 }
 
-/// Parses YAML text. Returns the value and whether it was read leniently (then the app shows a warning).
-pub fn parse_with_info(text: &str) -> Result<(Value, bool), YamlError> {
+/// Parses YAML text. Returns the value and, when it was read leniently, the warning the app shows.
+pub fn parse_with_info(text: &str) -> Result<(Value, Option<String>), YamlError> {
     let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     let docs = match YamlLoader::load_from_str(text) {
         Ok(d) => d,
@@ -30,7 +30,7 @@ pub fn parse_with_info(text: &str) -> Result<(Value, bool), YamlError> {
             // like 0.x: duplicate keys are allowed (the last one wins), other mistakes are read leniently with a warning
             let duplicate = full.message.to_lowercase().contains("duplicate");
             return match lenient::parse(text) {
-                Ok(v) => Ok((v, !duplicate)),
+                Ok(v) => Ok((v, if duplicate { None } else { Some(format!("Not valid YAML ({full}) — read leniently. Fix it to be safe.")) })),
                 Err(_) => Err(full),
             };
         }
@@ -51,7 +51,7 @@ pub fn parse_with_info(text: &str) -> Result<(Value, bool), YamlError> {
     } else {
         values.into_iter().next().unwrap()
     };
-    Ok((value, false))
+    Ok((value, None))
 }
 
 pub fn parse(text: &str) -> Result<Value, YamlError> {
@@ -168,7 +168,7 @@ mod tests {
     #[test]
     fn lenient_and_updates() {
         let (v, warn) = parse_with_info("name: Project 1\n wiki:\n  - some page\n").unwrap();
-        assert!(warn); assert_eq!(v["wiki"][0], "some page");
+        assert!(warn.is_some()); assert_eq!(v["wiki"][0], "some page");
         let mut d = Map::new();
         d.insert("name".into(), Value::String("Router".into()));
         d.insert("ip".into(), Value::String("10.0.0.2".into()));

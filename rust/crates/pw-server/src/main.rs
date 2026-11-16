@@ -17,7 +17,7 @@ async fn main() {
         match args.get(1).map(|s| s.as_str()) {
             Some("parse") => {
                 let out = match pw_core::yaml::parse_with_info(&text) {
-                    Ok((v, w)) => json!({ "value": sort(v), "warning": w }),
+                    Ok((v, w)) => json!({ "value": sort(v), "warning": w.is_some() }),
                     Err(e) => json!({ "error": true, "line": e.line }),
                 };
                 print!("{out}");

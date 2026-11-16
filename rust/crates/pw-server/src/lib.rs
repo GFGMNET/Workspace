@@ -51,20 +51,37 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/claude", get(|| async { Json(json!({ "ok": false, "command": "claude", "error": "Chat is not in the Rust prototype yet" })) }))
         .route("/api/examples", post(examples))
         .route("/api/features", get(features))
-        .route("/api/projects", get(projects))
-        .route("/api/projects/{p}", get(project))
+        .route("/api/features/{k}", put(feature_save).delete(feature_delete))
+        .route("/api/projects", get(projects).post(project_create))
+        .route("/api/projects/{p}", get(project).patch(project_rename).delete(project_delete))
+        .route("/api/projects/{p}/archive", post(project_archive))
+        .route("/api/projects/{p}/template", post(template_save))
+        .route("/api/projects/{p}/yaml", put(project_yaml))
+        .route("/api/projects/{p}/features", post(project_add_feature))
+        .route("/api/projects/{p}/features/{k}", axum::routing::delete(project_remove_feature))
         .route("/api/projects/{p}/overview", get(overview))
-        .route("/api/projects/{p}/index", get(|| async { Json(json!([])) }))
-        .route("/api/projects/{p}/backlinks", get(|| async { Json(json!([])) }))
+        .route("/api/projects/{p}/index", get(index))
+        .route("/api/projects/{p}/backlinks", get(backlinks))
         .route("/api/projects/{p}/f/{f}/items", get(items).post(create_item))
         .route("/api/projects/{p}/f/{f}/items/{id}", get(item).put(write_item).delete(delete_item))
         .route("/api/projects/{p}/f/{f}/trash", post(trash))
         .route("/api/projects/{p}/f/{f}/upload", post(upload))
         .route("/files/{p}/{*rest}", get(project_file))
-        .route("/api/search", get(|| async { Json(json!([])) }))
-        .route("/api/due", get(|| async { Json(json!({ "today": today(), "days": 14, "items": [], "total": 0 })) }))
-        .route("/api/templates", get(|| async { Json(json!([])) }))
-        .route("/api/archive", get(|| async { Json(json!([])) }))
+        .route("/api/search", get(search))
+        .route("/api/due", get(due))
+        .route("/api/fs/tree", get(fs_tree))
+        .route("/api/fs/file", get(fs_file).put(fs_write))
+        .route("/api/fs/raw", get(fs_raw))
+        .route("/api/fs/mkdir", post(fs_mkdir))
+        .route("/api/fs/rename", post(fs_rename))
+        .route("/api/fs/trash", post(fs_trash))
+        .route("/api/fs/upload", post(fs_upload))
+        .route("/api/fs/vscode", post(fs_vscode))
+        .route("/api/templates", get(templates))
+        .route("/api/templates/{id}", axum::routing::delete(template_delete))
+        .route("/api/archive", get(archive))
+        .route("/api/archive/{p}", axum::routing::delete(archive_delete))
+        .route("/api/archive/{p}/restore", post(archive_restore))
         .route("/api/secrets", get(secrets).delete(secrets_clear))
         .route("/api/secrets/{name}", put(secret_put).delete(secret_delete))
         .route("/api/update", get(|| async { Json(json!({ "current": VERSION, "enabled": false, "repo": "GFGMNET/Workspace", "lastCheck": null, "latest": null, "available": false, "snoozedUntil": null, "snoozed": false, "error": null })) }))
@@ -93,20 +110,6 @@ async fn guard(req: Request, next: Next) -> Response {
     next.run(req).await
 }
 
-fn today() -> String {
-    // UTC date; good enough for the prototype's empty lists
-    let days = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() / 86400).unwrap_or(0) as i64;
-    let (y, m, d) = civil(days);
-    format!("{y:04}-{m:02}-{d:02}")
-}
-fn civil(z: i64) -> (i64, u32, u32) {
-    let z = z + 719468; let era = z.div_euclid(146097); let doe = z.rem_euclid(146097);
-    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365; let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100); let mp = (5 * doy + 2) / 153;
-    let d = (doy - (153 * mp + 2) / 5 + 1) as u32; let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
-    (if m <= 2 { y + 1 } else { y }, m, d)
-}
-
 async fn info(State(ws): S) -> Json<Value> {
     Json(json!({
         "version": VERSION, "root": ws.root.to_string_lossy(), "examples": ws.list_examples().len(),
@@ -130,16 +133,71 @@ async fn features(State(ws): S) -> Json<Value> {
 }
 async fn projects(State(ws): S) -> Json<Value> { Json(json!(ws.list_projects())) }
 async fn project(State(ws): S, Path(p): Path<String>) -> ApiResult { Ok(Json(ws.load_project(&p)?.view())) }
-async fn overview(State(ws): S, Path(p): Path<String>) -> ApiResult {
-    let pr = ws.load_project(&p)?;
-    let list = ws.list_projects();
-    let counts = list.iter().find(|x| x["slug"] == p.as_str()).map(|x| x["features"].clone()).unwrap_or(json!([]));
-    let tiles: Vec<Value> = pr.features.iter().map(|f| match &f.def {
-        None => json!({ "key": f.key, "name": workspace::prettify(&f.key), "missing": true }),
-        Some(d) => json!({ "key": f.key, "name": d["name"], "layout": d["layout"], "icon": d["icon"], "stores": d["stores"],
-            "count": counts.as_array().and_then(|a| a.iter().find(|x| x["key"] == f.key.as_str())).map(|x| x["count"].clone()).unwrap_or(json!(0)) }),
-    }).collect();
-    Ok(Json(json!({ "name": pr.name, "meta": pr.meta, "today": today(), "days": 30, "tiles": tiles, "upcoming": [], "open": [], "openTotal": 0, "recent": [] })))
+async fn feature_save(State(ws): S, Path(k): Path<String>, b: Bytes) -> ApiResult { let body = body_json(&b)?; Ok(Json(ws.save_feature(&k, body["yaml"].as_str().unwrap_or(""))?)) }
+async fn feature_delete(State(ws): S, Path(k): Path<String>) -> ApiResult { Ok(Json(ws.delete_feature(&k)?)) }
+async fn project_create(State(ws): S, b: Bytes) -> ApiResult { Ok(Json(ws.create_project(&body_json(&b)?)?.view())) }
+async fn project_rename(State(ws): S, Path(p): Path<String>, b: Bytes) -> ApiResult { Ok(Json(ws.rename_project(&p, &body_json(&b)?)?.view())) }
+async fn project_delete(State(ws): S, Path(p): Path<String>) -> ApiResult { Ok(Json(ws.delete_project(&p, false)?)) }
+async fn project_archive(State(ws): S, Path(p): Path<String>) -> ApiResult { Ok(Json(ws.archive_project(&p)?)) }
+async fn template_save(State(ws): S, Path(p): Path<String>, b: Bytes) -> ApiResult { Ok(Json(ws.save_template(&p, &body_json(&b)?)?)) }
+async fn project_yaml(State(ws): S, Path(p): Path<String>, b: Bytes) -> ApiResult { let body = body_json(&b)?; Ok(Json(ws.save_project_yaml(&p, body["yaml"].as_str().unwrap_or(""))?.view())) }
+async fn project_add_feature(State(ws): S, Path(p): Path<String>, b: Bytes) -> ApiResult {
+    let body = body_json(&b)?;
+    Ok(Json(ws.add_feature_to_project(&p, body["key"].as_str().unwrap_or(""), body.get("settings"))?.view()))
+}
+async fn project_remove_feature(State(ws): S, Path((p, k)): Path<(String, String)>) -> ApiResult { Ok(Json(ws.remove_feature_from_project(&p, &k)?.view())) }
+async fn templates(State(ws): S) -> Json<Value> { Json(json!(ws.list_templates())) }
+async fn template_delete(State(ws): S, Path(id): Path<String>) -> ApiResult { Ok(Json(ws.delete_template(&id)?)) }
+async fn archive(State(ws): S) -> Json<Value> { Json(json!(ws.list_archived())) }
+async fn archive_delete(State(ws): S, Path(p): Path<String>) -> ApiResult { Ok(Json(ws.delete_project(&p, true)?)) }
+async fn archive_restore(State(ws): S, Path(p): Path<String>) -> ApiResult { Ok(Json(ws.restore_project(&p)?.view())) }
+async fn overview(State(ws): S, Path(p): Path<String>) -> ApiResult { Ok(Json(ws.project_overview(&p, 30)?)) }
+async fn index(State(ws): S, Path(p): Path<String>) -> ApiResult { Ok(Json(json!(ws.project_index_of(&p)?))) }
+async fn backlinks(State(ws): S, Path(p): Path<String>, Query(q): Q) -> ApiResult {
+    Ok(Json(json!(ws.backlinks(&p, qs(&q, "feature"), qs(&q, "id"))?)))
+}
+async fn search(State(ws): S, Query(q): Q) -> Json<Value> {
+    Json(json!(ws.search(qs(&q, "q"), Some(qs(&q, "project")).filter(|x| !x.is_empty()))))
+}
+async fn due(State(ws): S, Query(q): Q) -> Json<Value> {
+    let days = qs(&q, "days").parse::<i64>().ok().filter(|d| *d != 0).unwrap_or(14).clamp(1, 90);
+    Json(ws.due_all(days))
+}
+fn qs<'a>(q: &'a HashMap<String, String>, k: &str) -> &'a str { q.get(k).map(|s| s.as_str()).unwrap_or("") }
+// ---------- file explorer ----------
+async fn fs_tree(State(ws): S, Query(q): Q) -> ApiResult { Ok(Json(ws.fs_tree(qs(&q, "scope"), qs(&q, "path"))?)) }
+async fn fs_file(State(ws): S, Query(q): Q) -> ApiResult { Ok(Json(ws.fs_read(qs(&q, "scope"), qs(&q, "path"))?)) }
+async fn fs_write(State(ws): S, Query(q): Q, b: Bytes) -> ApiResult {
+    let body = body_json(&b)?;
+    Ok(Json(ws.fs_write(qs(&q, "scope"), qs(&q, "path"), body["content"].as_str().unwrap_or(""), qs(&q, "create") == "1")?))
+}
+async fn fs_mkdir(State(ws): S, Query(q): Q) -> ApiResult { Ok(Json(ws.fs_mkdir(qs(&q, "scope"), qs(&q, "path"))?)) }
+async fn fs_rename(State(ws): S, Query(q): Q, b: Bytes) -> ApiResult {
+    let body = body_json(&b)?;
+    Ok(Json(ws.fs_rename(qs(&q, "scope"), body["from"].as_str().unwrap_or(""), body["to"].as_str().unwrap_or(""))?))
+}
+async fn fs_trash(State(ws): S, Query(q): Q) -> ApiResult { Ok(Json(ws.fs_trash(qs(&q, "scope"), qs(&q, "path"))?)) }
+async fn fs_upload(State(ws): S, Query(q): Q, b: Bytes) -> ApiResult {
+    let name = Some(qs(&q, "filename")).filter(|x| !x.is_empty()).unwrap_or("upload.bin");
+    Ok(Json(ws.fs_upload(qs(&q, "scope"), qs(&q, "path"), name, &b)?))
+}
+async fn fs_vscode(State(ws): S, Query(q): Q) -> ApiResult { Ok(Json(ws.fs_open_vscode(qs(&q, "scope"), qs(&q, "path"))?)) }
+async fn fs_raw(State(ws): S, Query(q): Q) -> Response {
+    let f = match ws.fs_abs(qs(&q, "scope"), qs(&q, "path")) { Ok(f) => f, Err(e) => return ApiError(e).into_response() };
+    if !f.is_file() { return ApiError(workspace::err(404, "Not a file")).into_response(); }
+    match tokio::fs::read(&f).await {
+        Ok(bytes) => {
+            let mut res = Response::new(Body::from(bytes));
+            res.headers_mut().insert(header::CONTENT_TYPE, HeaderValue::from_static(mime(&f.to_string_lossy())));
+            res.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-cache"));
+            if !qs(&q, "download").is_empty() {
+                let name = f.file_name().map(|n| n.to_string_lossy().replace(['"', '\r', '\n'], "")).unwrap_or_default();
+                if let Ok(v) = HeaderValue::from_str(&format!("attachment; filename=\"{name}\"")) { res.headers_mut().insert(header::CONTENT_DISPOSITION, v); }
+            }
+            res
+        }
+        Err(_) => ApiError(workspace::err(404, "Not found")).into_response(),
+    }
 }
 async fn items(State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q) -> ApiResult {
     Ok(Json(ws.list_items(&p, &f, q.get("folder").map(|s| s.as_str()).unwrap_or(""), q.get("all").map(|s| s == "1").unwrap_or(false))?))

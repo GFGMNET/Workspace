@@ -214,28 +214,59 @@ impl Workspace {
     pub fn public_dir(&self) -> PathBuf { self.install.join("app").join("public") }
     fn starter_dir(&self) -> PathBuf { self.install.join("app").join("starter") }
 
-    /// First start: the data folder with the starter features (examples only on request).
-    pub fn ensure(&self) {
+    /// `location:` lets a project's content live in an existing folder; {install}, {data} and ~ work.
+    pub fn resolve_location(&self, loc: &str, home: &Path) -> PathBuf {
+        let mut l = loc.trim().to_string();
+        for (k, v) in [("{install}", self.install.to_string_lossy().to_string()), ("{data}", self.root.to_string_lossy().to_string())] {
+            while let Some(i) = l.to_lowercase().find(k) { l.replace_range(i..i + k.len(), &v); }
+        }
+        if l == "~" || l.starts_with("~/") || l.starts_with("~\\") {
+            let h = std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from).unwrap_or_default();
+            l = h.join(l[1..].trim_start_matches(['/', '\\'])).to_string_lossy().to_string();
+        }
+        let p = if Path::new(&l).is_absolute() { PathBuf::from(&l) } else { home.join(&l) };
+        normalize(&p)
+    }
+
+    /// First start: the data folder; starter features that are new in this version are added once
+    /// (a feature the client changed or deleted is never touched again). State: <root>/.workspace.json.
+    pub fn ensure(&self) -> Vec<String> {
+        let mut notes = vec![];
         let _ = fs::create_dir_all(self.projects_dir());
         let fd = self.features_dir();
-        if !fd.exists() {
-            let _ = fs::create_dir_all(&fd);
-            if let Ok(rd) = fs::read_dir(self.starter_dir().join("features")) {
-                for e in rd.flatten() { let _ = fs::copy(e.path(), fd.join(e.file_name())); }
-            }
+        let _ = fs::create_dir_all(&fd);
+        let sf = self.root.join(".workspace.json");
+        let mut st: Map<String, Value> = fs::read_to_string(&sf).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()).and_then(|v| v.as_object().cloned()).unwrap_or_default();
+        let mut installed: Vec<String> = st.get("starterFeatures").and_then(|a| a.as_array()).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
+        let mut names: Vec<String> = fs::read_dir(self.starter_dir().join("features")).map(|rd| rd.flatten().map(|e| e.file_name().to_string_lossy().to_string()).collect()).unwrap_or_default();
+        names.sort();
+        for f in names {
+            let Some(key) = f.strip_suffix(".yaml").or_else(|| f.strip_suffix(".yml")).map(|k| k.to_string()) else { continue };
+            if installed.contains(&key) { continue; }
+            let target = fd.join(&f);
+            if !target.exists() && fs::copy(self.starter_dir().join("features").join(&f), &target).is_ok() { notes.push(format!("added feature {key}")); }
+            installed.push(key);
         }
+        installed.sort();
+        st.insert("starterFeatures".into(), json!(installed));
+        st.insert("version".into(), json!(env!("CARGO_PKG_VERSION")));
+        let _ = fs::write(&sf, serde_json::to_string_pretty(&st).unwrap() + "\n");
+        notes
     }
     pub fn list_examples(&self) -> Vec<String> {
-        let mut v: Vec<String> = fs::read_dir(self.starter_dir().join("examples")).map(|rd| rd.flatten().filter(|e| e.path().is_dir()).map(|e| e.file_name().to_string_lossy().to_string()).collect()).unwrap_or_default();
+        let mut v: Vec<String> = fs::read_dir(self.starter_dir().join("examples")).map(|rd| rd.flatten().filter(|e| e.path().join("project.yaml").exists()).map(|e| e.file_name().to_string_lossy().to_string()).collect()).unwrap_or_default();
         v.sort();
         v
     }
+    /// Copies the example projects into the data folder (never overwrites: gets a new name instead).
     pub fn add_examples(&self) -> Vec<String> {
         let mut added = vec![];
         for name in self.list_examples() {
-            let dest = self.projects_dir().join(&name);
-            if dest.exists() { continue; }
-            if copy_dir(&self.starter_dir().join("examples").join(&name), &dest).is_ok() { added.push(name); }
+            let slug = crate::items::unique_name(&self.projects_dir(), &name, "");
+            if copy_dir(&self.starter_dir().join("examples").join(&name), &self.projects_dir().join(&slug)).is_ok() {
+                let _ = self.sync_project(&slug);
+                added.push(slug);
+            }
         }
         added
     }
@@ -248,7 +279,7 @@ impl Workspace {
             let key = match f.strip_suffix(".yaml").or_else(|| f.strip_suffix(".yml")) { Some(k) => k.to_string(), None => continue };
             let text = fs::read_to_string(self.features_dir().join(&f)).unwrap_or_default();
             let (raw, error, warning) = match yaml::parse_with_info(&text) {
-                Ok((Value::Object(o), w)) => (o, Value::Null, if w { json!("read leniently") } else { Value::Null }),
+                Ok((Value::Object(o), w)) => (o, Value::Null, json!(w)),
                 Ok((Value::Null, _)) => (Map::new(), Value::Null, Value::Null),
                 Ok(_) => (Map::new(), json!("must be key: value pairs"), Value::Null),
                 Err(e) => (Map::new(), json!(e.to_string()), Value::Null),
@@ -264,11 +295,11 @@ impl Workspace {
         let home = self.projects_dir().join(slug);
         let file = home.join("project.yaml");
         let text = fs::read_to_string(&file).map_err(|_| err(404, format!("Project \"{slug}\" not found")))?;
-        let (data, mut error) = match yaml::parse(&text) {
-            Ok(Value::Object(o)) => (o, None),
-            Ok(Value::Null) => (Map::new(), None),
-            Ok(_) => (Map::new(), Some("project.yaml must be key: value pairs".to_string())),
-            Err(e) => (Map::new(), Some(e.to_string())),
+        let (data, mut error, warning) = match yaml::parse_with_info(&text) {
+            Ok((Value::Object(o), w)) => (o, None, w),
+            Ok((Value::Null, w)) => (Map::new(), None, w),
+            Ok(_) => (Map::new(), Some("project.yaml must be key: value pairs".to_string()), None),
+            Err(e) => (Map::new(), Some(e.to_string()), None),
         };
         let features = self.list_features();
         let mut meta = Map::new();
@@ -277,8 +308,13 @@ impl Workspace {
             if META_KEYS.contains(&k.to_lowercase().as_str()) { meta.insert(k.to_lowercase(), v.clone()); continue; }
             if !v.is_null() && !v.is_object() && !v.is_array() { meta.insert(k.clone(), v.clone()); continue; }
             let mut overrides = Map::new();
-            if let Value::Object(o) = v { overrides = o.clone(); overrides.remove("items"); }
-            let fkey = overrides.remove("feature").and_then(|x| x.as_str().map(|s| s.to_string())).unwrap_or_else(|| k.clone());
+            let mut seeds: Vec<Value> = vec![];
+            match v {
+                Value::Array(a) => seeds = a.clone(),
+                Value::Object(o) => { overrides = o.clone(); if let Some(Value::Array(a)) = overrides.remove("items") { seeds = a; } }
+                _ => {}
+            }
+            let fkey = overrides.remove("feature").map(|x| x.as_str().map(|s| s.to_string()).unwrap_or_else(|| x.to_string())).unwrap_or_else(|| k.clone());
             let found = features.iter().find(|f| f["key"] == fkey.as_str())
                 .or_else(|| features.iter().find(|f| f["key"] == fkey.to_lowercase().as_str()))
                 .or_else(|| features.iter().find(|f| f["raw"]["aliases"].as_array().map(|a| a.iter().any(|x| x.as_str().map(|s| s.to_lowercase()) == Some(fkey.to_lowercase()))).unwrap_or(false)));
@@ -294,18 +330,18 @@ impl Workspace {
                 feature: found.map(|f| f["key"].as_str().unwrap_or("").to_string()).unwrap_or(fkey),
                 missing: found.is_none(),
                 def,
+                seeds,
                 overrides: Value::Object(overrides),
             });
         }
         let mut dir = home.clone();
         let mut external = false;
         if let Some(loc) = meta.get("location").and_then(|l| l.as_str()) {
-            let l = loc.replace("{install}", &self.install.to_string_lossy()).replace("{data}", &self.root.to_string_lossy());
-            let d = if Path::new(&l).is_absolute() { PathBuf::from(&l) } else { home.join(&l) };
+            let d = self.resolve_location(loc, &home);
             if d.is_dir() { dir = d; external = true; } else if error.is_none() { error = Some(format!("location: the folder \"{}\" does not exist", d.display())); }
         }
         let name = meta.get("name").map(|n| n.as_str().map(|s| s.to_string()).unwrap_or_else(|| n.to_string())).unwrap_or_else(|| slug.to_string());
-        Ok(Project { slug: slug.into(), dir, home, external, file, name, meta, features: feats, yaml: text, error })
+        Ok(Project { slug: slug.into(), dir, home, external, file, name, meta, features: feats, yaml: text, data, error, warning })
     }
 
     pub fn list_projects(&self) -> Vec<Value> {
@@ -324,7 +360,7 @@ impl Workspace {
                         "name": f.def.as_ref().map(|d| d["name"].clone()).unwrap_or(json!(prettify(&f.key))),
                         "layout": f.def.as_ref().map(|d| d["layout"].clone()), "icon": f.def.as_ref().map(|d| d["icon"].clone()),
                         "missing": f.missing, "count": if f.missing { 0 } else { count_items(&p, f) } })).collect::<Vec<_>>(),
-                    "modified": mtime_ms(&p.file),
+                    "modified": latest_mtime(&p.dir, 0),
                 })),
                 Err(e) => out.push(json!({ "slug": n, "name": n, "error": e.message, "features": [], "modified": 0 })),
             }
@@ -340,6 +376,7 @@ pub struct ProjectFeature {
     pub feature: String,
     pub missing: bool,
     pub def: Option<Value>,
+    pub seeds: Vec<Value>,
     pub overrides: Value,
 }
 pub struct Project {
@@ -352,7 +389,9 @@ pub struct Project {
     pub meta: Map<String, Value>,
     pub features: Vec<ProjectFeature>,
     pub yaml: String,
+    pub data: Map<String, Value>,
     pub error: Option<String>,
+    pub warning: Option<String>,
 }
 impl Project {
     pub fn feature(&self, key: &str) -> Result<&ProjectFeature> {
@@ -362,7 +401,7 @@ impl Project {
     }
     /// The answer of GET /api/projects/<p> (server.js projectView).
     pub fn view(&self) -> Value {
-        json!({ "slug": self.slug, "name": self.name, "meta": self.meta, "yaml": self.yaml, "error": self.error, "warning": Value::Null,
+        json!({ "slug": self.slug, "name": self.name, "meta": self.meta, "yaml": self.yaml, "error": self.error, "warning": self.warning,
             "path": self.dir.to_string_lossy(), "external": self.external, "yamlPath": self.file.to_string_lossy(),
             "features": self.features.iter().map(|f| json!({ "key": f.key, "feature": f.feature, "missing": f.missing, "def": f.def, "overrides": f.overrides })).collect::<Vec<_>>() })
     }
@@ -439,6 +478,25 @@ pub(crate) fn count_items(p: &Project, f: &ProjectFeature) -> usize {
 }
 pub(crate) fn count_files(dir: &Path) -> usize {
     fs::read_dir(dir).map(|rd| rd.flatten().map(|e| if e.path().is_dir() { if e.file_name().to_string_lossy().starts_with('.') { 0 } else { count_files(&e.path()) } } else { 1 }).sum()).unwrap_or(0)
+}
+/// Like path.resolve: removes "." and "..".
+pub fn normalize(p: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    for c in p.components() {
+        match c { std::path::Component::ParentDir => { out.pop(); } std::path::Component::CurDir => {} other => out.push(other.as_os_str()) }
+    }
+    out
+}
+/// The newest change in a folder (3 levels deep), for sorting the project list.
+pub(crate) fn latest_mtime(dir: &Path, depth: usize) -> f64 {
+    let mut m = 0f64;
+    for e in fs::read_dir(dir).map(|r| r.flatten().collect::<Vec<_>>()).unwrap_or_default() {
+        let n = e.file_name().to_string_lossy().to_string();
+        if [".trash", ".git", "node_modules", "data"].contains(&n.as_str()) { continue; }
+        let p = e.path();
+        if p.is_dir() { if depth < 3 { m = m.max(latest_mtime(&p, depth + 1)); } } else { m = m.max(mtime_ms(&p)); }
+    }
+    m
 }
 pub(crate) fn copy_dir(from: &Path, to: &Path) -> std::io::Result<()> {
     fs::create_dir_all(to)?;

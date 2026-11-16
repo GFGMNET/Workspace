@@ -225,7 +225,7 @@ pub fn clean_record(data: &Map<String, Value>, d: &Value) -> Map<String, Value> 
     }
     out
 }
-fn skill_stub(id: &str, title: &str, description: Option<&str>) -> String {
+pub(crate) fn skill_stub(id: &str, title: &str, description: Option<&str>) -> String {
     format!("---\nname: {id}\ndescription: {}\n---\n\n# {title}\n\n## Instructions\n\n1. ...\n", description.unwrap_or("Describe when Claude should use this skill."))
 }
 
