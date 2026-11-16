@@ -4,6 +4,8 @@
 use std::{net::TcpStream, thread, time::{Duration, Instant}};
 
 fn main() {
+    // chat permission helper (started by Claude CLI through the chat; stdio only)
+    if std::env::args().nth(1).as_deref() == Some("permission-mcp") { pw_server::chat::permission_mcp_main(); return; }
     let port: u16 = std::env::args().skip(1).find_map(|a| a.parse().ok()).or_else(|| std::env::var("PORT").ok().and_then(|p| p.parse().ok())).unwrap_or(4321);
     let ws = pw_server::workspace_from_env();
     thread::spawn(move || {

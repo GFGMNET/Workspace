@@ -1,0 +1,440 @@
+//! Chat (app/lib/chat.js): runs Claude CLI (`claude -p … --output-format stream-json`) in the project
+//! folder, streams its answer to the screen and saves the conversation as JSON in the chat feature.
+//! Permission questions (mode "ask") come back through a tiny MCP helper (`permission-mcp`, below)
+//! that asks this server over HTTP; the question is shown in the chat and waits for the answer.
+use pw_core::items::now_iso;
+use pw_core::workspace::{err, HttpError, Workspace};
+use serde_json::{json, Value};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::process::Stdio;
+use std::sync::{Arc, Mutex, OnceLock};
+use std::time::{Duration, Instant};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::sync::{mpsc, oneshot};
+
+const EDIT_TOOLS: [&str; 4] = ["Write", "Edit", "MultiEdit", "NotebookEdit"];
+pub static PORT: OnceLock<u16> = OnceLock::new();
+
+pub fn claude_command() -> String { std::env::var("CLAUDE_COMMAND").ok().filter(|c| !c.is_empty()).unwrap_or_else(|| "claude".into()) }
+
+fn hex(n: usize) -> String {
+    let mut b = vec![0u8; n];
+    getrandom::getrandom(&mut b).expect("random numbers");
+    b.iter().map(|x| format!("{x:02x}")).collect()
+}
+
+// ---------- environment and finding the program ----------
+/// Windows: read the current PATH from the registry (Claude CLI may have been installed while the app runs).
+fn fresh_windows_path() -> Option<String> {
+    if !cfg!(windows) { return None; }
+    static CACHE: Mutex<Option<(Instant, Option<String>)>> = Mutex::new(None);
+    let mut c = CACHE.lock().unwrap();
+    if let Some((at, v)) = c.as_ref() { if at.elapsed() < Duration::from_secs(60) { return v.clone(); } }
+    let q = |key: &str| -> String {
+        let mut cmd = std::process::Command::new("reg");
+        cmd.args(["query", key, "/v", "Path"]).stdin(Stdio::null()).stderr(Stdio::null());
+        #[cfg(windows)]
+        { use std::os::windows::process::CommandExt; cmd.creation_flags(0x0800_0000); }
+        let out = cmd.output().map(|o| String::from_utf8_lossy(&o.stdout).to_string()).unwrap_or_default();
+        out.lines().find_map(|l| { let t = l.trim(); if !t.to_lowercase().starts_with("path") { return None; } let i = t.find("REG_")?; let rest = &t[i..]; rest.find(char::is_whitespace).map(|j| rest[j..].trim().to_string()) }).unwrap_or_default()
+    };
+    let expand = |v: String| -> String {
+        let re = regex::Regex::new(r"%([^%]+)%").unwrap();
+        re.replace_all(&v, |c: &regex::Captures| std::env::vars().find(|(k, _)| k.eq_ignore_ascii_case(&c[1])).map(|(_, v)| v).unwrap_or_else(|| c[0].to_string())).into_owned()
+    };
+    let fresh: Vec<String> = [q(r"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"), q(r"HKCU\Environment")].into_iter().filter(|x| !x.is_empty()).map(expand).collect();
+    let v = if fresh.is_empty() { None } else { Some(fresh.join(";")) };
+    *c = Some((Instant::now(), v.clone()));
+    v
+}
+pub fn current_env() -> Vec<(String, String)> {
+    let mut env: Vec<(String, String)> = std::env::vars().collect();
+    if let Some(fresh) = fresh_windows_path() {
+        let k = env.iter().find(|(k, _)| k.eq_ignore_ascii_case("path")).map(|(k, _)| k.clone()).unwrap_or_else(|| "Path".into());
+        let old = env.iter().find(|(x, _)| *x == k).map(|(_, v)| v.clone()).unwrap_or_default();
+        let mut seen = std::collections::HashSet::new();
+        let joined: Vec<String> = old.split(';').chain(fresh.split(';')).filter(|x| !x.is_empty() && seen.insert(x.to_lowercase())).map(|x| x.to_string()).collect();
+        env.retain(|(x, _)| *x != k);
+        env.push((k, joined.join(";")));
+    }
+    env
+}
+/// The program to start: a path as given, otherwise searched in PATH (on Windows also .cmd/.bat, like a shell).
+pub fn find_program(name: &str, env: &[(String, String)]) -> PathBuf {
+    if name.contains('/') || name.contains('\\') { return PathBuf::from(name); }
+    let path = env.iter().find(|(k, _)| k.eq_ignore_ascii_case("path")).map(|(_, v)| v.clone()).unwrap_or_default();
+    let exts: Vec<String> = if cfg!(windows) {
+        env.iter().find(|(k, _)| k.eq_ignore_ascii_case("pathext")).map(|(_, v)| v.split(';').map(|e| e.to_lowercase()).collect()).unwrap_or_else(|| vec![".exe".into(), ".cmd".into(), ".bat".into()])
+    } else { vec![String::new()] };
+    for dir in std::env::split_paths(&path) {
+        for e in &exts {
+            let p = dir.join(format!("{name}{e}"));
+            if p.is_file() { return p; }
+        }
+    }
+    PathBuf::from(name)
+}
+fn command(program: &Path) -> tokio::process::Command {
+    #[allow(unused_mut)]
+    let mut c = tokio::process::Command::new(program);
+    #[cfg(windows)]
+    c.creation_flags(0x0800_0000);
+    c
+}
+
+/// GET /api/claude
+pub async fn claude_version() -> Value {
+    let env = current_env(); let name = claude_command();
+    let mut c = command(&find_program(&name, &env));
+    c.arg("--version").env_clear().envs(env).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped()).kill_on_drop(true);
+    match tokio::time::timeout(Duration::from_secs(15), c.output()).await {
+        Ok(Ok(o)) if o.status.success() => json!({ "ok": true, "command": name, "version": String::from_utf8_lossy(&o.stdout).trim() }),
+        Ok(Ok(o)) => json!({ "ok": false, "command": name, "error": String::from_utf8_lossy(&o.stderr).trim().lines().next().unwrap_or("Claude CLI failed") }),
+        Ok(Err(e)) => json!({ "ok": false, "command": name, "error": e.to_string() }),
+        Err(_) => json!({ "ok": false, "command": name, "error": "Claude CLI did not answer in time" }),
+    }
+}
+
+fn login_hint(msg: &str) -> String {
+    let re = regex::Regex::new(r"(?i)/login|not logged in|log in|invalid api key|authentication|unauthorized|oauth").unwrap();
+    if !re.is_match(msg) { return msg.to_string(); }
+    format!("{msg}\n\nClaude CLI says it is not signed in. Run `claude` in a terminal and sign in with /login. If you already did, start a new message; if it still fails, restart the app (Workspace → Quit, then start it again).")
+}
+fn permission_args(mode: &str, allowed: &[String]) -> Vec<String> {
+    let mut a = vec![];
+    if mode == "auto" { a.extend(["--permission-mode".into(), "acceptEdits".into()]); }
+    if mode == "read-only" { a.extend(["--disallowedTools".into(), EDIT_TOOLS.iter().chain(["Bash"].iter()).copied().collect::<Vec<_>>().join(",")]); }
+    let mut allow: Vec<String> = vec![];
+    for t in allowed {
+        let ok = !t.is_empty() && t.chars().all(|c| c.is_ascii_alphanumeric() || "_*():.- ".contains(c));
+        if ok && !allow.contains(t) && !(mode == "read-only" && EDIT_TOOLS.contains(&t.as_str())) { allow.push(t.clone()); }
+    }
+    if !allow.is_empty() { a.extend(["--allowedTools".into(), allow.join(",")]); }
+    a
+}
+fn summarize(input: &Value) -> String {
+    if !input.is_object() { return String::new(); }
+    let v = ["file_path", "path", "command", "pattern", "url", "query", "description"].iter().find_map(|k| input.get(*k).filter(|v| !v.is_null() && *v != "" && *v != false));
+    let s = match v { Some(Value::String(s)) => s.clone(), Some(o) => o.to_string(), None => input.to_string() };
+    s.chars().take(200).collect()
+}
+fn detail(tool: &str, input: &Value) -> String {
+    let t = |v: &Value, n: usize| -> String { match v { Value::String(s) => s.chars().take(n).collect(), Value::Null => String::new(), o => o.to_string().chars().take(n).collect() } };
+    match tool {
+        "Bash" if !input["command"].is_null() => t(&input["command"], 2000),
+        "Edit" | "MultiEdit" if !input["old_string"].is_null() => format!("- {}\n+ {}", t(&input["old_string"], 600), t(&input["new_string"], 600)),
+        "Write" if !input["content"].is_null() => t(&input["content"], 1200),
+        _ => String::new(),
+    }
+}
+
+// ---------- the chat file ----------
+struct ChatFile { path: PathBuf, chat: Value }
+impl ChatFile {
+    fn save(&mut self) {
+        self.chat["updated"] = json!(now_iso());
+        let _ = std::fs::write(&self.path, serde_json::to_string_pretty(&self.chat).unwrap());
+    }
+    fn allow_always(&mut self, tool: &str) {
+        let list = self.chat["allowedTools"].as_array_mut();
+        if let Some(l) = list { if !l.iter().any(|x| x == tool) { l.push(json!(tool)); self.save(); } }
+    }
+}
+
+// ---------- permission questions ----------
+struct Turn {
+    token: String,
+    tx: mpsc::UnboundedSender<Value>,
+    pending: HashMap<String, (String, oneshot::Sender<Value>)>,
+    chat: Arc<Mutex<ChatFile>>,
+}
+fn turns() -> &'static Mutex<HashMap<String, Turn>> {
+    static T: OnceLock<Mutex<HashMap<String, Turn>>> = OnceLock::new();
+    T.get_or_init(Default::default)
+}
+/// POST /api/chat-permission/<turn> (from the helper, with the turn's token): waits for the answer.
+pub async fn request_permission(turn: &str, token: &str, body: &Value) -> Value {
+    let req = hex(6);
+    let rx = {
+        let mut all = turns().lock().unwrap();
+        let Some(t) = all.get_mut(turn).filter(|t| !token.is_empty() && t.token == token) else { return json!({ "allow": false, "message": "This chat turn is over." }) };
+        let (stx, srx) = oneshot::channel();
+        let tool = body["tool"].as_str().unwrap_or("").to_string();
+        let input = body.get("input").cloned().unwrap_or(json!({}));
+        t.pending.insert(req.clone(), (tool.clone(), stx));
+        let _ = t.tx.send(json!({ "type": "permission", "turn": turn, "req": req, "tool": tool, "input": summarize(&input), "detail": detail(&tool, &input) }));
+        srx
+    };
+    match tokio::time::timeout(Duration::from_secs(600), rx).await {
+        Ok(Ok(a)) => a,
+        Ok(Err(_)) => json!({ "allow": false, "message": "The chat turn ended." }),
+        Err(_) => {
+            if let Some(t) = turns().lock().unwrap().get_mut(turn) { t.pending.remove(&req); let _ = t.tx.send(json!({ "type": "permission_done", "req": req })); }
+            json!({ "allow": false, "message": "No answer in time." })
+        }
+    }
+}
+/// POST /api/chat-permission/<turn>/<req>/answer (from the chat screen).
+pub fn answer_permission(turn: &str, req: &str, body: &Value) -> Result<Value, HttpError> {
+    let mut all = turns().lock().unwrap();
+    let t = all.get_mut(turn).ok_or_else(|| err(404, "This question was already answered or has expired"))?;
+    let (tool, tx) = t.pending.remove(req).ok_or_else(|| err(404, "This question was already answered or has expired"))?;
+    let allow = body["allow"] == true;
+    if allow && body["always"] == true && !tool.is_empty() { t.chat.lock().unwrap().allow_always(&tool); }
+    let _ = tx.send(if allow { json!({ "allow": true }) } else { json!({ "allow": false, "message": "The person did not allow this." }) });
+    let _ = t.tx.send(json!({ "type": "permission_done", "req": req, "allow": allow }));
+    Ok(json!({ "ok": true }))
+}
+
+// ---------- one turn ----------
+/// Starts one turn; the events come out of the returned channel until "done" or "error".
+pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Result<mpsc::UnboundedReceiver<Value>, HttpError> {
+    let p = ws.load_project(slug)?;
+    let f = p.feature(key)?;
+    let def = f.def.clone().unwrap();
+    if def["stores"] != "chat" { return Err(err(400, "Not a chat feature")); }
+    let message = body["message"].as_str().map(|s| s.to_string()).unwrap_or_else(|| body["message"].to_string());
+    let id = match body["chatId"].as_str().filter(|s| !s.is_empty()) {
+        Some(i) => i.to_string(),
+        None => {
+            let title: String = message.lines().next().unwrap_or("").chars().take(60).collect();
+            let title = if title.is_empty() { "Chat".to_string() } else { title };
+            ws.create_item(slug, key, &json!({ "title": title }))?["id"].as_str().unwrap_or("").to_string()
+        }
+    };
+    let file = pw_core::items::item_path(&p, f, &id)?;
+    let mut chat: Value = std::fs::read_to_string(&file).ok().and_then(|t| serde_json::from_str(&t).ok()).ok_or_else(|| err(404, format!("Item \"{id}\" not found")))?;
+    let mut allowed: Vec<String> = chat["allowedTools"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
+    for t in body["allowTools"].as_array().into_iter().flatten().filter_map(|x| x.as_str()) { if !allowed.iter().any(|a| a == t) { allowed.push(t.to_string()); } }
+    chat["allowedTools"] = json!(allowed);
+    if !chat["messages"].is_array() { chat["messages"] = json!([]); }
+    chat["messages"].as_array_mut().unwrap().push(json!({ "role": "user", "text": message, "time": now_iso() }));
+    let mode = def["permissions"].as_str().unwrap_or("ask").to_string();
+    let session = chat["sessionId"].as_str().map(|s| s.to_string());
+    let title = chat["title"].clone();
+    let cf = Arc::new(Mutex::new(ChatFile { path: file, chat }));
+    cf.lock().unwrap().save();
+
+    let (tx, rx) = mpsc::unbounded_channel::<Value>();
+    let _ = tx.send(json!({ "type": "chat", "id": id, "title": title, "mode": mode }));
+
+    // the prompt, with the project's notes on the first turn
+    let mut prompt = message.clone();
+    if session.is_none() {
+        let ctx: Vec<String> = match &def["context"] { Value::Array(a) => a.iter().map(|x| x.as_str().unwrap_or("").to_string()).collect(), Value::String(s) if !s.is_empty() => vec![s.clone()], _ => vec![] };
+        let folders: Vec<String> = ctx.iter().filter_map(|k| p.features.iter().find(|x| x.key == *k).and_then(|x| x.def.as_ref()).map(|d| format!("{}/", d["folder"].as_str().unwrap_or("")))).collect();
+        if !folders.is_empty() { prompt = format!("(Workspace note: this project keeps its main content in {} — look there first when relevant.)\n\n{prompt}", folders.join(", ")); }
+        if let Some(i) = def["instructions"].as_str().filter(|i| !i.trim().is_empty()) { prompt = format!("(Project instructions: {})\n\n{prompt}", i.trim()); }
+    }
+    let mut args: Vec<String> = ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"].iter().map(|s| s.to_string()).collect();
+    if let Some(s) = &session { args.extend(["--resume".into(), s.clone()]); }
+    if let Some(m) = def["model"].as_str().filter(|m| !m.is_empty()) { args.extend(["--model".into(), m.chars().filter(|c| c.is_alphanumeric() || "_.-".contains(*c)).collect()]); }
+    // headless runs don't show the "trust project MCP servers" prompt: pass the project's servers explicitly
+    let mcp_text = std::fs::read_to_string(p.dir.join(".mcp.json")).unwrap_or_default();
+    let mut configs: Vec<String> = vec![];
+    if serde_json::from_str::<Value>(&mcp_text).ok().and_then(|v| v["mcpServers"].as_object().map(|o| !o.is_empty())).unwrap_or(false) { configs.push(".mcp.json".into()); }
+    let turn_id = hex(8);
+    let mut perm_file: Option<PathBuf> = None;
+    if mode == "ask" {
+        if let Some(port) = PORT.get() {
+            let token = hex(16);
+            turns().lock().unwrap().insert(turn_id.clone(), Turn { token: token.clone(), tx: tx.clone(), pending: HashMap::new(), chat: cf.clone() });
+            let pf = std::env::temp_dir().join(format!("pw-permission-{turn_id}.json"));
+            let helper = std::env::current_exe().map(|e| e.to_string_lossy().to_string()).unwrap_or_default();
+            let cfg = json!({ "mcpServers": { "pw_permission": { "type": "stdio", "command": helper, "args": ["permission-mcp"],
+                "env": { "PW_PERMISSION_URL": format!("http://127.0.0.1:{port}/api/chat-permission/{turn_id}"), "PW_PERMISSION_TOKEN": token } } } });
+            if write_private(&pf, &cfg.to_string()).is_ok() {
+                configs.push(pf.to_string_lossy().to_string());
+                perm_file = Some(pf);
+                args.extend(["--permission-prompt-tool".into(), "mcp__pw_permission__approve".into()]);
+            }
+        }
+    }
+    if !configs.is_empty() { args.push("--mcp-config".into()); args.extend(configs); }
+    let mut all_allowed: Vec<String> = def["allowed_tools"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
+    all_allowed.extend(allowed);
+    args.extend(permission_args(&mode, &all_allowed));
+
+    let mut env = current_env();
+    env.extend(ws.secrets_env_for(&mcp_text).0);
+    env.push(("FORCE_COLOR".into(), "0".into()));
+    let name = claude_command();
+    let program = find_program(&name, &env);
+    let dir = p.dir.clone();
+
+    tokio::spawn(async move {
+        let cleanup = |turn_id: &str, perm_file: &Option<PathBuf>| {
+            if let Some(t) = turns().lock().unwrap().remove(turn_id) {
+                for (_, (_, s)) in t.pending { let _ = s.send(json!({ "allow": false, "message": "The chat turn ended." })); }
+            }
+            if let Some(f) = perm_file { let _ = std::fs::remove_file(f); }
+        };
+        let mut reply = json!({ "role": "assistant", "text": "", "tools": [], "time": now_iso() });
+        let finish = |reply: &mut Value, extra: Value| {
+            if let Value::Object(o) = extra { for (k, v) in o { if !v.is_null() { reply[k] = v; } } }
+            let mut c = cf.lock().unwrap();
+            let keep = reply["text"] != "" || reply["tools"].as_array().map(|a| !a.is_empty()).unwrap_or(false) || !reply["error"].is_null()
+                || reply["denials"].as_array().map(|a| !a.is_empty()).unwrap_or(false);
+            if keep { c.chat["messages"].as_array_mut().unwrap().push(reply.clone()); }
+            c.save();
+        };
+        let mut cmd = command(&program);
+        cmd.args(&args).current_dir(&dir).env_clear().envs(env).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).kill_on_drop(true);
+        let mut child = match cmd.spawn() {
+            Ok(c) => c,
+            Err(e) => {
+                let msg = if e.kind() == std::io::ErrorKind::NotFound { format!("Claude CLI was not found (command \"{name}\"). Install it and sign in, or set CLAUDE_COMMAND.") } else { e.to_string() };
+                finish(&mut reply, json!({ "error": msg })); cleanup(&turn_id, &perm_file);
+                let _ = tx.send(json!({ "type": "error", "message": msg }));
+                return;
+            }
+        };
+        if let Some(mut stdin) = child.stdin.take() { let _ = stdin.write_all(prompt.as_bytes()).await; drop(stdin); }
+        let mut err_out = child.stderr.take().unwrap();
+        let stderr_task = tokio::spawn(async move { let mut s = String::new(); let _ = err_out.read_to_string(&mut s).await; s });
+        let mut lines = BufReader::new(child.stdout.take().unwrap()).lines();
+        let (mut got_delta, mut finished, mut stopped) = (false, false, false);
+        let text_push = |reply: &mut Value, t: &str| { let s = reply["text"].as_str().unwrap_or("").to_string() + t; reply["text"] = json!(s); };
+        loop {
+            let line = tokio::select! {
+                l = lines.next_line() => match l { Ok(Some(l)) => l, _ => break },
+                _ = tx.closed() => { let _ = child.kill().await; stopped = true; break; }
+            };
+            let Ok(ev) = serde_json::from_str::<Value>(line.trim()) else { continue };
+            match ev["type"].as_str().unwrap_or("") {
+                "system" if ev["subtype"] == "init" => {
+                    if let Some(s) = ev["session_id"].as_str() { cf.lock().unwrap().chat["sessionId"] = json!(s); }
+                    let _ = tx.send(json!({ "type": "status", "text": "Claude is working…", "model": ev["model"], "tools": ev["tools"].as_array().map(|a| a.len()) }));
+                }
+                "stream_event" => {
+                    let e = &ev["event"];
+                    if e["type"] == "content_block_delta" && e["delta"]["type"] == "text_delta" {
+                        let t = e["delta"]["text"].as_str().unwrap_or("");
+                        got_delta = true; text_push(&mut reply, t); let _ = tx.send(json!({ "type": "text", "delta": t }));
+                    }
+                }
+                "assistant" => {
+                    for b in ev["message"]["content"].as_array().cloned().unwrap_or_default() {
+                        if b["type"] == "text" && !got_delta { if let Some(t) = b["text"].as_str().filter(|t| !t.is_empty()) { text_push(&mut reply, t); let _ = tx.send(json!({ "type": "text", "delta": t })); } }
+                        if b["type"] == "tool_use" {
+                            let t = json!({ "id": b["id"], "name": b["name"], "input": summarize(&b["input"]) });
+                            reply["tools"].as_array_mut().unwrap().push(t.clone());
+                            let mut e = t; e["type"] = json!("tool"); let _ = tx.send(e);
+                        }
+                    }
+                    if got_delta {
+                        got_delta = false;
+                        let txt = reply["text"].as_str().unwrap_or("").to_string();
+                        if !txt.is_empty() && !txt.ends_with('\n') { text_push(&mut reply, "\n\n"); let _ = tx.send(json!({ "type": "text", "delta": "\n\n" })); }
+                    }
+                }
+                "user" => {
+                    for b in ev["message"]["content"].as_array().cloned().unwrap_or_default() {
+                        if b["type"] != "tool_result" { continue; }
+                        let is_err = b["is_error"] == true;
+                        if let Some(t) = reply["tools"].as_array_mut().unwrap().iter_mut().find(|x| x["id"] == b["tool_use_id"]) { t["error"] = json!(is_err); t["done"] = json!(true); }
+                        let _ = tx.send(json!({ "type": "tool_result", "id": b["tool_use_id"], "error": is_err }));
+                    }
+                }
+                "result" => {
+                    if let Some(s) = ev["session_id"].as_str() { cf.lock().unwrap().chat["sessionId"] = json!(s); }
+                    let denials: Vec<Value> = ev["permission_denials"].as_array().cloned().unwrap_or_default().iter().map(|d| json!({ "tool": d["tool_name"], "input": summarize(&d["tool_input"]) })).collect();
+                    if reply["text"] == "" { if let Some(r) = ev["result"].as_str() { text_push(&mut reply, r); let _ = tx.send(json!({ "type": "text", "delta": r })); } }
+                    let t = reply["text"].as_str().unwrap_or("").trim_end_matches('\n').to_string(); reply["text"] = json!(t);
+                    let error = if ev["is_error"] == true { json!(login_hint(ev["result"].as_str().unwrap_or("Claude reported an error"))) } else { Value::Null };
+                    if !finished { finished = true; cleanup(&turn_id, &perm_file); finish(&mut reply, json!({ "denials": denials, "cost": ev["total_cost_usd"], "error": error })); }
+                    let _ = tx.send(json!({ "type": "done", "id": id, "denials": denials, "cost": ev["total_cost_usd"], "error": error, "mode": mode }));
+                    // like 0.x: the stream ends with "done"
+                    let _ = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;
+                    break;
+                }
+                _ => {}
+            }
+        }
+        if !finished {
+            let status = if stopped { None } else { child.wait().await.ok() };
+            let stderr = stderr_task.await.unwrap_or_default();
+            cleanup(&turn_id, &perm_file);
+            let code = status.and_then(|s| s.code());
+            if stopped || code.is_none() {
+                finish(&mut reply, json!({ "stopped": true }));
+                let _ = tx.send(json!({ "type": "done", "id": id, "stopped": true, "mode": mode }));
+            } else {
+                let tail: Vec<&str> = stderr.trim().lines().collect();
+                let last = tail[tail.len().saturating_sub(3)..].join(" ");
+                let msg = login_hint(&if last.is_empty() { format!("Claude CLI stopped (exit code {})", code.unwrap()) } else { last });
+                finish(&mut reply, json!({ "error": msg }));
+                let _ = tx.send(json!({ "type": "error", "message": msg }));
+            }
+        }
+    });
+    Ok(rx)
+}
+
+fn write_private(p: &Path, text: &str) -> std::io::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        use std::io::Write;
+        let mut f = std::fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(p)?;
+        f.write_all(text.as_bytes())
+    }
+    #[cfg(not(unix))]
+    { std::fs::write(p, text) }
+}
+
+// ---------- the permission helper (`project-workspace-server permission-mcp`) ----------
+/// Tiny MCP server on stdio that Claude CLI calls for `--permission-prompt-tool mcp__pw_permission__approve`.
+/// It forwards the question to the app (PW_PERMISSION_URL with PW_PERMISSION_TOKEN) and waits for the answer.
+pub fn permission_mcp_main() {
+    use std::io::{BufRead, Write};
+    let url = std::env::var("PW_PERMISSION_URL").unwrap_or_default();
+    let token = std::env::var("PW_PERMISSION_TOKEN").unwrap_or_default();
+    let send = |m: Value| { let mut o = std::io::stdout().lock(); let _ = writeln!(o, "{m}"); let _ = o.flush(); };
+    for line in std::io::stdin().lock().lines() {
+        let Ok(line) = line else { break };
+        let Ok(m) = serde_json::from_str::<Value>(line.trim()) else { continue };
+        let id = m["id"].clone();
+        match m["method"].as_str().unwrap_or("") {
+            "initialize" => send(json!({ "jsonrpc": "2.0", "id": id, "result": { "protocolVersion": m["params"]["protocolVersion"].as_str().unwrap_or("2024-11-05"), "capabilities": { "tools": {} }, "serverInfo": { "name": "pw_permission", "version": "1" } } })),
+            "tools/list" => send(json!({ "jsonrpc": "2.0", "id": id, "result": { "tools": [{ "name": "approve", "description": "Asks the person in the Project Workspace chat whether a tool may run.",
+                "inputSchema": { "type": "object", "properties": { "tool_name": { "type": "string" }, "input": { "type": "object" }, "tool_use_id": { "type": "string" } }, "required": ["tool_name"] } }] } })),
+            "tools/call" => {
+                let a = &m["params"]["arguments"];
+                let input = if a["input"].is_object() { a["input"].clone() } else { json!({}) };
+                let r = ask(&url, &token, &json!({ "tool": a["tool_name"], "input": input, "toolUseId": a["tool_use_id"] }));
+                let answer = if r["allow"] == true { json!({ "behavior": "allow", "updatedInput": input }) } else { json!({ "behavior": "deny", "message": r["message"].as_str().unwrap_or("The person did not allow this.") }) };
+                send(json!({ "jsonrpc": "2.0", "id": id, "result": { "content": [{ "type": "text", "text": answer.to_string() }] } }));
+            }
+            _ => if !id.is_null() { send(json!({ "jsonrpc": "2.0", "id": id, "error": { "code": -32601, "message": "Method not found" } })) },
+        }
+    }
+}
+/// A plain HTTP/1.1 POST to the app on 127.0.0.1 (no TLS, no library needed).
+fn ask(url: &str, token: &str, body: &Value) -> Value {
+    use std::io::{Read, Write};
+    let fail = |m: String| json!({ "allow": false, "message": m });
+    let Some(rest) = url.strip_prefix("http://") else { return fail("The workspace could not be asked: bad address".into()) };
+    let (host, path) = rest.split_once('/').map(|(h, p)| (h.to_string(), format!("/{p}"))).unwrap_or((rest.to_string(), "/".into()));
+    let mut s = match std::net::TcpStream::connect(&host) { Ok(s) => s, Err(e) => return fail(format!("The workspace could not be asked: {e}")) };
+    let _ = s.set_read_timeout(Some(Duration::from_secs(15 * 60)));
+    let data = body.to_string();
+    let req = format!("POST {path} HTTP/1.1\r\nHost: {host}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nX-PW-Token: {token}\r\nConnection: close\r\n\r\n{data}", data.len());
+    if s.write_all(req.as_bytes()).is_err() { return fail("The workspace could not be asked.".into()); }
+    let mut out = Vec::new();
+    if s.read_to_end(&mut out).is_err() && out.is_empty() { return fail("No answer in time.".into()); }
+    let text = String::from_utf8_lossy(&out);
+    let Some((head, body)) = text.split_once("\r\n\r\n") else { return fail("No answer from the workspace.".into()) };
+    let body = if head.to_lowercase().contains("transfer-encoding: chunked") { dechunk(body) } else { body.to_string() };
+    serde_json::from_str(&body).unwrap_or_else(|_| fail("No answer from the workspace.".into()))
+}
+fn dechunk(s: &str) -> String {
+    let mut out = String::new(); let mut rest = s;
+    while let Some((size, after)) = rest.split_once("\r\n") {
+        let n = usize::from_str_radix(size.trim(), 16).unwrap_or(0);
+        if n == 0 || after.len() < n { break; }
+        out.push_str(&after[..n]); rest = after[n..].trim_start_matches("\r\n");
+    }
+    out
+}

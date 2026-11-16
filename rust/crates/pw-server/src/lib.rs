@@ -19,6 +19,7 @@ use std::{collections::HashMap, convert::Infallible, path::PathBuf, sync::Arc, t
 type Q = Query<HashMap<String, String>>;
 use tokio_stream::StreamExt;
 
+pub mod chat;
 pub mod live;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -51,7 +52,10 @@ pub fn router(ws: Workspace) -> Router {
     live::start(ws.clone());
     Router::new()
         .route("/api/info", get(info))
-        .route("/api/claude", get(|| async { Json(json!({ "ok": false, "command": "claude", "error": "Chat is not in the Rust prototype yet" })) }))
+        .route("/api/claude", get(|| async { Json(chat::claude_version().await) }))
+        .route("/api/projects/{p}/f/{f}/chat", post(chat_turn))
+        .route("/api/chat-permission/{turn}", post(chat_permission))
+        .route("/api/chat-permission/{turn}/{req}/answer", post(chat_answer))
         .route("/api/examples", post(examples))
         .route("/api/features", get(features))
         .route("/api/features/{k}", put(feature_save).delete(feature_delete))
@@ -253,6 +257,21 @@ async fn secret_put(State(ws): S, Path(name): Path<String>, b: Bytes) -> ApiResu
     Ok(Json(r))
 }
 async fn secret_delete(State(ws): S, Path(name): Path<String>) -> ApiResult { Ok(Json(ws.secret_remove(&name)?)) }
+async fn chat_turn(State(ws): S, Path((p, f)): Path<(String, String)>, b: Bytes) -> Response {
+    let rx = body_json(&b).map_err(|e| e.0).and_then(|body| chat::run_turn(ws.clone(), &p, &f, &body));
+    let stream: std::pin::Pin<Box<dyn tokio_stream::Stream<Item = Result<Event, Infallible>> + Send>> = match rx {
+        Ok(rx) => Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(rx).map(|v| Ok(Event::default().data(v.to_string())))),
+        Err(e) => Box::pin(tokio_stream::once(Ok(Event::default().data(json!({ "type": "error", "message": e.message }).to_string())))),
+    };
+    let mut res = Sse::new(stream).into_response();
+    res.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    res
+}
+async fn chat_permission(Path(turn): Path<String>, headers: axum::http::HeaderMap, b: Bytes) -> ApiResult {
+    let token = headers.get("x-pw-token").and_then(|h| h.to_str().ok()).unwrap_or("").to_string();
+    Ok(Json(chat::request_permission(&turn, &token, &body_json(&b)?).await))
+}
+async fn chat_answer(Path((turn, req)): Path<(String, String)>, b: Bytes) -> ApiResult { Ok(Json(chat::answer_permission(&turn, &req, &body_json(&b)?)?)) }
 async fn events() -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
     let hello = tokio_stream::once(Ok(Event::default().comment("hello")));
     type Events = std::pin::Pin<Box<dyn tokio_stream::Stream<Item = Result<Event, Infallible>> + Send>>;
@@ -303,5 +322,6 @@ fn percent_decode(s: &str) -> String {
 /// Runs the server on 127.0.0.1:<port> until the process ends.
 pub async fn serve(ws: Workspace, port: u16) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", port)).await?;
+    let _ = chat::PORT.set(listener.local_addr().map(|a| a.port()).unwrap_or(port));
     axum::serve(listener, router(ws)).await
 }
