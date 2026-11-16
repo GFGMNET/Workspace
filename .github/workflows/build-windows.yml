@@ -86,12 +86,9 @@ jobs:
           if ("$r" -notmatch "^OK ${{ steps.v.outputs.version }} .* exe true$") { throw "App check failed: $r" }
       - name: Check the MCP server runs with the app's runtime
         run: |
-          $env:ELECTRON_RUN_AS_NODE = "1"
+          # spawned with pipes like Claude CLI does (PowerShell doesn't pipe GUI programs reliably)
           $env:WORKSPACE_DIR = Join-Path $env:RUNNER_TEMP "pw-data"
-          $req = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}'
-          $out = $req | & "dist/ProjectWorkspace/ProjectWorkspace.exe" "dist/ProjectWorkspace/app/mcp.js"
-          Write-Host $out
-          if ("$out" -notmatch "project-workspace") { throw "MCP server did not answer" }
+          node -e "const {spawn}=require('child_process');const d=require('path').resolve('dist/ProjectWorkspace');const c=spawn(d+'/ProjectWorkspace.exe',[d+'/app/mcp.js'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'}});let o='';c.stdout.on('data',x=>{o+=x;if(o.includes('serverInfo')){console.log(o.slice(0,200));process.exit(o.includes('project-workspace')?0:1)}});c.stdin.write(JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2024-11-05',capabilities:{},clientInfo:{name:'ci',version:'1'}}})+'\n');setTimeout(()=>{console.log('no answer: '+o);process.exit(1)},30000)"
       - name: Zip
         id: zip
         run: |
