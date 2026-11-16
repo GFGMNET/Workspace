@@ -134,6 +134,11 @@ ok('VS Code redirects stay under /ide', () => {
   assert.strictEqual(ide.rewriteLocation('./x', s), './x');
   const c = ide.withToken('a=1; vscode-tkn=old'); assert(/^a=1; vscode-tkn=[a-f0-9]{32,}$/.test(c), c);
 });
+ok('UI scripts and the desktop app have no syntax errors', () => {
+  const vm = require('vm');
+  for (const f of ['core.js', 'views.js', 'explorer.js', 'app.js']) new vm.Script(fs.readFileSync(path.join(__dirname, '..', 'public', f), 'utf8'), { filename: f });
+  for (const f of ['../electron/main.js', '../../tools/electron/bootstrap/main.js']) new vm.Script('(function(){' + fs.readFileSync(path.join(__dirname, f), 'utf8').replace(/^'use strict';/m, '') + '\n})', { filename: f });
+});
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 
 // MCP server handshake
