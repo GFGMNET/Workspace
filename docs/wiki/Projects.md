@@ -38,6 +38,17 @@ The example project **Workspace (development)** manages the workspace itself thi
 - chat
 - a *release* skill
 
+## Rename, archive, delete
+
+**Manage** in the project header:
+
+- **Rename:** changes the name in `project.yaml`, and the rest of the file stays as it is. Tick *Also rename the folder* to rename `projects/<name>` too.
+- **Features:** remove a feature from the project. Its files stay in the folder.
+- **Archive:** hides the project. Its folder moves to `data/projects/_archive/`. The home page lists *Archived projects*, where you can **Restore** or **Delete** them.
+- **Delete:** deletes the project's folder for good. Type the name to confirm. For a project with `location:`, only its folder in `data/projects/` is deleted, never the content folder it points to.
+
+Deleting the folder `data/projects/<name>` by hand does the same.
+
 ## Good to know
 
 - **The folder is the truth.** Files you put into a feature folder show up even if they are not listed in `project.yaml`.

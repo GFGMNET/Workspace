@@ -90,6 +90,19 @@ ok('location: project content in an existing folder ({install})', () => {
   fs.writeFileSync(path.join(tmp, 'projects', 'workspace-dev', 'project.yaml'), 'name: x\nlocation: /does/not/exist\nwiki:\n');
   assert(/does not exist/.test(ws.loadProject('workspace-dev').error));
 });
+ok('rename (name + folder), archive, restore, delete', () => {
+  ws.createProject({ name: 'Old name', yaml: '# keep this comment\nname: Old name\nwiki:\n' });
+  const r = ws.renameProject('old-name', { name: 'New: name', folder: true });
+  assert.strictEqual(r.name, 'New: name'); assert.strictEqual(r.slug, 'new-name');
+  assert(/# keep this comment/.test(fs.readFileSync(r.file, 'utf8')));
+  ws.archiveProject('new-name');
+  assert(!ws.listProjects().some(p => p.slug === 'new-name'));
+  assert(ws.listArchived().some(a => a.slug === 'new-name'));
+  ws.restoreProject('new-name');
+  assert(ws.listProjects().some(p => p.slug === 'new-name'));
+  ws.deleteProject('new-name');
+  assert(!fs.existsSync(path.join(tmp, 'projects', 'new-name')));
+});
 ok('search finds content', () => assert(ws.search('wireguard').length >= 1));
 
 // MCP server handshake

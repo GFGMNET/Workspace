@@ -436,3 +436,8 @@ button.ilabel.on{background:var(--lc);color:#fff}
 /* help links into the wiki */
 .help{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;white-space:nowrap}
 .note .sp{flex:1}
+
+/* manage project */
+.mgsec{border-top:1px solid var(--line);padding:12px 0 4px;display:flex;flex-direction:column;gap:6px}
+.mgfeat{display:flex;flex-direction:column;gap:2px;max-height:200px;overflow:auto}
+.danger-zone b{color:var(--err)}

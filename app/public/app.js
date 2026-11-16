@@ -99,12 +99,21 @@ function renderHome() {
       <button class="card pcard new" type="button" data-new-project>${icon('plus', 26)}<span>Create a project</span></button>
       ${!ps.length && S.info.examples ? `<button class="card pcard new" type="button" data-examples>${icon('layers', 26)}<span>Add the example projects</span><span class="faint small">test, test 2 and Home Lab — to look around</span></button>` : ''}</div>
     <div class="grid" style="margin-top:22px;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))">
+      <div class="card" data-archived hidden></div>
       <div class="card"><b>Your data</b><p class="muted small" style="margin:6px 0 0">Kept apart from the program — when you update, replace everything except this folder.</p><pre class="code" style="margin-top:10px">${esc(S.info.root)}
   features/   what each feature means (${S.features.length})
   projects/   one folder per project (${ps.length})</pre></div>
       <div class="card"><b>Use it from Claude CLI</b><p class="muted small" style="margin:6px 0 10px">Register the workspace MCP server once — then Claude can list, create and edit projects from any terminal.</p>
         <pre class="code">claude mcp add workspace --scope user -- ${esc(S.info.mcpCommand)}</pre></div></div></div>`;
   $$('[data-new-project]').forEach(b => b.onclick = () => newProjectDialog());
+  api('/api/archive').then(list => {
+    const box = $('[data-archived]'); if (!box || !list.length) return;
+    box.hidden = false;
+    box.innerHTML = `<details><summary style="cursor:pointer"><b>Archived projects</b> <span class="faint">${list.length}</span></summary><div class="ovlist" style="margin-top:8px">${list.map(a => `<div class="ovrow"><span class="t">${esc(a.name)}<span>${a.archived ? 'archived ' + esc(ago(Date.parse(a.archived))) : ''}</span></span>
+      <button class="btn sm" type="button" data-restore="${esc(a.slug)}">Restore</button><button class="btn sm ghost danger" type="button" data-adel="${esc(a.slug)}" data-name="${esc(a.name)}">Delete</button></div>`).join('')}</div></details>`;
+    $$('[data-restore]', box).forEach(b => b.onclick = async () => { const r = await api(`/api/archive/${enc(b.dataset.restore)}/restore`, { body: {} }); await App.refreshProjects(); toast('Restored'); go('#/p/' + enc(r.slug)); });
+    $$('[data-adel]', box).forEach(b => b.onclick = () => confirmDelete(b.dataset.name, () => api(`/api/archive/${enc(b.dataset.adel)}`, { method: 'DELETE' })));
+  }).catch(() => {});
   const ex = $('[data-examples]'); if (ex) ex.onclick = async () => { ex.disabled = true; const r = await api('/api/examples', { body: {} }); await App.refreshProjects(); toast(`Added ${r.added.length} example projects`); route(); };
 }
 
@@ -143,12 +152,14 @@ async function renderProject(tab, sub, query) {
         ${(Array.isArray(p.meta.tags) && p.meta.tags.length) || p.meta.status ? `<div class="chips" style="margin-top:6px">${(p.meta.tags || []).map(t => `<span class="chip accent">#${esc(t)}</span>`).join('')}${p.meta.status ? `<span class="chip">${esc(p.meta.status)}</span>` : ''}</div>` : ''}</div>
       <button class="btn" type="button" data-cli title="Copies: ${esc(cli)}">${icon('terminal', 14)} Claude CLI</button>
       <button class="btn" type="button" data-vscode title="Open this project in VS Code">${icon('terminal', 14)} VS Code</button>
-      <button class="btn" type="button" data-path title="${esc(p.path)}">${icon('copy', 14)} Copy path</button></div>
+      <button class="btn" type="button" data-path title="${esc(p.path)}">${icon('copy', 14)} Copy path</button>
+      <button class="btn" type="button" data-manage title="Rename, archive or delete this project" aria-label="Manage project">${icon('edit', 14)} Manage</button></div>
     ${p.error ? `<div class="err" style="margin-top:12px" role="alert">project.yaml has an error: ${esc(p.error)}. Fix it in the project.yaml tab.</div>` : ''}
     <nav class="tabs" id="ptabs" role="tablist" aria-label="Features of ${esc(p.name)}"></nav>
     <div id="fnote"></div><section id="fbody"></section></div>`;
   $('[data-cli]').onclick = () => copy(cli); $('[data-path]').onclick = () => copy(p.path);
   $('[data-vscode]').onclick = () => openVSCode('p/' + p.slug, '');
+  $('[data-manage]').onclick = () => manageProject(p);
   renderTabs();
   const body = $('#fbody');
   if (tab === '_yaml') return renderProjectYaml(body);
@@ -267,6 +278,35 @@ function addFeatureDialog() {
       S.project = await api(`/api/projects/${enc(p.slug)}/features`, { body: { key, settings: key !== feat ? { feature: feat } : null } });
       await App.refreshProjects(); go(projectHref(key));
     } });
+}
+
+// ---------- rename / archive / delete ----------
+function manageProject(p) {
+  const m = modal({ title: `Manage “${p.name}”`, ok: 'Rename', cancel: 'Close',
+    body: `<div class="field"><label for="mpn">Name</label><input id="mpn" name="name" value="${esc(p.name)}" required></div>
+      <label class="row small" style="gap:8px;margin:-4px 0 12px"><input type="checkbox" name="folder" style="width:auto"> Also rename the folder <span class="mono faint">projects/${esc(p.slug)}</span></label>
+      ${p.external ? `<p class="faint small" style="margin:0 0 12px">The content stays where it is (<span class="mono">${esc(p.path)}</span>).</p>` : ''}
+      <div class="mgsec"><b>Features</b><div class="mgfeat">${p.features.map(f => `<div class="row"><span style="flex:1">${esc(f.def ? f.def.name : f.key)} <span class="mono faint small">${esc(f.key)}</span></span><button class="btn sm ghost danger" type="button" data-rmf="${esc(f.key)}">Remove</button></div>`).join('') || '<span class="faint small">None</span>'}</div>
+        <span class="faint small">Removing a feature takes it out of project.yaml; its files stay in the folder.</span></div>
+      <div class="mgsec"><b>Archive</b><span class="muted small">Hides the project from the list. Its folder moves to <span class="mono">projects/_archive/</span>; restore it any time from the home page.</span>
+        <div><button class="btn" type="button" data-archive>${icon('folder', 14)} Archive project</button></div></div>
+      <div class="mgsec danger-zone"><b>Delete</b><span class="muted small">Deletes the folder <span class="mono">projects/${esc(p.slug)}</span> for good${p.external ? ' — the content folder it points to is <b>not</b> touched' : ', with everything in it'}. This cannot be undone.</span>
+        <div><button class="btn danger" type="button" data-delete>${icon('trash', 14)} Delete project…</button></div></div>`,
+    onOk: async f => {
+      const r = await api(`/api/projects/${enc(p.slug)}`, { method: 'PATCH', body: { name: f.name.value.trim(), folder: f.folder.checked } });
+      S.project = r; await App.refreshProjects(); toast('Renamed'); go('#/p/' + enc(r.slug));
+    } });
+  $$('[data-rmf]', m.el).forEach(b => b.onclick = async () => {
+    if (!confirm(`Remove “${b.dataset.rmf}” from this project? Its files stay in the folder.`)) return;
+    S.project = await api(`/api/projects/${enc(p.slug)}/features/${enc(b.dataset.rmf)}`, { method: 'DELETE' }); m.close(); await App.refreshProjects(); go('#/p/' + enc(p.slug)); toast('Feature removed');
+  });
+  $('[data-archive]', m.el).onclick = async () => { await api(`/api/projects/${enc(p.slug)}/archive`, { body: {} }); m.close(); S.project = null; await App.refreshProjects(); go('#/'); toast(`“${p.name}” archived`); };
+  $('[data-delete]', m.el).onclick = () => { m.close(); confirmDelete(p.name, () => api(`/api/projects/${enc(p.slug)}`, { method: 'DELETE' })); };
+}
+function confirmDelete(name, run) {
+  modal({ title: 'Delete project', ok: 'Delete for good', danger: true,
+    body: `<p style="margin:0 0 10px">This deletes <b>${esc(name)}</b> and cannot be undone. Type the project's name to confirm:</p><div class="field"><input name="n" autocomplete="off" aria-label="Project name"></div>`,
+    onOk: async f => { if (f.n.value.trim() !== name) throw new Error('The name does not match'); await run(); S.project = null; await App.refreshProjects(); go('#/'); toast(`“${name}” deleted`); } });
 }
 
 // ---------- new project ----------

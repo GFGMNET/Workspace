@@ -255,6 +255,9 @@ Plain Node `http` with no framework. It binds to `127.0.0.1:4321` (override with
 | `GET /api/projects/<p>/backlinks?feature=&id=` | "mentioned in" for one item |
 | `POST /api/examples` | add the example projects |
 | `PUT /api/projects/<p>/yaml` | save project.yaml (validated) |
+| `PATCH /api/projects/<p>` `{name, folder}` | rename (only the `name:` line changes; `folder: true` also renames `projects/<slug>`) |
+| `POST /api/projects/<p>/archive`, `GET /api/archive`, `POST /api/archive/<slug>/restore` | archive to `projects/_archive/` and restore |
+| `DELETE /api/projects/<p>`, `DELETE /api/archive/<slug>` | delete the project's folder for good (a `location:` content folder is never touched) |
 | `POST/DELETE /api/projects/<p>/features[/<key>]` | add/remove a feature |
 | `GET/POST /api/projects/<p>/f/<feature>/items` | list / create items (`?folder=` for images/files) |
 | `GET/PUT/DELETE …/items/<id>` | read / write / move to trash |
@@ -288,6 +291,7 @@ Screens (from the accepted mockup, issue #2):
 3. **Features:** list, YAML editor with validation, a sketch of the layout, fields, and which projects use it.
 4. **New project:** name, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.
+5a. **Manage** (project header): rename (optionally the folder too), remove features from the project (files stay), archive (moves the folder to `projects/_archive/`, hidden from the list; *Archived projects* on the home page restores or deletes them), delete (type the name to confirm; deletes `projects/<slug>` only).
 6. **Explorer:** every project has an *Explorer* tab with the whole project folder as a tree (incl. `project.yaml`, `.claude/`, `.mcp.json`), and the sidebar has a workspace explorer (features + all projects). Text files open in the code editor (Markdown with preview, images shown); new file/folder, upload, rename/move, delete (to `.trash`), download. Saving a `project.yaml` or feature YAML is validated first.
 7. **VS Code tab (full VS Code in the app):** shows the browser version of VS Code, opened on the project folder, in an embedded frame. By default the app starts the installed VS Code's own web server (`code serve-web --server-base-path /ide`, downloads its web part once) on `127.0.0.1:8740` with a random connection token (kept in `data/.ide-token`), and stops it when the app exits. The browser never talks to that port directly: the app **reverse-proxies `/ide/…` (HTTP and WebSockets)** on its own address and removes frame-blocking headers, so the embedded VS Code is same-site and browsers don't block it (#30). Settings from v0.3.0 (direct `http://{host}:{port}` URLs) are upgraded automatically; code-server, which serves at its root, uses `strip_base: true`. The command, port and URL are set in `data/settings.yaml` (`ide:`), so code-server or OpenVSCode Server can be used instead. *Open in new window* is always offered in case the browser blocks the frame.
 8. **VS Code buttons:** *VS Code* in the project header and *Open in VS Code* on every file run the `code` command (`VSCODE_COMMAND` to override) to open the project folder in the installed VS Code and jump to the file. If `code` is not on the PATH the browser is asked to open a `vscode://file/…` link.

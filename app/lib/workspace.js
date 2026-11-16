@@ -763,6 +763,69 @@ function projectOverview(slug, days = 30) {
   return { name: p.name, meta: p.meta, today: t0, days, tiles, upcoming: upcoming.slice(0, 30), open: open.slice(0, 20), openTotal: open.length, recent: recent.slice(0, 12) };
 }
 
+// ---------- rename, archive, delete ----------
+const ARCHIVE = '_archive';
+const archiveDir = () => path.join(PROJECTS_DIR, ARCHIVE);
+
+// Changes the name in project.yaml (only the name: line, so comments stay) and, if asked,
+// the project's folder in data/projects/. Content in a location: folder is never moved.
+function renameProject(slug, { name, folder }) {
+  const p = loadProject(slug);
+  name = String(name || '').trim();
+  if (!name) throw httpError(400, 'Please enter a name');
+  const line = `name: ${/^[\w .()&+-]+$/.test(name) && !/^\d/.test(name) ? name : JSON.stringify(name)}`;
+  let text = p.yaml;
+  if (/^name\s*:.*$/m.test(text)) text = text.replace(/^name\s*:.*$/m, line);
+  else text = text.replace(/^(---\s*\n)?/, m => m + line + '\n');
+  parseYamlSafe(text, 'project.yaml');
+  writeText(p.file, text);
+  let newSlug = slug;
+  if (folder) {
+    const target = slugify(name);
+    if (target !== slug) {
+      newSlug = uniqueName(PROJECTS_DIR, target, '');
+      fs.renameSync(p.home, path.join(PROJECTS_DIR, newSlug));
+    }
+  }
+  return loadProject(newSlug);
+}
+// Moves the project folder to data/projects/_archive/ (hidden from the list, can be restored).
+function archiveProject(slug) {
+  const p = loadProject(slug);
+  ensureDir(archiveDir());
+  const name = uniqueName(archiveDir(), slug, '');
+  fs.renameSync(p.home, path.join(archiveDir(), name));
+  writeText(path.join(archiveDir(), name, '.archived'), new Date().toISOString() + '\n');
+  return { ok: true, archived: name };
+}
+function listArchived() {
+  const d = archiveDir(); if (!isDir(d)) return [];
+  return fs.readdirSync(d, { withFileTypes: true }).filter(e => e.isDirectory() && exists(path.join(d, e.name, PROJECT_FILE))).map(e => {
+    let name = e.name, when = null;
+    try { name = String((YAML.parse(readText(path.join(d, e.name, PROJECT_FILE))) || {}).name || e.name); } catch {}
+    try { when = readText(path.join(d, e.name, '.archived')).trim(); } catch {}
+    return { slug: e.name, name, archived: when };
+  }).sort((a, b) => String(b.archived).localeCompare(String(a.archived)));
+}
+function restoreProject(archived) {
+  checkId(archived, 'project');
+  const from = safeJoin(archiveDir(), archived);
+  if (!exists(path.join(from, PROJECT_FILE))) throw httpError(404, 'Not in the archive');
+  const slug = uniqueName(PROJECTS_DIR, archived, '');
+  try { fs.rmSync(path.join(from, '.archived'), { force: true }); } catch {}
+  fs.renameSync(from, path.join(PROJECTS_DIR, slug));
+  return loadProject(slug);
+}
+// Deletes the project's folder in data/projects/ (or in the archive) for good.
+// A project with location: keeps its content folder: only its project.yaml folder goes.
+function deleteProject(slug, { archived = false } = {}) {
+  checkId(slug, 'project');
+  const dir = archived ? safeJoin(archiveDir(), slug) : projectDir(slug);
+  if (!exists(path.join(dir, PROJECT_FILE))) throw httpError(404, 'Project not found');
+  fs.rmSync(dir, { recursive: true, force: true });
+  return { ok: true };
+}
+
 // ---------- first start, updates, examples ----------
 function readState() { try { return JSON.parse(readText(path.join(ROOT, STATE_FILE))); } catch { return {}; } }
 function writeState(st) { writeText(path.join(ROOT, STATE_FILE), JSON.stringify(st, null, 2) + '\n'); }
@@ -811,7 +874,7 @@ function addExamples() {
 function refreshClaudeFiles(slug) { const p = loadProject(slug); if (!p.error) writeMcpJson(p); }
 
 module.exports = {
-  refreshClaudeFiles, projectIndex, resolveRef, backlinks, projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
+  renameProject, archiveProject, listArchived, restoreProject, deleteProject, refreshClaudeFiles, projectIndex, resolveRef, backlinks, projectOverview, ensureWorkspace, addExamples, listExamples, INSTALL_DIR,
   ROOT, FEATURES_DIR, PROJECTS_DIR, STORES, LAYOUTS, FIELD_TYPES, YAML,
   httpError, slugify, normalizeFeature,
   listFeatures, getFeature, saveFeature, deleteFeature,
