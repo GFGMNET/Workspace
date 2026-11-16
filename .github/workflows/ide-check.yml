@@ -1,0 +1,68 @@
+# Diagnostic: starts the workspace + VS Code's web server (code serve-web) on a runner, opens the
+# VS Code tab in Chromium and records what happens (screenshot, console, failed requests).
+# Actions → "VS Code tab check" → Run workflow. Results: the run's artifacts.
+name: VS Code tab check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ide:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: VS Code CLI
+        run: |
+          curl -fsSL "https://update.code.visualstudio.com/latest/cli-alpine-x64/stable" -o vscode-cli.tar.gz
+          tar -xzf vscode-cli.tar.gz
+          ./code --version
+          echo "IDE_COMMAND=$PWD/code serve-web --host 127.0.0.1 --port {port} --connection-token {token} --server-base-path {base} --accept-server-license-terms" >> "$GITHUB_ENV"
+      - name: Playwright
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm i playwright@1.48.2 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Start the workspace and VS Code
+        run: |
+          export WORKSPACE_DIR="$RUNNER_TEMP/pw-data"
+          node app/server.js 4399 > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 20); do sleep 1; curl -fsS http://localhost:4399/api/info >/dev/null && break; done
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' http://localhost:4399/api/examples
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' --max-time 180 http://localhost:4399/api/ide/start | tee "$RUNNER_TEMP/ide-start.json"
+      - name: Open the VS Code tab in Chromium
+        run: |
+          mkdir -p out
+          cat > /tmp/pw/check.js <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const out = process.argv[2]; const log = [];
+            const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
+            p.on('console', m => log.push(`console.${m.type()}: ${m.text()}`));
+            p.on('pageerror', e => log.push(`pageerror: ${e.message}`));
+            p.on('requestfailed', r => log.push(`failed: ${r.method()} ${r.url()} ${r.failure() && r.failure().errorText}`));
+            p.on('response', r => { if (r.status() >= 400) log.push(`http ${r.status()}: ${r.request().method()} ${r.url()}`); });
+            p.on('websocket', ws => { log.push(`ws open: ${ws.url()}`); ws.on('close', () => log.push(`ws close: ${ws.url()}`)); ws.on('socketerror', e => log.push(`ws error: ${e}`)); });
+            await p.goto('http://localhost:4399/#/p/test/_ide');
+            await p.waitForTimeout(45000);
+            await p.screenshot({ path: out + '/page.png' });
+            const f = p.frames().find(x => x.url().includes('/ide/'));
+            log.push('frame url: ' + (f ? f.url() : 'none'));
+            if (f) { try { log.push('frame text: ' + (await f.evaluate(() => document.body.innerText.slice(0, 500)))); log.push('workbench: ' + (await f.evaluate(() => !!document.querySelector('.monaco-workbench')))); } catch (e) { log.push('frame eval: ' + e.message); } }
+            require('fs').writeFileSync(out + '/log.txt', log.join('\n'));
+            await b.close();
+          })();
+          JS
+          node /tmp/pw/check.js "$PWD/out" || true
+          cp "$RUNNER_TEMP/server.log" "$RUNNER_TEMP/ide-start.json" out/ 2>/dev/null || true
+          curl -fsS http://localhost:4399/api/ide > out/ide-status.json || true
+          tail -80 out/log.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ide-check
+          path: out
