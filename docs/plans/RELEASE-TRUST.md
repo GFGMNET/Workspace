@@ -72,4 +72,4 @@ What the project has to do once: a short **Code signing policy** section in the 
 
 ## 6. Decision (2026-11-16)
 
-Approved: part 1 now (by the maintainer), parts 2 and 3 with version 1.0 (SignPath Foundation, one *Approve* click per release; updater checks on Windows and Linux). 0.x stays unsigned.
+Approved: part 1 now (by the maintainer; **done 2026-11-16**), parts 2 and 3 with version 1.0 (SignPath Foundation, one *Approve* click per release; updater checks on Windows and Linux). 0.x stays unsigned.
