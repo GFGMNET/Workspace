@@ -1,6 +1,18 @@
 {
   "_comment": "Libraries bundled with the app (no npm packages at runtime). Checked weekly by .github/workflows/security.yml.",
-  "yaml": { "version": "2.9.0", "path": "app/lib/vendor/yaml", "update": "node tools/vendor-yaml.js <path to node_modules/yaml>" },
-  "highlight.js": { "version": "11.12.0", "path": "app/public/vendor/highlight.min.js", "update": "node tools/build-highlight.js <path to node_modules/highlight.js>" },
-  "mermaid": { "version": "11.16.1", "path": "app/public/vendor/mermaid.min.js", "update": "copy node_modules/mermaid/dist/mermaid.min.js" }
+  "yaml": {
+    "version": "2.9.1",
+    "path": "app/lib/vendor/yaml",
+    "update": "node tools/vendor-yaml.js <path to node_modules/yaml>"
+  },
+  "highlight.js": {
+    "version": "11.12.0",
+    "path": "app/public/vendor/highlight.min.js",
+    "update": "node tools/build-highlight.js <path to node_modules/highlight.js>"
+  },
+  "mermaid": {
+    "version": "11.16.1",
+    "path": "app/public/vendor/mermaid.min.js",
+    "update": "copy node_modules/mermaid/dist/mermaid.min.js"
+  }
 }
