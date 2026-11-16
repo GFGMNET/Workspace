@@ -8,7 +8,7 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 
 - **[[Getting Started|Getting-Started]]**: install, first project, first feature (10 minutes)
 - [[Projects]]: how `project.yaml` works
-- [[Features]]: define your own feature types (all settings)
+- [[Features]]: define your own feature types (all settings), with a **page per feature** (e.g. [[Feature-Wiki]], [[Feature-Tasks]], [[Feature-Chat]])
 - [[Building Blocks|Building-Blocks]]: pages, tables, Kanban, calendar, org chart, map, diagrams, scripts, chat …
 - [[Claude]]: chat, skills, MCP, workspace MCP server
 - [[VS Code and Explorer|VS-Code-and-Explorer]]

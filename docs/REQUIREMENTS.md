@@ -47,7 +47,8 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W3 | Links between features + "mentioned in" | ✅ | #19 |
 | W4 | Explorer to view all files of the projects (and the whole workspace) | ✅ | #22 |
 | W5 | Open projects and files in VS Code | ✅ | #21 |
-| W6 | Full VS Code inside the app (browser VS Code via `code serve-web`, or code-server / OpenVSCode Server) | ✅ built · Windows test open | #24 |
+| W6 | Full VS Code inside the app (browser VS Code via `code serve-web`, or code-server / OpenVSCode Server) | ✅ | #24 |
+| W6a | VS Code tab must work without changing browser settings (served through the app's own address) | ✅ · to re-test on Windows | #30 |
 | W7 | Collapsible left sidebar | ✅ | #15 |
 | W8 | Rename, archive and delete projects in the app | 📋 | #11 |
 | W9 | Answer chat permission prompts inline | 📋 | #10 |
@@ -60,19 +61,21 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | ID | Requirement | Status | Issue |
 |---|---|---|---|
 | D1 | Connect via Claude CLI and different MCP servers | ✅ v0.1 | |
-| D2 | Runs like a real application, nothing to install | 📋 | #1 |
-| D3 | The .exe is built automatically by GitHub (GitHub Actions on each release tag, attached to the release) | 📋 | #1 |
+| D2 | Runs like a real application, nothing to install (portable `ProjectWorkspace.exe`) | ✅ built · to test on Windows | #1 |
+| D3 | The .exe is built automatically by GitHub (workflow *Build Windows app*, by hand or with every release) | ✅ | #1 |
 | D4 | The git repository is only for developing the tool; live installations never use git and update by downloading a new version | ✅ | #17 |
 | D5 | Client data is kept separate from the program, so updates never overwrite it | ✅ | #17 |
 | D6 | `start.bat` must not open the browser before the app is ready | ✅ | #14 |
 | D7 | Track improvements and bugs as GitHub issues | ✅ ongoing | |
 | D8 | The design document lives in the repo so anyone can rebuild the tool | ✅ | [DESIGN.md](DESIGN.md) |
 | D9 | Requirements tracked in this file | ✅ ongoing | |
-| D10 | Licence for the repository | ❓ | #13 |
+| D10 | Licence for the repository: MIT | ✅ | #13 |
 | D11 | Getting started guide | ✅ | #25 · [GETTING-STARTED.md](GETTING-STARTED.md) |
 | D12 | Wiki on the GitHub page (generated from `docs/`, published by a GitHub Action) | ✅ · first page must be created once on GitHub | #25 |
 | D13 | The app checks GitHub once a week for a new version and asks the user to update (release notes, *Update now / Later / Skip*) | ✅ | #26 |
 | D14 | New versions are published as GitHub releases by a GitHub Action when a version tag is pushed | ✅ | #26 |
+| D15 | Wiki: a details page per feature with all its options | ✅ | |
+| D16 | Link to the wiki inside the app (sidebar, Help on every feature) | ✅ | |
 
 ## Open questions
 

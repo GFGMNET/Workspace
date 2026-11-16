@@ -88,7 +88,7 @@ function watchExternal() {
 const P = '/api/projects/([^/]+)';
 const routes = [
   ['GET', /^\/api\/info$/, async () => ({ version: VERSION, root: ws.ROOT, examples: ws.listExamples().length, projectsDir: ws.PROJECTS_DIR, featuresDir: ws.FEATURES_DIR,
-    stores: ws.STORES, layouts: ws.LAYOUTS, fieldTypes: ws.FIELD_TYPES, platform: process.platform, mcpScript: path.join(__dirname, 'mcp.js'), exe: process.env.PW_EXE || null,
+    stores: ws.STORES, layouts: ws.LAYOUTS, fieldTypes: ws.FIELD_TYPES, platform: process.platform, mcpScript: path.join(__dirname, 'mcp.js'), exe: process.env.PW_EXE || null, wiki: require('../package.json').wiki || null,
     mcpCommand: process.env.PW_EXE ? `"${process.env.PW_EXE}" --mcp` : `node "${path.join(__dirname, 'mcp.js')}"` })],
   ['GET', /^\/api\/claude$/, () => chat.claudeVersion()],
   ['POST', /^\/api\/examples$/, () => ({ added: ws.addExamples() })],

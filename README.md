@@ -6,7 +6,9 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 
 ## Start
 
-You need [Node.js](https://nodejs.org) 18 or newer (LTS). Nothing else gets installed.
+**Windows, nothing to install:** download `project-workspace-…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest), unzip it, and double-click **ProjectWorkspace.exe**.
+
+**With Node.js** (18 or newer, any system):
 
 - **Windows:** double-click `start.bat`
 - **macOS / Linux:** `./start.sh`

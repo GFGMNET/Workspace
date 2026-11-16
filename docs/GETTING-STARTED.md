@@ -12,11 +12,14 @@ You need:
 | Claude CLI *(optional)* | the Chat tab and Claude integration | https://docs.claude.com/en/docs/claude-code |
 | VS Code *(optional)* | the VS Code tab and buttons | https://code.visualstudio.com |
 
-Download the workspace: on GitHub use **Code → Download ZIP** (or the latest release), then unzip it anywhere, for example `C:\Workspace` or a folder in OneDrive.
+**Easiest on Windows:** download `project-workspace-…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest) and unzip it anywhere, for example `C:\Workspace` or a folder in OneDrive. It contains **ProjectWorkspace.exe**, so you don't need Node.js.
+
+**Otherwise:** download the other zip of the release (or **Code → Download ZIP**) and install Node.js.
 
 ## 2. Start it
 
-- **Windows:** double-click `start.bat`
+- **Windows (exe):** double-click `ProjectWorkspace.exe`
+- **Windows (Node.js):** double-click `start.bat`
 - **macOS / Linux:** run `./start.sh`
 
 A console window opens and your browser shows **http://localhost:4321** as soon as the workspace is ready. Keep the console window open while you work; closing it stops the workspace.

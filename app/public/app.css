@@ -432,3 +432,7 @@ a.chip.accent:hover{text-decoration:none;filter:brightness(.95)}
 button.ilabel.on{background:var(--lc);color:#fff}
 .ibody{padding:0 18px 12px 46px}
 .ibody .md{font-size:14px}
+
+/* help links into the wiki */
+.help{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;white-space:nowrap}
+.note .sp{flex:1}

@@ -289,7 +289,7 @@ Screens (from the accepted mockup, issue #2):
 4. **New project:** name, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.
 6. **Explorer:** every project has an *Explorer* tab with the whole project folder as a tree (incl. `project.yaml`, `.claude/`, `.mcp.json`), and the sidebar has a workspace explorer (features + all projects). Text files open in the code editor (Markdown with preview, images shown); new file/folder, upload, rename/move, delete (to `.trash`), download. Saving a `project.yaml` or feature YAML is validated first.
-7. **VS Code tab (full VS Code in the app):** shows the browser version of VS Code, opened on the project folder, in an embedded frame. By default the app starts the installed VS Code's own web server (`code serve-web`, downloads its web part once) on `127.0.0.1:8740` with a random connection token (kept in `data/.ide-token`), and stops it when the app exits. The command, port and URL are set in `data/settings.yaml` (`ide:`), so code-server or OpenVSCode Server can be used instead. *Open in new window* is always offered in case the browser blocks the frame.
+7. **VS Code tab (full VS Code in the app):** shows the browser version of VS Code, opened on the project folder, in an embedded frame. By default the app starts the installed VS Code's own web server (`code serve-web --server-base-path /ide`, downloads its web part once) on `127.0.0.1:8740` with a random connection token (kept in `data/.ide-token`), and stops it when the app exits. The browser never talks to that port directly: the app **reverse-proxies `/ide/…` (HTTP and WebSockets)** on its own address and removes frame-blocking headers, so the embedded VS Code is same-site and browsers don't block it (#30). Settings from v0.3.0 (direct `http://{host}:{port}` URLs) are upgraded automatically; code-server, which serves at its root, uses `strip_base: true`. The command, port and URL are set in `data/settings.yaml` (`ide:`), so code-server or OpenVSCode Server can be used instead. *Open in new window* is always offered in case the browser blocks the frame.
 8. **VS Code buttons:** *VS Code* in the project header and *Open in VS Code* on every file run the `code` command (`VSCODE_COMMAND` to override) to open the project folder in the installed VS Code and jump to the file. If `code` is not on the PATH the browser is asked to open a `vscode://file/…` link.
 
 - **Theme:** light, dark or auto (follows the OS), switched in the sidebar and remembered in `localStorage`.
@@ -313,13 +313,31 @@ Live installations never use git; they are updated from **GitHub Releases** (#26
 - **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
 - **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* releases the version in `package.json` (or push a tag `vX.Y.Z`). It runs the tests, zips the program (`git archive`, so no client data) and creates the release; the notes come from `docs/releases/vX.Y.Z.md` (else generated).
 
+## 7c. Windows app (exe)
+
+`.github/workflows/build-windows.yml` (runs on `windows-latest`, by hand or from the Release workflow) builds a portable package:
+
+```
+ProjectWorkspace/
+  ProjectWorkspace.exe   Node + tools/sea/launcher.js (Node "single executable application")
+  app/ docs/ tools/ README.md LICENSE package.json
+  data/                  created on first start
+```
+
+- The exe is a copy of `node.exe` with an icon and file details (`rcedit`) and the launcher injected (`postject`).
+- The launcher starts `app/server.js` from the folder next to the exe with `--open`, so updates only replace files.
+- Options: `--no-open`, a port number, `--mcp` (the workspace MCP server for Claude CLI) and `--version`.
+- The workflow tests the exe on the runner (`--version`, then `/api/info` must answer) before zipping it as `project-workspace-vX.Y.Z-windows-x64.zip`.
+- Releases carry both zips. The updater picks the Windows zip when it runs from the exe (`PW_EXE` is set), and restarts the new exe after an update.
+
 ## 7a. Documentation
 
 | Document | For whom | Where |
 |---|---|---|
 | `README.md` | first look, start, update | repo root |
 | `docs/GETTING-STARTED.md` | new users: install, first project, first feature, Claude, VS Code, updating | repo + wiki *Getting-Started* |
-| `docs/wiki/*.md` | user guide: projects, features (all settings), building blocks, Claude, VS Code & Explorer, data & updates, FAQ | GitHub wiki |
+| `docs/wiki/*.md` | user guide: projects, features (all settings), **a page per starter feature** (`Feature-<Name>.md`: all its options, examples, what it stores), building blocks, Claude, VS Code & Explorer, data & updates, FAQ | GitHub wiki |
+| Help links in the app | *Help & wiki* in the sidebar; *Help* on every feature tab and in the feature editor opens that feature's wiki page; *Getting started* on the home page | `package.json` → `wiki` |
 | `docs/DESIGN.md` | developers: architecture and rebuild guide | repo + wiki *Design* |
 | `docs/REQUIREMENTS.md` | everyone: every requirement with status and issue | repo + wiki *Requirements* |
 
@@ -338,7 +356,8 @@ The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and 
 | Diagram | Mermaid text |
 | Chat | Claude CLI in the project folder; permissions per project |
 | Theme | Light, dark, or follow the OS |
-| App format | Node.js + browser. Portable `.exe` planned (#1) |
+| App format | Node.js + browser; portable Windows exe built by GitHub Actions (#1) |
+| Licence | MIT (#13) |
 | Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
 | Dependencies | None at runtime (Mermaid and highlight.js are bundled) |
 | Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |

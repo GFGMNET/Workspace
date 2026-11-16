@@ -23,7 +23,7 @@ The **Scripts** feature is an explorer for the `scripts/` folder of a project. *
 The **VS Code** tab shows the full VS Code (extensions, terminal, Git) inside the app, opened on the project.
 
 1. Click **Start VS Code**. The app runs `code serve-web` from your installed VS Code. The first start downloads its web part and needs internet once.
-2. It runs on `127.0.0.1:8740` with a random access token, so other websites can't reach it.
+2. It runs on `127.0.0.1:8740` with a random access token, so other websites can't reach it. The app shows it **through its own address** (`/ide/`), so browsers treat it as part of the app and don't block it, and you don't need to change any browser settings.
 3. It stops when the workspace stops.
 
 To use **code-server** or **OpenVSCode Server** instead, change `data/settings.yaml`:
@@ -32,7 +32,6 @@ To use **code-server** or **OpenVSCode Server** instead, change `data/settings.y
 ide:
   command: code-server --bind-addr 127.0.0.1:{port} --auth none --disable-telemetry
   port: 8740
-  url: http://{host}:{port}/?folder={folder}
+  url: "{base}/?folder={folder}"
+  strip_base: true      # code-server serves at its root
 ```
-
-If the tab stays blank, your browser is blocking embedded pages. Use **Open in new window**.

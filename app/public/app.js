@@ -8,6 +8,10 @@ const App = {
   refreshProjects: async () => { try { S.projects = await api('/api/projects'); renderSidebar(); renderTabs(); } catch {} },
   refreshProjectOnly: async () => { if (S.project) { try { S.project = await api(`/api/projects/${enc(S.project.slug)}`); renderTabs(); } catch {} } },
 };
+// Links into the wiki (help). Starter features have their own page; others go to the overview.
+const WIKI_FEATURE = { wiki: 'Feature-Wiki', knowledge: 'Feature-Knowledge', gallery: 'Feature-Gallery', files: 'Feature-Files', scripts: 'Feature-Scripts', skills: 'Feature-Skills', mcp: 'Feature-MCP', chat: 'Feature-Chat', tasks: 'Feature-Tasks', calendar: 'Feature-Calendar', team: 'Feature-Team', map: 'Feature-Map', diagrams: 'Feature-Diagrams', contacts: 'Feature-Contacts', devices: 'Feature-Devices', github: 'Feature-Issues' };
+const wikiUrl = (page = '') => ((S.info && S.info.wiki) || 'https://github.com/GFGMNET/Workspace/wiki') + (page ? '/' + page : '');
+const helpLink = (page, label = 'Help') => `<a class="help" href="${esc(wikiUrl(page))}" target="_blank" rel="noopener" title="Open the wiki">${icon('book', 13)} ${esc(label)}</a>`;
 const fdesc = yaml => (String(yaml || '').match(/^#\s?(.+)$/m) || [, ''])[1].replace(/\s*\(.*$/, '');
 const go = h => { if (location.hash === h) route(); else location.hash = h; };
 
@@ -86,7 +90,7 @@ function renderHome() {
   const ps = S.projects;
   $('#main').innerHTML = `<div class="wrap">
     <div class="hero"><div>${menuBtn}<h1>All projects</h1><p class="muted" style="margin:6px 0 0">Every project is a folder. Its <span class="mono">project.yaml</span> lists the features it uses; <a href="#/features">features</a> say what they mean.</p></div>
-      <button class="btn primary" type="button" data-new-project>${icon('plus', 14)} New project</button></div>
+      <div class="row">${helpLink('Getting-Started', 'Getting started')}<button class="btn primary" type="button" data-new-project>${icon('plus', 14)} New project</button></div></div>
     <div class="grid">${ps.map(p => `<a class="card pcard" href="#/p/${enc(p.slug)}">
         <div class="top">${avatar(p.name, p.icon, p.color, p.slug)}<div style="min-width:0"><h3>${esc(p.name)}</h3><div class="mono faint small">projects/${esc(p.slug)}</div></div></div>
         <div class="desc">${p.error ? `<span style="color:var(--err)">⚠ ${esc(p.error)}</span>` : esc(p.description)}</div>
@@ -160,7 +164,7 @@ async function renderProject(tab, sub, query) {
     return;
   }
   const over = Object.keys(f.overrides || {}).length ? ` · overridden in project.yaml: ${Object.entries(f.overrides).map(([k, v]) => `<span class="mono">${esc(k)}: ${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join(', ')}` : '';
-  $('#fnote').innerHTML = `<div class="note" style="margin-bottom:14px"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} ${f.def.stores === 'github' ? ` · repository <a class="mono" href="https://github.com/${esc(f.def.repo)}" target="_blank" rel="noopener">${esc(f.def.repo || 'not set')}</a>` : ` · folder <span class="mono">${esc(f.def.folder)}/</span>`}${over}</div>`;
+  $('#fnote').innerHTML = `<div class="note" style="margin-bottom:14px"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} ${f.def.stores === 'github' ? ` · repository <a class="mono" href="https://github.com/${esc(f.def.repo)}" target="_blank" rel="noopener">${esc(f.def.repo || 'not set')}</a>` : ` · folder <span class="mono">${esc(f.def.folder)}/</span>`}${over}<span class="sp"></span>${helpLink(WIKI_FEATURE[f.feature] || 'Features', 'Help')}</div>`;
   try { App.index = await api(`/api/projects/${enc(p.slug)}/index`); } catch { App.index = []; }
   const ctx = { p, f, el: body, sub, query, href: (id, suffix = '') => projectHref(f.key, id, suffix) };
   const view = VIEWS[f.def.layout] || VIEWS.pages;
@@ -234,6 +238,7 @@ chat:
   permissions: auto  # override
 photos:
   feature: gallery   # other key, same feature</pre>
+      ${helpLink('Projects', 'All options for project.yaml')}
       <b>Available features</b><div class="chips">${S.features.map(f => `<a class="chip" href="#/features/${enc(f.key)}">${esc(f.key)}</a>`).join('')}</div></aside></div>`;
   const save = async () => {
     try { S.project = await api(`/api/projects/${enc(p.slug)}/yaml`, { method: 'PUT', body: { yaml: $('#ytext').value } }); App.dirty = false; await App.refreshProjects(); toast('Saved'); route(); }
@@ -359,6 +364,7 @@ async function renderFeatures(key, query) {
       <div class="info"><b>Looks like</b>${layoutSketch(sel.def.layout)}<span class="muted small">${esc({ pages: 'Page list with search on the left, the page on the right.', cards: 'Cards with summary and tags, search and tag filters.', list: 'A simple list.', grid: 'Picture grid with albums and drag & drop upload.', files: 'Folders and files with upload.', table: 'Sortable table; click a row to edit.', kanban: 'Columns; drag cards between them.', calendar: 'Month view; click a day to add.', orgchart: 'Tree of people; set who they report to.', map: 'Your own image with pins you can drag.', diagram: 'Mermaid text with live preview.', chat: 'Chat with Claude CLI inside the project folder.', issues: 'Issues of a GitHub repository: open/closed, labels, search.', code: 'Explorer with a code editor and script templates.' }[sel.def.layout] || '')}</span>
         ${sel.def.fields ? `<b>Fields</b><div class="chips">${sel.def.fields.map(f => `<span class="chip">${esc(f.name)} <span class="faint">${esc(f.type)}</span></span>`).join('')}</div>` : ''}
         <b>Used by</b><div class="chips">${sel.usedBy.map(p => `<a class="chip accent" href="#/p/${enc(p.slug)}/${enc(sel.key)}">${esc(p.name)}</a>`).join('') || '<span class="faint small">No project yet</span>'}</div>
+        ${helpLink(WIKI_FEATURE[sel.key] || 'Features', WIKI_FEATURE[sel.key] ? 'Documentation for this feature' : 'Feature settings in the wiki')}
         <details><summary class="small" style="cursor:pointer;font-weight:600">All settings</summary><pre class="code" style="font-size:11.5px;margin-top:8px">${esc(KEYS_HELP)}</pre></details></div></div></div>`;
   const ta = $('[data-fy]', pane);
   ta.oninput = () => (App.dirty = ta.value !== sel.yaml);
@@ -471,6 +477,7 @@ function listen() {
   try {
     S.info = await api('/api/info');
     $('#rootPath').textContent = S.info.root; $('#rootPath').title = S.info.root;
+    if (S.info.wiki) $('#navWiki').href = S.info.wiki;
     [S.projects, S.features] = await Promise.all([api('/api/projects'), api('/api/features')]);
   } catch (e) { $('#main').innerHTML = `<div class="wrap"><div class="err">Cannot reach the workspace server: ${esc(e.message)}</div></div>`; return; }
   fillIcons(document);

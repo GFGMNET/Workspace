@@ -23,6 +23,29 @@ fields:
 new_item: Task
 ```
 
+## Feature reference
+
+Every starter feature has its own page with all its settings, examples and what it stores on disk:
+
+| Feature | Layout | Page |
+|---|---|---|
+| Wiki | pages | [[Feature-Wiki]] |
+| Knowledge | cards | [[Feature-Knowledge]] |
+| Gallery | grid | [[Feature-Gallery]] |
+| Files | files | [[Feature-Files]] |
+| Scripts | code | [[Feature-Scripts]] |
+| Skills | pages (for Claude) | [[Feature-Skills]] |
+| MCP | cards (for Claude) | [[Feature-MCP]] |
+| Chat | chat | [[Feature-Chat]] |
+| Tasks | kanban | [[Feature-Tasks]] |
+| Calendar | calendar | [[Feature-Calendar]] |
+| Team | org chart | [[Feature-Team]] |
+| Map | map | [[Feature-Map]] |
+| Diagrams | diagram | [[Feature-Diagrams]] |
+| Contacts | table | [[Feature-Contacts]] |
+| Devices | table | [[Feature-Devices]] |
+| Issues | issues (GitHub) | [[Feature-Issues]] |
+
 ## Three ways to add one
 
 1. **In the app:** **Features → + New feature**. Pick what it stores, the layout and the fields.
