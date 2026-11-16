@@ -6,11 +6,11 @@ use std::sync::OnceLock;
 
 pub(crate) fn key_re() -> &'static Regex {
     static R: OnceLock<Regex> = OnceLock::new();
-    R.get_or_init(|| Regex::new(r#"^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s'"#\-\[\]{},?][^:#]*?|-[^\s:][^:#]*?)\s*:(?:\s+(.*))?$"#).unwrap())
+    R.get_or_init(|| Regex::new(r##"^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s'"#\-\[\]{},?][^:#]*?|-[^\s:][^:#]*?)\s*:(?:\s+(.*))?$"##).unwrap())
 }
 fn flow_pair_re() -> &'static Regex {
     static R: OnceLock<Regex> = OnceLock::new();
-    R.get_or_init(|| Regex::new(r#"^("(?:[^"\\]|\\.)*"|'[^']*'|[^:]+?)\s*:\s*(.*)$"#).unwrap())
+    R.get_or_init(|| Regex::new(r##"^("(?:[^"\\]|\\.)*"|'[^']*'|[^:]+?)\s*:\s*(.*)$"##).unwrap())
 }
 fn block_re() -> &'static Regex {
     static R: OnceLock<Regex> = OnceLock::new();
