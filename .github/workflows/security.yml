@@ -97,11 +97,13 @@ jobs:
             execSync(`gh issue create --title ${JSON.stringify(title)} --body-file /tmp/body.md ${sec ? '--label security' : '--label enhancement'}`, { stdio: 'inherit' });
           }
           JS
-      - name: Patch release with the new Electron
+      - name: Patch release with the new Electron (as a draft to sign)
         if: steps.e.outputs.update == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # a release still waiting for its signature: don't start another one
+          if [ "$(gh api "repos/${{ github.repository }}/releases" --jq '[.[] | select(.draft)] | length')" != "0" ]; then echo "A draft release waits for its signature; nothing to do."; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           v=$(node -p "const v=require('./package.json').version.split('.').map(Number); v[2]++; v.join('.')")

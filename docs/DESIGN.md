@@ -399,7 +399,7 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 
 | Component | Source of CVEs | How it is kept current |
 |---|---|---|
-| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and released automatically (together with whatever is already on main; notes collected in `docs/releases/vX.Y.Z.md` are kept); the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
+| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and built automatically as a draft to sign (together with whatever is already on main; notes collected in `docs/releases/vX.Y.Z.md` are kept); the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
 | Bundled libraries (yaml, Mermaid, highlight.js) | few | `tools/vendor.json` lists the versions; the same workflow checks npm for newer versions and known advisories → issue (security: right away, plain updates: monthly). |
 | Our own code | logic mistakes | CodeQL (`.github/workflows/codeql.yml`: JavaScript + workflows, on every push and weekly); tests in `app/test/smoke.js`. |
 | Build workflows | supply chain | Dependabot (`.github/dependabot.yml`) for GitHub Actions. |
@@ -407,7 +407,19 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 
 **Reporting:** `SECURITY.md` — private reports through GitHub (*Security → Report a vulnerability*). Only the latest release gets fixes.
 
-**Not done yet:** signed release packages (the updater checks HTTPS and the package name only), code signing of the exe (#31).
+**Signed releases (#49).** The private key never leaves the maintainer's PC (decision 2026-11-16: no key on GitHub).
+
+- `tools/signing/signing.js` (runs with Node or the app's runtime via `ELECTRON_RUN_AS_NODE`; Windows: `new-signing-key.cmd`, `sign-release.cmd`):
+  `new-key` makes an Ed25519 key pair, the private key as encrypted PKCS#8 PEM (AES-256-CBC, PBKDF2, password), the public key as SPKI PEM.
+  `sign` shows the checksum list, asks for *yes* and the password, writes `SHA256SUMS.txt.sig` (base64 Ed25519 signature over the file's exact bytes).
+- `release.yml` creates the release as a **draft** (apps don't see drafts), builds all packages, then attaches `SHA256SUMS.txt`
+  (`project-workspace vX.Y.Z` + `sha256  file` lines) and opens an issue *Sign and publish vX.Y.Z*. The maintainer signs, attaches the `.sig`, publishes.
+- `app/lib/release-key.pem` holds the public key. When it is there, `updater.js` installs a package only if the signature over
+  `SHA256SUMS.txt` is valid, its first line names the offered version, and the downloaded zip's SHA-256 is in it (`checkSigned`).
+- The weekly security check prepares Electron patch releases the same way (draft + issue) and starts no new one while a draft waits.
+- Not covered: the maintainer signs what GitHub built; a tampered build on a hijacked GitHub account would still need the maintainer's signature, and the issue asks to sign only releases they started.
+
+**Not done yet:** code signing of the exe (#31).
 
 ## 7a. Documentation
 

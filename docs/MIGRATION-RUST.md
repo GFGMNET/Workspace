@@ -102,11 +102,12 @@ Each phase ends with a check before the next starts. Estimates are working days 
 
 ### Phase S: signed packages in 0.x (1–2 days, first)
 
-Useful now and needed for 1.0: the updater should only install packages we signed.
+Useful now and needed for 1.0: the updater only installs packages the maintainer signed. **Decided: the private key stays on the maintainer's PC** (option C, 2026-11-16).
 
-- Release workflow signs every zip (ed25519, minisign format, `.minisig` next to the zip). Private key in a GitHub Actions secret.
-- `updater.js` verifies the signature with the public key built into the program before it unpacks anything.
-- Done when: an unsigned or tampered zip is refused (test), and 0.x releases are signed.
+- Releases are built as drafts with `SHA256SUMS.txt`; the maintainer signs it with `tools/signing` (Ed25519) and publishes.
+- `updater.js` checks the signature and the zip's checksum with the public key in `app/lib/release-key.pem` before it unpacks anything.
+- 1.0 keeps the formats: `pw-cli new-key / sign` read the same encrypted PKCS#8 key (crate `pkcs8` with PBES2), and the Rust updater checks the same files.
+- Done when: an unsigned or tampered zip is refused (test ✅), the public key is in the app, and releases are signed.
 
 ### Phase 0: the safety net (3–4 days)
 
@@ -197,7 +198,7 @@ Useful now and needed for 1.0: the updater should only install packages we signe
 1. **Node.js package:** 1.0 drops the "run with Node.js" package (`start.bat`/`start.sh`); machines without a screen use `project-workspace-server`. **Decided: yes** (2026-11-16).
 2. **macOS:** not part of 1.0; later improvement (#56). **Decided** (2026-11-16).
 3. **Where the screens live:** served from `app/public` on disk, updates replace files as today. **Decided: on disk** (2026-11-16).
-4. **Signing key custody:** who holds the private key for package signatures. *Open.*
+4. **Signing key custody:** only on the maintainer's PC, backed up in their password manager; releases are signed there. **Decided** (2026-11-16).
 
 ## 10. Tracking
 

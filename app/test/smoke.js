@@ -160,6 +160,19 @@ ok('updates: each installation picks its own download', () => {
   assert.strictEqual(up.pickAsset(assets, 'linux', 'x64', false).name, 'project-workspace-v1.0.0.zip');
   assert.strictEqual(up.pickAsset(assets, 'darwin', 'arm64', true), null);
 });
+ok('updates: only packages in a validly signed checksum list are accepted', () => {
+  const crypto = require('crypto'); const up = require('../lib/updater');
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+  const zip = Buffer.from('zip bytes'); const h = crypto.createHash('sha256').update(zip).digest('hex');
+  const sums = Buffer.from(`project-workspace v1.2.3\n${h}  pw-v1.2.3-windows-x64.zip\n`);
+  const sig = crypto.sign(null, sums, privateKey).toString('base64');
+  assert.deepStrictEqual(up.checkSigned(null, null, '1.2.3', 'x', zip, null), { required: false });
+  assert(up.checkSigned(sums, sig, '1.2.3', 'pw-v1.2.3-windows-x64.zip', zip, publicKey).ok);
+  assert.throws(() => up.checkSigned(null, null, '1.2.3', 'pw-v1.2.3-windows-x64.zip', zip, publicKey), /not signed/);
+  assert.throws(() => up.checkSigned(Buffer.concat([sums, Buffer.from('x')]), sig, '1.2.3', 'pw-v1.2.3-windows-x64.zip', zip, publicKey), /not valid/);
+  assert.throws(() => up.checkSigned(sums, sig, '1.2.4', 'pw-v1.2.3-windows-x64.zip', zip, publicKey), /another version/);
+  assert.throws(() => up.checkSigned(sums, sig, '1.2.3', 'pw-v1.2.3-windows-x64.zip', Buffer.from('evil'), publicKey), /does not match/);
+});
 ok('VS Code redirects stay under /ide', () => {
   const ide = require('../lib/ide'); const s = { base: '/ide' };
   assert.strictEqual(ide.rewriteLocation('http://127.0.0.1:8740/?folder=/x', s), '/ide/?folder=/x');

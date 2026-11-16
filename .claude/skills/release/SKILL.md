@@ -20,11 +20,16 @@ reaches every client within a week. Never break `data/`: it belongs to the clien
 7. Start the release: GitHub → **Actions → Release → Run workflow** (or the API:
    `POST /repos/GFGMNET/Workspace/actions/workflows/release.yml/dispatches` with `ref: main`).
    Pushing a tag `vX.Y.Z` works too.
-8. The **Release** Action creates the tag `v<version from package.json>`, runs the tests,
-   builds `project-workspace-vX.Y.Z.zip` and publishes the release.
-9. Close the issues that went into the release.
+8. The **Release** Action runs the tests, builds every package (Node zip, Windows, Linux x64/arm64)
+   and creates the release as a **draft** with `SHA256SUMS.txt`, then opens an issue *Sign and publish vX.Y.Z*.
+9. The maintainer signs on their own PC (the key is never on GitHub, never in this session):
+   download `SHA256SUMS.txt` from the draft → drag it onto `tools\signing\sign-release.cmd` → attach
+   `SHA256SUMS.txt.sig` to the draft → **Publish release** (this creates the tag).
+   Tell the user these steps; you cannot sign or publish for them.
+10. Close the issues that went into the release.
 
 ## Do not
 
 - Do not put anything from a client's `data/` folder into the repo or the zip.
 - Do not reuse or move an existing tag.
+- Never ask for, create or handle the private signing key. Only the public key goes into `app/lib/release-key.pem`.

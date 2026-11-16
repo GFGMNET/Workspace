@@ -8,6 +8,10 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
+      sha:
+        description: Commit to build (draft releases have no tag yet)
+        type: string
+        required: false
       tag:
         description: Release tag to attach the zips to
         type: string
@@ -30,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ inputs.sha || inputs.tag || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
