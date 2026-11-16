@@ -225,9 +225,10 @@ function restart(swap) {
   try { ide.stop(); } catch {}
   server.close();
   if (global.pwRestart) return global.pwRestart({ swap }); // desktop app (app/electron/main.js)
+  if (swap) { updater.runSwap(swap); return setTimeout(() => process.exit(0), 300); } // new runtime: swapped after we quit
   if (process.env.PW_LAUNCHER === 'loop') return process.exit(75);
   // The Windows exe was moved into the backup folder by the update: start the new one in its place.
-  const exe = process.env.PW_EXE ? path.join(ws.INSTALL_DIR, path.basename(process.env.PW_EXE)) : null;
+  const exe = process.env.PW_EXE && !process.env.PW_SERVER ? path.join(ws.INSTALL_DIR, path.basename(process.env.PW_EXE)) : null;
   const cmd = exe || process.execPath;
   const args = [...(exe ? [] : [path.join(__dirname, 'server.js')]), ...ARGS.filter(a => a !== '--open'), ...(exe ? ['--no-open'] : [])];
   // The new process waits for this one to free the port (PW_RESTARTED), so it can start right away.

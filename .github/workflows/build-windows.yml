@@ -40,7 +40,10 @@ jobs:
         id: e
         run: |
           $major = (Get-Content tools/electron/electron-version).Trim()
-          npm install --prefix build/electron "electron@$major" --no-save --no-audit --no-fund
+          npm install --prefix build/electron "electron@$major" --no-save --no-audit --no-fund --foreground-scripts
+          # newer npm versions may skip install scripts: download Electron's files explicitly
+          if (-not (Test-Path build/electron/node_modules/electron/dist)) { node build/electron/node_modules/electron/install.js }
+          if (-not (Test-Path build/electron/node_modules/electron/dist/electron.exe)) { throw "Electron download failed" }
           $ev = node -p "require('./build/electron/node_modules/electron/package.json').version"
           "electron=$ev" >> $env:GITHUB_OUTPUT
           Write-Host "Electron $ev"

@@ -112,7 +112,9 @@ function runtimePlan(install, src) {
 }
 // Runs a small script that waits until the app has quit, puts the new runtime in place and starts it again.
 function runSwap(dir) {
-  const install = ws.INSTALL_DIR; const exe = process.env.PW_EXE; const pid = process.pid;
+  const install = ws.INSTALL_DIR; const pid = process.pid;
+  // the desktop app starts its window again; the Linux server mode (project-workspace-server) its server
+  const exe = process.env.PW_SERVER ? path.join(install, 'project-workspace-server') : process.env.PW_EXE;
   const { spawn } = require('child_process');
   const env = { ...process.env, PW_RESTARTED: '1' };
   if (process.platform === 'win32') {
