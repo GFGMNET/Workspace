@@ -1,0 +1,10 @@
+{
+  "value": {
+    "icon": "folder",
+    "layout": "files",
+    "name": "Files",
+    "new_item": "Folder",
+    "stores": "files"
+  },
+  "warning": false
+}

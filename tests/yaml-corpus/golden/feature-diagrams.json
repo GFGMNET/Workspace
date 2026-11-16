@@ -1,0 +1,10 @@
+{
+  "value": {
+    "icon": "diagram",
+    "layout": "diagram",
+    "name": "Diagrams",
+    "new_item": "Diagram",
+    "stores": "diagram"
+  },
+  "warning": false
+}

@@ -1,0 +1,36 @@
+{
+  "value": {
+    "chat": {
+      "permissions": "ask"
+    },
+    "description": "Example 2 — an agent project for Claude CLI",
+    "knowledge": [
+      "a knowledge base"
+    ],
+    "mcp": [
+      {
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "."
+        ],
+        "command": "npx",
+        "description": "Lets Claude read and write files in this project folder",
+        "name": "filesystem",
+        "transport": "stdio"
+      },
+      "a connection for different MCP"
+    ],
+    "name": "test 2",
+    "skills": [
+      {
+        "description": "Use this when someone asks how this project is organised.",
+        "title": "an skill.md for agent"
+      }
+    ],
+    "wiki": [
+      "a wiki page"
+    ]
+  },
+  "warning": false
+}

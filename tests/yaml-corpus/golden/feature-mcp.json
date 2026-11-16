@@ -1,0 +1,11 @@
+{
+  "value": {
+    "for_claude": "mcp",
+    "icon": "plug",
+    "layout": "cards",
+    "name": "MCP",
+    "new_item": "Connection",
+    "stores": "records"
+  },
+  "warning": false
+}

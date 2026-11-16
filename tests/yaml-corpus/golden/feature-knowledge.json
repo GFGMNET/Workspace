@@ -1,0 +1,16 @@
+{
+  "value": {
+    "aliases": [
+      "knowlege",
+      "kb",
+      "knowledge_base"
+    ],
+    "icon": "lightbulb",
+    "layout": "cards",
+    "name": "Knowledge",
+    "new_item": "Article",
+    "search": true,
+    "stores": "markdown"
+  },
+  "warning": false
+}

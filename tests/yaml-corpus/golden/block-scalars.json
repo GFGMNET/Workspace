@@ -1,0 +1,14 @@
+{
+  "value": {
+    "bool": "yes",
+    "date": "2026-11-16",
+    "empty": null,
+    "folded": "folded text\n",
+    "literal": "line one\nline two\n",
+    "number": 31,
+    "quoted": "a: b # not a comment",
+    "single": "it's",
+    "tilde": null
+  },
+  "warning": false
+}

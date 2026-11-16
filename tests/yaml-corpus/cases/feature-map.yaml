@@ -1,0 +1,12 @@
+# Offline map: upload your own image (floor plan, site plan) and place pins on it.
+name: Map
+icon: map
+stores: records
+layout: map
+fields:
+  - name
+  - name: kind
+    type: select
+    options: [device, room, site, other]
+  - notes
+new_item: Pin

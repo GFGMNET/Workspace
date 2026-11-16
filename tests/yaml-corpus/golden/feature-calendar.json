@@ -1,0 +1,24 @@
+{
+  "value": {
+    "date_field": "date",
+    "fields": [
+      "title",
+      {
+        "name": "date",
+        "type": "date"
+      },
+      {
+        "name": "end",
+        "type": "date"
+      },
+      "location",
+      "notes"
+    ],
+    "icon": "calendar",
+    "layout": "calendar",
+    "name": "Calendar",
+    "new_item": "Event",
+    "stores": "records"
+  },
+  "warning": false
+}

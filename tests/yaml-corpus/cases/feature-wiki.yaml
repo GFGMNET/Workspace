@@ -1,0 +1,7 @@
+# Wiki: Markdown pages with a page list and search.
+name: Wiki
+icon: book
+stores: markdown
+layout: pages
+search: true
+new_item: Page

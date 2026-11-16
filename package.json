@@ -3,14 +3,20 @@
   "version": "0.6.2",
   "description": "File-based project workspace: project.yaml says which features a project has, features/*.yaml says what they mean. Web UI, chat with Claude CLI, MCP server. No database, no dependencies.",
   "private": true,
-  "updates": { "repo": "GFGMNET/Workspace" },
+  "updates": {
+    "repo": "GFGMNET/Workspace"
+  },
   "homepage": "https://github.com/GFGMNET/Workspace",
   "wiki": "https://github.com/GFGMNET/Workspace/wiki",
   "scripts": {
     "start": "node app/server.js",
     "mcp": "node app/mcp.js",
-    "test": "node app/test/smoke.js"
+    "test": "node app/test/smoke.js",
+    "test:contract": "node tests/contract/run.js",
+    "test:yaml": "node --test tests/yaml-corpus/yaml.test.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT"
 }

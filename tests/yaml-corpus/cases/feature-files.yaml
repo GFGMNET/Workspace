@@ -1,0 +1,6 @@
+# Any documents (PDF, Office, ...) in folders.
+name: Files
+icon: folder
+stores: files
+layout: files
+new_item: Folder

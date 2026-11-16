@@ -1,0 +1,7 @@
+defaults: &d
+  status: open
+  owner: ann
+task:
+  <<: *d
+  title: Merged
+list: [a, b, {c: 1}]

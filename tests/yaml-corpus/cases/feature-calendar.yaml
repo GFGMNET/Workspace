@@ -1,0 +1,15 @@
+# Calendar. Each event is a record with a date (and optional end date).
+name: Calendar
+icon: calendar
+stores: records
+layout: calendar
+date_field: date
+fields:
+  - title
+  - name: date
+    type: date
+  - name: end
+    type: date
+  - location
+  - notes
+new_item: Event

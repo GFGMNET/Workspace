@@ -1,0 +1,15 @@
+{
+  "value": {
+    "knowlege": [
+      "kb entry"
+    ],
+    "name": "Project 1",
+    "skils": [
+      "a skill"
+    ],
+    "wiki": [
+      "some page"
+    ]
+  },
+  "warning": true
+}

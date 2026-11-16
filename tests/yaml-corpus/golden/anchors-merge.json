@@ -1,0 +1,21 @@
+{
+  "value": {
+    "defaults": {
+      "owner": "ann",
+      "status": "open"
+    },
+    "list": [
+      "a",
+      "b",
+      {
+        "c": 1
+      }
+    ],
+    "task": {
+      "owner": "ann",
+      "status": "open",
+      "title": "Merged"
+    }
+  },
+  "warning": false
+}

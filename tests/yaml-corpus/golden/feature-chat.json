@@ -1,0 +1,14 @@
+{
+  "value": {
+    "context": [
+      "wiki",
+      "knowledge"
+    ],
+    "icon": "chat",
+    "layout": "chat",
+    "name": "Chat",
+    "permissions": "ask",
+    "stores": "chat"
+  },
+  "warning": false
+}

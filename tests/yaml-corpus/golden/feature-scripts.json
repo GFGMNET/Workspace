@@ -1,0 +1,10 @@
+{
+  "value": {
+    "icon": "terminal",
+    "layout": "code",
+    "name": "Scripts",
+    "new_item": "Script",
+    "stores": "files"
+  },
+  "warning": false
+}

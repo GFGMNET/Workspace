@@ -1,0 +1,89 @@
+{
+  "value": {
+    "calendar": [
+      {
+        "date": "2026-11-18",
+        "title": "Firmware update window"
+      },
+      {
+        "date": "2026-11-25",
+        "title": "ISP technician visit"
+      }
+    ],
+    "chat": {
+      "permissions": "read-only"
+    },
+    "color": "#b4501a",
+    "description": "Shows every building block — devices table, network diagram, floor plan, tasks, calendar and team",
+    "devices": [
+      {
+        "ip": "192.168.1.1",
+        "kind": "router",
+        "location": "Hallway",
+        "name": "Router"
+      },
+      {
+        "ip": "192.168.1.20",
+        "kind": "server",
+        "location": "Office",
+        "name": "NAS"
+      },
+      {
+        "ip": "192.168.1.30",
+        "kind": "access point",
+        "location": "Office",
+        "name": "Office AP"
+      }
+    ],
+    "diagrams": [
+      "Network"
+    ],
+    "icon": "🏠",
+    "map": {
+      "feature": "map"
+    },
+    "name": "Home Lab",
+    "scripts": null,
+    "tags": [
+      "network",
+      "example"
+    ],
+    "tasks": [
+      {
+        "owner": "Alex",
+        "priority": "high",
+        "status": "Doing",
+        "title": "Replace the old switch"
+      },
+      {
+        "due": "2026-11-20",
+        "status": "To do",
+        "title": "Set up nightly backup to NAS"
+      },
+      {
+        "status": "Done",
+        "title": "Label all cables"
+      }
+    ],
+    "team": [
+      {
+        "name": "Alex",
+        "role": "Owner"
+      },
+      {
+        "name": "Sam",
+        "reports_to": "alex",
+        "role": "Network"
+      },
+      {
+        "name": "Kim",
+        "reports_to": "alex",
+        "role": "Backups"
+      }
+    ],
+    "wiki": [
+      "Home"
+    ]
+  },
+  "warning": false
+}

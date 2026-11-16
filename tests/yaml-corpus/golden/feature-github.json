@@ -1,0 +1,10 @@
+{
+  "value": {
+    "icon": "issue",
+    "layout": "issues",
+    "name": "Issues",
+    "state": "open",
+    "stores": "github"
+  },
+  "warning": false
+}

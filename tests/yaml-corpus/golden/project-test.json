@@ -1,0 +1,16 @@
+{
+  "value": {
+    "description": "Example 1 — wiki, knowledge base and a picture gallery",
+    "gallery": [
+      "a picture gallery"
+    ],
+    "knowledge": [
+      "a knowledge base"
+    ],
+    "name": "test",
+    "wiki": [
+      "a wiki page"
+    ]
+  },
+  "warning": false
+}

@@ -1,0 +1,12 @@
+# Simple table of contacts.
+name: Contacts
+icon: contact
+stores: records
+layout: table
+fields:
+  - name
+  - company
+  - phone
+  - email
+  - notes
+new_item: Contact

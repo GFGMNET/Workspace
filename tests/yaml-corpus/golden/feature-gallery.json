@@ -1,0 +1,11 @@
+{
+  "value": {
+    "albums": true,
+    "icon": "image",
+    "layout": "grid",
+    "name": "Gallery",
+    "new_item": "Album",
+    "stores": "images"
+  },
+  "warning": false
+}

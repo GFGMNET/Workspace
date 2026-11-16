@@ -1,0 +1,15 @@
+{
+  "value": {
+    "aliases": [
+      "skils",
+      "skill"
+    ],
+    "for_claude": "skills",
+    "icon": "puzzle",
+    "layout": "pages",
+    "name": "Skills",
+    "new_item": "Skill",
+    "stores": "markdown"
+  },
+  "warning": false
+}

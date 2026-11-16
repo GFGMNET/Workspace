@@ -1,0 +1,38 @@
+{
+  "value": {
+    "columns": [
+      "To do",
+      "Doing",
+      "Done"
+    ],
+    "fields": [
+      "title",
+      "owner",
+      {
+        "name": "due",
+        "type": "date"
+      },
+      {
+        "name": "priority",
+        "options": [
+          "low",
+          "normal",
+          "high"
+        ],
+        "type": "select"
+      },
+      {
+        "multiple": true,
+        "name": "related",
+        "type": "link"
+      },
+      "notes"
+    ],
+    "icon": "kanban",
+    "layout": "kanban",
+    "name": "Tasks",
+    "new_item": "Task",
+    "stores": "records"
+  },
+  "warning": false
+}

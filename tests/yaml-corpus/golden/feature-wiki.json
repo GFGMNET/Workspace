@@ -1,0 +1,11 @@
+{
+  "value": {
+    "icon": "book",
+    "layout": "pages",
+    "name": "Wiki",
+    "new_item": "Page",
+    "search": true,
+    "stores": "markdown"
+  },
+  "warning": false
+}

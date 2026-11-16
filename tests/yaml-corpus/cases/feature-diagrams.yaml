@@ -1,0 +1,6 @@
+# Diagrams written as Mermaid text (https://mermaid.js.org), one .mmd file each.
+name: Diagrams
+icon: diagram
+stores: diagram
+layout: diagram
+new_item: Diagram

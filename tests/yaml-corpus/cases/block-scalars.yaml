@@ -1,0 +1,13 @@
+literal: |
+  line one
+  line two
+folded: >
+  folded
+  text
+quoted: "a: b # not a comment"
+single: 'it''s'
+empty:
+number: 0x1F
+date: 2026-11-16
+bool: yes
+tilde: ~

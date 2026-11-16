@@ -1,0 +1,9 @@
+# Agent skills for Claude. Each skill is .claude/skills/<name>/SKILL.md
+# Claude CLI loads them automatically when it runs in the project folder.
+name: Skills
+icon: puzzle
+stores: markdown
+layout: pages
+for_claude: skills
+new_item: Skill
+aliases: [skils, skill]

@@ -1,0 +1,5 @@
+# My router
+name: Router # the main one
+ip: 192.168.1.1
+tags: [net, core]
+kind: router

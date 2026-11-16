@@ -1,0 +1,29 @@
+{
+  "value": {
+    "fields": [
+      "name",
+      "ip",
+      "mac",
+      "location",
+      {
+        "name": "kind",
+        "options": [
+          "router",
+          "switch",
+          "server",
+          "access point",
+          "printer",
+          "other"
+        ],
+        "type": "select"
+      },
+      "notes"
+    ],
+    "icon": "server",
+    "layout": "table",
+    "name": "Network devices",
+    "new_item": "Device",
+    "stores": "records"
+  },
+  "warning": false
+}

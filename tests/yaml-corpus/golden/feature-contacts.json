@@ -1,0 +1,17 @@
+{
+  "value": {
+    "fields": [
+      "name",
+      "company",
+      "phone",
+      "email",
+      "notes"
+    ],
+    "icon": "contact",
+    "layout": "table",
+    "name": "Contacts",
+    "new_item": "Contact",
+    "stores": "records"
+  },
+  "warning": false
+}

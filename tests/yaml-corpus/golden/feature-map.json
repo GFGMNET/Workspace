@@ -1,0 +1,24 @@
+{
+  "value": {
+    "fields": [
+      "name",
+      {
+        "name": "kind",
+        "options": [
+          "device",
+          "room",
+          "site",
+          "other"
+        ],
+        "type": "select"
+      },
+      "notes"
+    ],
+    "icon": "map",
+    "layout": "map",
+    "name": "Map",
+    "new_item": "Pin",
+    "stores": "records"
+  },
+  "warning": false
+}

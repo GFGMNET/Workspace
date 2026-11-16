@@ -1,0 +1,33 @@
+---
+name: Workspace (development)
+description: This tool itself — design docs, build scripts, GitHub issues and Claude, working directly in the program folder
+icon: "🛠"
+color: "#334155"
+tags: [development, example]
+# The project's files are the program folder itself. For your own git clone use its path,
+# e.g.  location: C:\dev\Workspace   (project.yaml stays in data/projects/workspace-dev/)
+location: "{install}"
+issues:
+  feature: github
+  repo: GFGMNET/Workspace
+docs:
+  feature: wiki
+  name: Docs
+  folder: docs
+  new_item: Document
+scripts:
+  folder: tools
+chat:
+  permissions: ask
+  folder: .workspace/chats
+  context: [docs]
+  instructions: This is the source of Project Workspace. Read docs/DESIGN.md and docs/REQUIREMENTS.md first. Track every bug and improvement as a GitHub issue.
+skills:
+  - title: release
+    description: Use this when asked to publish a new version of Project Workspace.
+mcp:
+  folder: .workspace/mcp
+  items:
+    - name: github
+      description: GitHub MCP server, so Claude can read and write issues and pull requests. Set it up with your token, then it becomes active.
+      transport: http

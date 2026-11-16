@@ -1,0 +1,18 @@
+{
+  "value": {
+    "fields": [
+      "name",
+      "role",
+      "email",
+      "phone",
+      "reports_to"
+    ],
+    "icon": "users",
+    "layout": "orgchart",
+    "name": "Team",
+    "new_item": "Person",
+    "parent_field": "reports_to",
+    "stores": "records"
+  },
+  "warning": false
+}

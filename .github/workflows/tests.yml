@@ -1,0 +1,31 @@
+# Automated checks on every push: the unit checks, the API contract tests and the YAML corpus,
+# on Linux and Windows. The same contract tests will check the Rust version (PW_SERVER_CMD, PW_MCP_CMD, PW_YAML_CMD).
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Unit checks
+        run: node app/test/smoke.js
+      - name: API contract tests
+        run: node tests/contract/run.js
+      - name: YAML corpus
+        run: node --test tests/yaml-corpus/yaml.test.js

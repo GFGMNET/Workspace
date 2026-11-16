@@ -1,0 +1,8 @@
+# MCP connections for Claude CLI. Each connection is a record; the app writes
+# them to .mcp.json in the project folder, which Claude CLI loads on start.
+name: MCP
+icon: plug
+stores: records
+layout: cards
+for_claude: mcp
+new_item: Connection

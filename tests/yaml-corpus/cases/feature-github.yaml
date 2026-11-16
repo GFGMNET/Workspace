@@ -1,0 +1,8 @@
+# Issues of a GitHub repository (bugs and ideas). Set the repository in each project:
+#   issues: { feature: github, repo: owner/name }
+# Private repositories need a token in data/settings.yaml:  github: { token: ... }
+name: Issues
+icon: issue
+stores: github
+layout: issues
+state: open
