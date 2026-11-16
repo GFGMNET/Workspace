@@ -18,7 +18,7 @@ You need:
 
 ## 2. Start it
 
-- **Windows (exe):** double-click `ProjectWorkspace.exe`
+- **Windows (exe):** double-click `ProjectWorkspace.exe`. The first time, Windows may say *Windows protected your PC*, because the exe isn't signed yet (#31). Click **More info → Run anyway**.
 - **Windows (Node.js):** double-click `start.bat`
 - **macOS / Linux:** run `./start.sh`
 

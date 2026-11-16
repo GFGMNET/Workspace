@@ -12,6 +12,12 @@ No, except for the Claude chat, the first start of the in-app VS Code, MCP serve
 **How do I get new versions?**
 The app tells you: once a week it checks GitHub and shows *Version X is available* with an **Update now** button. See [[Data and Updates|Data-and-Updates]].
 
+**Windows says "Windows protected your PC" when I start the exe**
+The exe isn't code-signed yet, so SmartScreen doesn't know the publisher. Click **More info → Run anyway**; Windows remembers it. Signing is planned ([#31](https://github.com/GFGMNET/Workspace/issues/31)).
+
+**Do I need start.bat?**
+Not with the Windows exe: **ProjectWorkspace.exe** replaces it. `start.bat` / `start.sh` are for running the program with Node.js, e.g. from a git clone while developing, or on macOS and Linux.
+
 **"Port 4321 is already in use"**
 The workspace is already running. Open http://localhost:4321, or start a second one with `node app/server.js 4322`.
 
