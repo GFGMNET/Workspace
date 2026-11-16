@@ -1,7 +1,11 @@
 //! Secrets (app/lib/secrets.js): stored encrypted in <root>/.secrets.json with AES-256-GCM.
 //! The same file format as 0.x, so secrets saved by 0.x can be read (when the key isn't OS-protected).
-//! OS protection of the key (Windows DPAPI / keyring) comes with the desktop app in phase 3:
-//! until then a key marked `protected: os` is reported as locked.
+//! The key itself is protected by the operating system when it can be (so a copied data folder doesn't
+//! reveal the values): on Windows with DPAPI (`protected: dpapi`, for this Windows user), on Linux by the
+//! desktop app through the keyring (`protected: keyring`, see [`set_protector`]). Without it the key is
+//! kept next to the secrets (`protected: none`) and the app says so; it is upgraded as soon as it can be.
+//! Keys protected by the 0.x desktop app (`protected: os`, Electron's safeStorage) are taken over on
+//! Windows (data/.app/Local State); elsewhere the secrets have to be entered again.
 use crate::workspace::{err, Result, Workspace};
 use aes_gcm::aead::{Aead, KeyInit, Payload};
 use aes_gcm::{Aes256Gcm, Nonce};
@@ -41,6 +45,56 @@ fn random<const N: usize>() -> [u8; N] {
     b
 }
 fn now() -> String { crate::items::now_iso() }
+fn to_key(v: Vec<u8>) -> Result<[u8; 32]> { v.try_into().map_err(|_| err(500, "Bad secrets key")) }
+fn key_cache() -> &'static std::sync::Mutex<std::collections::HashMap<String, [u8; 32]>> {
+    static C: OnceLock<std::sync::Mutex<std::collections::HashMap<String, [u8; 32]>>> = OnceLock::new();
+    C.get_or_init(Default::default)
+}
+
+/// Protects the secrets' key with the operating system.
+pub trait Protector: Send + Sync {
+    /// Stored as `protected:` in .secrets.json.
+    fn name(&self) -> &'static str;
+    fn protect(&self, key: &[u8]) -> std::result::Result<String, String>;
+    fn unprotect(&self, data: &str) -> std::result::Result<Vec<u8>, String>;
+}
+static PROTECTOR: OnceLock<Box<dyn Protector>> = OnceLock::new();
+/// The desktop app registers the keyring (Linux) here. Windows always has DPAPI.
+pub fn set_protector(p: Box<dyn Protector>) { let _ = PROTECTOR.set(p); }
+fn protector() -> Option<&'static dyn Protector> {
+    if cfg!(windows) { let _ = PROTECTOR.set(Box::new(dpapi::Dpapi)); }
+    PROTECTOR.get().map(|b| b.as_ref())
+}
+fn wrap(key: &[u8; 32]) -> Value {
+    if let Some(p) = protector() { if let Ok(d) = p.protect(key) { key_cache().lock().unwrap().insert(d.clone(), *key); return json!({ "protected": p.name(), "data": d }); } }
+    json!({ "protected": "none", "data": B64.encode(key) })
+}
+
+/// Windows DPAPI for the current user, through PowerShell's ProtectedData (no native code in the app).
+mod dpapi {
+    use super::Protector;
+    pub struct Dpapi;
+    fn run(op: &str, data: &str) -> Result<String, String> {
+        let script = format!("Add-Type -AssemblyName System.Security; [Convert]::ToBase64String([System.Security.Cryptography.ProtectedData]::{op}([Convert]::FromBase64String($env:PW_DPAPI_IN), $null, 'CurrentUser'))");
+        let mut c = std::process::Command::new("powershell.exe");
+        c.args(["-NoProfile", "-NonInteractive", "-Command", &script]).env("PW_DPAPI_IN", data).stdin(std::process::Stdio::null());
+        #[cfg(windows)]
+        { use std::os::windows::process::CommandExt; c.creation_flags(0x0800_0000); }
+        let out = c.output().map_err(|e| e.to_string())?;
+        let t = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        if !out.status.success() || t.is_empty() { return Err(String::from_utf8_lossy(&out.stderr).trim().to_string()); }
+        Ok(t)
+    }
+    pub fn unprotect(data: &str) -> Result<Vec<u8>, String> {
+        use base64::Engine;
+        base64::engine::general_purpose::STANDARD.decode(run("Unprotect", data)?).map_err(|e| e.to_string())
+    }
+    impl Protector for Dpapi {
+        fn name(&self) -> &'static str { "dpapi" }
+        fn protect(&self, key: &[u8]) -> Result<String, String> { use base64::Engine; run("Protect", &base64::engine::general_purpose::STANDARD.encode(key)) }
+        fn unprotect(&self, data: &str) -> Result<Vec<u8>, String> { unprotect(data) }
+    }
+}
 
 impl Workspace {
     fn secrets_file(&self) -> std::path::PathBuf { self.root.join(".secrets.json") }
@@ -62,14 +116,42 @@ impl Workspace {
         let Some(k) = j.get("key").cloned() else {
             if !create { return Ok(None); }
             let k = random::<32>();
-            j.insert("key".into(), json!({ "protected": "none", "data": B64.encode(k) }));
+            j.insert("key".into(), wrap(&k));
             return Ok(Some(k));
         };
-        if k["protected"] == "os" {
-            return Err(err(423, "The secrets are protected by the operating system of the desktop app; open the workspace with the app to use them."));
+        let data = k["data"].as_str().unwrap_or("").to_string();
+        let how = k["protected"].as_str().unwrap_or("none").to_string();
+        if let Some(hit) = key_cache().lock().unwrap().get(&data) { return Ok(Some(*hit)); }
+        let key: [u8; 32] = match how.as_str() {
+            "none" => to_key(B64.decode(&data).map_err(|_| err(500, "Bad secrets key"))?)?,
+            "os" => to_key(self.electron_key(&data).map_err(|m| err(423, m))?)?,
+            other => {
+                let p = protector().filter(|p| p.name() == other).ok_or_else(|| err(423, format!("The secrets are protected by {} and cannot be read here. Open the workspace with the app on the computer where they were saved, or remove them and enter them again.", if other == "dpapi" { "Windows" } else { "the system keyring" })))?;
+                to_key(p.unprotect(&data).map_err(|_| err(423, "The secrets were saved by another computer or user and cannot be read here. Remove them and enter them again."))?)?
+            }
+        };
+        key_cache().lock().unwrap().insert(data, key);
+        // upgrade to the protection that is available now
+        if protector().map(|p| p.name() != how).unwrap_or(false) {
+            let w = wrap(&key);
+            if w["protected"] != how.as_str() { j.insert("key".into(), w); let _ = self.secrets_write(j); }
         }
-        let raw = B64.decode(k["data"].as_str().unwrap_or("")).map_err(|_| err(500, "Bad secrets key"))?;
-        raw.try_into().map(Some).map_err(|_| err(500, "Bad secrets key"))
+        Ok(Some(key))
+    }
+    /// 0.x desktop app (Electron safeStorage). Windows: its own key is in data/.app/Local State, protected by DPAPI.
+    fn electron_key(&self, data: &str) -> std::result::Result<Vec<u8>, String> {
+        let again = "The secrets were saved by the 0.x desktop app and cannot be read here. Remove them and enter them again.".to_string();
+        if !cfg!(windows) { return Err(again); }
+        let ls: Value = fs::read_to_string(self.root.join(".app").join("Local State")).ok().and_then(|t| serde_json::from_str(&t).ok()).ok_or(again.clone())?;
+        let wrapped = B64.decode(ls["os_crypt"]["encrypted_key"].as_str().unwrap_or("")).map_err(|_| again.clone())?;
+        let wrapped = wrapped.strip_prefix(b"DPAPI").ok_or(again.clone())?;
+        let chrome_key = dpapi::unprotect(&B64.encode(wrapped)).map_err(|_| again.clone())?;
+        let blob = B64.decode(data).map_err(|_| again.clone())?;
+        let body = blob.strip_prefix(b"v10").ok_or(again.clone())?;
+        if body.len() < 12 + 16 || chrome_key.len() != 32 { return Err(again); }
+        let plain = Aes256Gcm::new_from_slice(&chrome_key).unwrap().decrypt(Nonce::from_slice(&body[..12]), &body[12..]).map_err(|_| again.clone())?;
+        // safeStorage stored our key as base64 text
+        B64.decode(String::from_utf8_lossy(&plain).trim()).map_err(|_| again)
     }
     pub fn secrets_status(&self) -> Value {
         let mut j = self.secrets_read();
@@ -78,7 +160,9 @@ impl Workspace {
         let mut items: Vec<Value> = j["items"].as_object().unwrap().iter()
             .map(|(n, v)| json!({ "name": n, "env": env_name(n), "updated": v.get("updated").cloned().unwrap_or(Value::Null) })).collect();
         items.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
-        json!({ "protection": j.get("key").map(|k| k["protected"].clone()).unwrap_or(json!("none")), "available": false, "locked": locked, "items": items })
+        let available = protector().is_some();
+        let protection = j.get("key").map(|k| k["protected"].clone()).unwrap_or_else(|| json!(protector().map(|p| p.name()).unwrap_or("none")));
+        json!({ "protection": protection, "available": available, "locked": locked, "items": items })
     }
     pub fn secret_set(&self, name: &str, value: &str) -> Result<Value> {
         let name = name.trim();
