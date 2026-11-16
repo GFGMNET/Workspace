@@ -50,7 +50,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W4 | Explorer to view all files of the projects (and the whole workspace) | ✅ | #22 |
 | W5 | Open projects and files in VS Code | ✅ | #21 |
 | W6 | Full VS Code inside the app (browser VS Code via `code serve-web`, or code-server / OpenVSCode Server) | ✅ | #24 |
-| W6a | VS Code tab must work without changing browser settings (served through the app's own address) | ✅ · to re-test on Windows | #30 |
+| W6a | VS Code tab must work without changing browser settings (served through the app's own address) | ✅ · to re-test on Windows | #30, #33 |
 | W7 | Collapsible left sidebar | ✅ | #15 |
 | W8 | Rename and archive projects in the app; delete = delete the project folder | ✅ | #11 |
 | W9 | Answer chat permission prompts inline | 📋 | #10 |
