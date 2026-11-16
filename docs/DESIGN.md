@@ -527,6 +527,8 @@ The UI can be rebuilt freely on top of the API in section 7.
 
 The detailed plan (inventory, crates, phases with exit criteria, tests, risks, decisions) is in [MIGRATION-RUST.md](MIGRATION-RUST.md); milestone *v1.0 (Rust)*, issues #49–#55.
 
+**Status:** phase 0 (safety net) ✅, phase 1 (prototype) ✅ go — next: phase 2 (the core), then 3 (chat, VS Code, updater, MCP, desktop), 4 (beta), 5 (release). The code is in `rust/`.
+
 **Why.** Security, not speed: most CVEs we have to ship come from Chromium and Node.js inside Electron (7g).
 With Tauri the app uses the browser engine of the system — **WebView2** on Windows (updated by Windows/Edge, not by us),
 **WebKitGTK** on Linux (updated by the distribution) — and the core becomes a Rust program (memory-safe, no runtime).

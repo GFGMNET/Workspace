@@ -98,6 +98,18 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 
 ## 5. Phases
 
+| Phase | What | Status |
+|---|---|---|
+| S | Trusted releases (account protection now, signing with 1.0) | decided; account protection done |
+| 0 | Safety net: API contract tests, YAML corpus | ✅ done |
+| 1 | Prototype, go/no-go | ✅ done — **go** |
+| 2 | The core | next |
+| 3 | Chat, VS Code, updater, MCP, desktop extras | |
+| 4 | Beta next to 0.x | |
+| 5 | Release 1.0 | |
+
+**About the effort figures:** the days below are working days of a human developer. Claude does the coding; what takes time are the build-and-check round-trips on GitHub (5–10 minutes each, crates can't be downloaded in Claude's work environment). Realistically phase 2 is a few working sessions (one to three days), depending mostly on the YAML details.
+
 Each phase ends with a check before the next starts. Estimates are working days for one developer with Claude.
 
 ### Phase S: trusted releases
@@ -138,6 +150,20 @@ In the prototype: project list, project pages, overview tiles, wiki/knowledge pa
 - `pw-core` complete: features (aliases, normalisation), projects (`location:`, overview, rename, archive, restore, delete), items for every storage type (markdown, images, files, records, diagram, chat history), search, links and backlinks, templates, due, explorer, photo dates, secrets.
 - `pw-server` routes for all of it, SSE file watching.
 - Done when: contract tests and YAML corpus green against the Rust server (`PW_SERVER_CMD=project-workspace-server`), except chat, VS Code, updates, MCP.
+
+Steps, in this order (after each step: how many contract tests and YAML cases pass):
+
+1. **YAML** (the hardest part):
+   - the lenient reader for broken files (port of `app/lib/yaml-lenient.js`, ~230 lines) with its warning, so the original sloppy example and old settings files keep working;
+   - comment-keeping record updates: no Rust YAML library keeps comments, so top-level keys are rewritten at text level (like `YAML.updateMapping`);
+   - the remaining differences of the corpus (duplicate keys: the last one wins; error line numbers).
+2. **Records**: table, list, cards, Kanban (columns, status), calendar (date field), org chart (parent field), map (pins, the map picture); create, write (comments kept), trash; MCP records write `.mcp.json` with `${PW_SECRET_…}`.
+3. **Pictures and files**: albums/folders, uploads (no overwriting), photo dates (EXIF), `/files/…`, trash.
+4. **Diagrams, chat history** (reading/listing only; running chats is phase 3), skills (`.claude/skills`).
+5. **Explorer** (`/api/fs/*`: tree, read, write, mkdir, rename, upload, raw, trash; private files), **search**, **links and backlinks**.
+6. **Projects**: create (seeds), save `project.yaml`, add/remove features, rename, archive/restore/delete, `location:`; **templates**; **overview** and **what's due**; **examples**.
+7. **Secrets** (AES-256-GCM; the key without OS protection in this phase, DPAPI/keyring and the Electron migration in phase 3).
+8. **Live refresh**: file watching (`notify`) for the data folder and `location:` folders, `/api/events`.
 
 ### Phase 3: the rest (8–10 days)
 
