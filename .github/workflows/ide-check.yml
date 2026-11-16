@@ -50,14 +50,41 @@ jobs:
             await p.goto('http://localhost:4399/#/p/test/_ide');
             await p.waitForTimeout(45000);
             await p.screenshot({ path: out + '/page.png' });
-            const f = p.frames().find(x => x.url().includes('/ide/'));
-            log.push('frame url: ' + (f ? f.url() : 'none'));
-            if (f) { try { log.push('frame text: ' + (await f.evaluate(() => document.body.innerText.slice(0, 500)))); log.push('workbench: ' + (await f.evaluate(() => !!document.querySelector('.monaco-workbench')))); } catch (e) { log.push('frame eval: ' + e.message); } }
+            for (const f of p.frames().filter(x => x.url().includes('/ide/'))) {
+              try {
+                const r = await f.evaluate(() => ({ wb: !!document.querySelector('.monaco-workbench'), parts: [...document.querySelectorAll('.part')].map(x => x.id || x.className.split(' ').slice(0, 2).join('.')).slice(0, 8), text: document.body.innerText.slice(0, 200) }));
+                log.push(`frame ${f.url().slice(0, 120)} → workbench ${r.wb}, parts ${r.parts.join(',')}, text ${JSON.stringify(r.text)}`);
+              } catch (e) { log.push('frame eval: ' + e.message); }
+            }
             require('fs').writeFileSync(out + '/log.txt', log.join('\n'));
             await b.close();
           })();
           JS
           node /tmp/pw/check.js "$PWD/out" || true
+          # the same in Electron (the desktop app's engine), with the app's window settings
+          (cd /tmp/pw && npm i electron@45 >/dev/null 2>&1)
+          cat > /tmp/pw/el.js <<'JS'
+          const { app, BrowserWindow } = require('electron');
+          app.commandLine.appendSwitch('no-sandbox');
+          app.whenReady().then(async () => {
+            const w = new BrowserWindow({ width: 1400, height: 900, show: true, webPreferences: { contextIsolation: true, sandbox: true } });
+            const log = [];
+            w.webContents.on('console-message', (e) => { const m = e.message || ''; if (!/AgentHost|ChatModelSelection/.test(m)) log.push('console: ' + m.slice(0, 200)); });
+            w.webContents.on('did-fail-load', (e, c, d, u) => log.push(`fail ${c} ${d} ${u}`));
+            await w.loadURL('http://localhost:4399/#/p/test/_ide');
+            await new Promise(r => setTimeout(r, 45000));
+            for (const f of w.webContents.mainFrame.framesInSubtree) {
+              if (!f.url.includes('/ide/')) continue;
+              try { const r = await f.executeJavaScript('JSON.stringify({wb: !!document.querySelector(".monaco-workbench"), text: document.body.innerText.slice(0,200)})'); log.push(`frame ${f.url.slice(0, 120)} → ${r}`); } catch (e) { log.push('frame eval ' + e.message); }
+            }
+            const img = await w.webContents.capturePage({ x: 300, y: 200, width: 800, height: 500 });
+            const bmp = img.toBitmap(); let sum = 0; for (let i = 0; i < bmp.length; i += 4) sum += (bmp[i] + bmp[i + 1] + bmp[i + 2]) / 3;
+            log.push('electron ' + process.versions.electron + ', average brightness of the VS Code area: ' + Math.round(sum / (bmp.length / 4)) + ' (0 = black)');
+            require('fs').writeFileSync(process.argv[process.argv.length - 1] + '/electron.png', img.toPNG());
+            console.log(log.join('\n')); app.exit(0);
+          });
+          JS
+          xvfb-run -a /tmp/pw/node_modules/.bin/electron /tmp/pw/el.js "$PWD/out" 2>&1 | grep -v "dbus\|Gtk\|ERROR:viz" | tee out/electron.txt || true
           cp "$RUNNER_TEMP/server.log" "$RUNNER_TEMP/ide-start.json" out/ 2>/dev/null || true
           curl -fsS http://localhost:4399/api/ide > out/ide-status.json || true
           tail -80 out/log.txt
