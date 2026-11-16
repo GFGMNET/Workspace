@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Project Workspace — MCP server (stdio, zero dependencies) so Claude CLI can manage the workspace.
-// Register once:  claude mcp add workspace --scope user -- node "<path>/app/mcp.js"
+// Register once:  claude mcp add project-workspace --scope user -- node "<path>/app/mcp.js"
 'use strict';
 const ws = require('./lib/workspace');
 ws.ensureWorkspace();

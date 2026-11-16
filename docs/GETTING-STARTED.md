@@ -105,7 +105,7 @@ The layouts you can use are:
 5. *Optional:* let Claude manage the whole workspace from any terminal:
 
    ```
-   claude mcp add workspace --scope user -- node "C:\Workspace\app\mcp.js"
+   claude mcp add project-workspace --scope user -- node "C:\Workspace\app\mcp.js"
    ```
 
 ## 8. Use VS Code

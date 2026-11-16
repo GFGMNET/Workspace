@@ -104,7 +104,7 @@ function renderHome() {
   features/   what each feature means (${S.features.length})
   projects/   one folder per project (${ps.length})</pre></div>
       <div class="card"><b>Use it from Claude CLI</b><p class="muted small" style="margin:6px 0 10px">Register the workspace MCP server once — then Claude can list, create and edit projects from any terminal.</p>
-        <pre class="code">claude mcp add workspace --scope user -- ${esc(S.info.mcpCommand)}</pre></div></div></div>`;
+        <pre class="code">claude mcp add project-workspace --scope user ${S.info.mcpEnv ? '-e ' + esc(S.info.mcpEnv) + ' ' : ''}-- ${esc(S.info.mcpCommand)}</pre></div></div></div>`;
   $$('[data-new-project]').forEach(b => b.onclick = () => newProjectDialog());
   api('/api/archive').then(list => {
     const box = $('[data-archived]'); if (!box || !list.length) return;

@@ -71,7 +71,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 - **Skills** are written to `.claude/skills/<name>/SKILL.md` and **MCP connections** to `.mcp.json`. Claude CLI picks both up when started in the project folder ("Open in Claude CLI").
 - **Workspace MCP server:** lets Claude list, create and edit projects from anywhere:
   ```
-  claude mcp add workspace --scope user -- node "C:\path\to\Workspace\app\mcp.js"
+  claude mcp add project-workspace --scope user -- node "C:\path\to\Workspace\app\mcp.js"
   ```
 
 ## More

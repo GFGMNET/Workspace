@@ -233,7 +233,7 @@ The CLI command is `claude` by default. Set `CLAUDE_COMMAND` to use another path
 This is a stdio JSON-RPC server with no dependencies. Register it once:
 
 ```
-claude mcp add workspace --scope user -- node "<path>/app/mcp.js"
+claude mcp add project-workspace --scope user -- node "<path>/app/mcp.js"
 ```
 
 Tools: `list_projects`, `get_project`, `create_project`, `update_project_yaml`, `list_features`, `save_feature`, `list_items`, `read_item`, `create_item`, `write_item`, `backlinks`, `search`.

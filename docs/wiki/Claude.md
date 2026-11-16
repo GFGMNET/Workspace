@@ -39,7 +39,7 @@ chat:
 Register the workspace MCP server once:
 
 ```
-claude mcp add workspace --scope user -- node "C:\Workspace\app\mcp.js"
+claude mcp add project-workspace --scope user -- node "C:\Workspace\app\mcp.js"
 ```
 
 Claude can then list, create and edit projects, features, pages and records from anywhere, for example: *"create a project Office Move with a wiki, tasks and contacts"*.
