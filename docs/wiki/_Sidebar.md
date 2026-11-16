@@ -9,6 +9,7 @@
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
 - [[Desktop App|Desktop-App]]
 - [[Secrets]]
+- [[Security]]
 - [[Data and Updates|Data-and-Updates]]
 - [[Backup]]
 - [[Import and Export|Import-and-Export]]

@@ -14,6 +14,7 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 - [[Claude]]: chat, skills, MCP, workspace MCP server
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
 - [[Secrets]]: API keys and passwords, kept encrypted
+- [[Security]]: what protects you, how security updates arrive
 - [[Data and Updates|Data-and-Updates]]: where your data lives, how to update
 - [[Backup]] · [[Import and Export|Import-and-Export]]: what to back up; bringing files in and out
 - [[FAQ]]

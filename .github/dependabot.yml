@@ -1,0 +1,8 @@
+# Keeps the GitHub Actions used by the workflows up to date (the app itself has no npm packages;
+# Electron and the bundled libraries are checked by .github/workflows/security.yml).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

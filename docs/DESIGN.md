@@ -388,6 +388,27 @@ the app can protect it. A key that can't be decrypted (other computer/user) make
 - **Due in all projects:** `ws.dueAll(days)` collects `projectOverview().upcoming` of every project (overdue Kanban
   items + dated records in the next days), `GET /api/due?days=14`. Shown on the home page; used by the desktop reminders.
 
+## 7g. Security
+
+**Attack surface.** The server listens on `127.0.0.1` only; requests must come from `localhost`/`127.0.0.1` (Host check, against DNS
+rebinding) and changing requests and WebSockets from a local origin (Origin check, against CSRF); file access is limited to the
+workspace and project folders (`safeJoin`, `rel2abs`); app-private files are never served (see 7e). The desktop window loads
+only the local workspace (sandbox, context isolation, no Node in the page); other links open in the system browser.
+
+**What we ship, and how it stays current**
+
+| Component | Source of CVEs | How it is kept current |
+|---|---|---|
+| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and released automatically; the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
+| Bundled libraries (yaml, Mermaid, highlight.js) | few | `tools/vendor.json` lists the versions; the same workflow checks npm for newer versions and known advisories → issue (security: right away, plain updates: monthly). |
+| Our own code | logic mistakes | CodeQL (`.github/workflows/codeql.yml`: JavaScript + workflows, on every push and weekly); tests in `app/test/smoke.js`. |
+| Build workflows | supply chain | Dependabot (`.github/dependabot.yml`) for GitHub Actions. |
+| Node.js / browser (start.bat, start.sh) | the user's | not shipped; the user keeps them current. |
+
+**Reporting:** `SECURITY.md` — private reports through GitHub (*Security → Report a vulnerability*). Only the latest release gets fixes.
+
+**Not done yet:** signed release packages (the updater checks HTTPS and the package name only), code signing of the exe (#31).
+
 ## 7a. Documentation
 
 | Document | For whom | Where |
@@ -432,6 +453,7 @@ Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text
 | Licence | MIT (#13) |
 | Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
 | Dependencies | None to install: Mermaid, highlight.js and yaml are bundled |
+| Security | Weekly automatic Electron security releases, CodeQL, Dependabot (7g); v1.0 planned in Rust + Tauri to stop bundling a browser engine (10, #41) |
 | YAML | Full YAML 1.2 (bundled library) with a lenient fallback and a warning for non-standard files (#12) |
 | Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |
 | Developing the tool | It can manage itself: the example project *Workspace (development)* uses `location: "{install}"` with docs, scripts, GitHub issues, chat and a *release* skill (#27–#29) |
@@ -455,3 +477,62 @@ To port it to another stack, keep these contracts:
 - **Claude CLI flags** (section 6)
 
 The UI can be rebuilt freely on top of the API in section 7.
+
+## 10. Version 1.0: Rust + Tauri (planned, #41)
+
+**Why.** Security, not speed: most CVEs we have to ship come from Chromium and Node.js inside Electron (7g).
+With Tauri the app uses the browser engine of the system — **WebView2** on Windows (updated by Windows/Edge, not by us),
+**WebKitGTK** on Linux (updated by the distribution) — and the core becomes a Rust program (memory-safe, no runtime).
+Side effects: downloads of about 10–20 MB instead of 120–157 MB, less memory.
+
+**What stays the same**
+- The data folder, `project.yaml`, `features/*.yaml`, all files on disk: a 1.0 installation reads a 0.x data folder unchanged.
+- The screens: `app/public` (HTML, CSS, JavaScript) is kept as it is.
+- The HTTP API (`/api/...`, SSE `/api/events`, `/ide` proxy). Keeping it means the browser still works (`--browser`),
+  the VS Code tab keeps its same-origin proxy, and the screens need no change.
+- Claude CLI integration (chat via `claude -p`, skills, `.mcp.json`, the workspace MCP server), secrets syntax `${secret:name}`.
+
+**Architecture**
+
+```
+crates/
+  pw-core     projects, features, items, YAML (+ lenient reader), search, links, overview/due,
+              templates, archive, secrets (AES-256-GCM; key via DPAPI / Keychain / Secret Service)
+  pw-server   axum + tokio: the same routes as app/server.js; SSE; file watching (notify);
+              VS Code reverse proxy incl. WebSockets (hyper); chat (tokio::process → claude); updater
+  pw-mcp      the workspace MCP server (stdio JSON-RPC), same tools as app/mcp.js
+  pw-app      Tauri 2 shell: window on http://localhost:<port>, tray, notifications, autostart,
+              single instance; no Tauri IPC commands exposed to the page (capabilities: none)
+  pw-cli      project-workspace-server (no window, no WebKitGTK needed) and --mcp
+app/public    unchanged screens, served by pw-server
+```
+
+**Choices to confirm in the prototype**
+- YAML: `serde_yaml` is unmaintained; candidates `saphyr` / `yaml-rust2`. Comment-preserving record updates (today
+  `YAML.updateMapping`) need our own text-level edit of top-level keys. Merge keys, anchors, several documents must behave as today.
+- The page loaded from `http://localhost` inside WebView2/WebKitGTK: VS Code tab (iframe, WebSockets), Mermaid, file drag & drop, paste.
+- Linux: WebKitGTK 4.1 must be installed (most desktops have it); `project-workspace-server` has no such need.
+- Windows 10 without WebView2: Tauri's bootstrapper, or a clear message.
+
+**Security work that comes with it**
+- `cargo-deny` / `cargo-audit` in CI (advisories, licences, duplicate crates), `Cargo.lock` committed, rustls instead of OpenSSL,
+  minimal crate features. Weekly check like 7g, for crates.
+- **Signed release packages:** every zip gets an ed25519 signature (minisign); the updater only installs signed packages
+  (public key in the program). Worth bringing to 0.x first.
+- The security check of 7g then watches crates and the bundled JS libraries; there is no browser engine of our own to patch.
+
+**Moving from 0.x.** The 0.x updater installs 1.0 like any release (program files + new runtime). The last 0.x release removes
+runtime files that the new package doesn't list (Electron's DLLs and `resources/`), so no leftovers stay behind. Data is untouched.
+
+**Phases**
+0. **API contract tests:** move the HTTP-level checks into a test suite that runs against a server URL, and run it against today's
+   Node server. The Rust server must pass the same suite.
+1. **Prototype** (Windows + Linux): Tauri window, project list, wiki feature, YAML reading incl. the sloppy example, VS Code tab.
+   → Decision: go / no go.
+2. **Core:** everything in `pw-core` with the contract tests green.
+3. **The rest:** chat, VS Code proxy, MCP server, updater with signatures, secrets, desktop extras (tray, reminders, autostart).
+4. **Beta** next to 0.x (separate download, same data folder after a backup; 0.x keeps getting security releases).
+5. **1.0**: the 0.x apps are offered the update.
+
+Effort: several weeks; most of it in phases 2–3. The screens are reused, which saves about half of the work.
+

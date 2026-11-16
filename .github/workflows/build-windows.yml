@@ -105,4 +105,7 @@ jobs:
         if: inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ inputs.tag }}" "dist/${{ steps.zip.outputs.name }}" --clobber
+        run: |
+          # electron-version.txt: which browser engine this release ships (read by the weekly security check)
+          "${{ steps.e.outputs.electron }}" | Set-Content -NoNewline dist/electron-version.txt
+          gh release upload "${{ inputs.tag }}" "dist/${{ steps.zip.outputs.name }}" dist/electron-version.txt --clobber

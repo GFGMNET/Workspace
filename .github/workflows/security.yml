@@ -1,0 +1,114 @@
+# Weekly security check of everything the app ships:
+#  1. Electron (browser engine + Node.js of the desktop app): a newer patch of the major in
+#     tools/electron/electron-version → patch release (version +0.0.1) is made automatically,
+#     so installed apps get it with their weekly update check. A major near its end of life → issue.
+#  2. Bundled libraries (tools/vendor.json): newer versions and known vulnerabilities → issue.
+#  Run by hand: Actions → "Security check" → Run workflow (dry run: only report).
+name: Security check
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'   # Mondays 04:17 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only report, don't release
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Electron
+        id: e
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          major=$(tr -d '[:space:]' < tools/electron/electron-version)
+          newest=$(npm view "electron@$major" version --json | node -e "let a=JSON.parse(require('fs').readFileSync(0,'utf8'));a=[].concat(a).filter(v=>!/-/.test(v));console.log(a[a.length-1])")
+          latest_major=$(npm view electron dist-tags.latest | cut -d. -f1)
+          # the Electron version of the latest release (asset electron-version.txt written by the Windows build)
+          tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name 2>/dev/null || true)
+          shipped=$(gh release download "$tag" -p electron-version.txt -O - 2>/dev/null | tr -d '[:space:]' || true)
+          if [ -z "$shipped" ] && [ -n "$tag" ]; then
+            # older releases: read runtime.json from the Windows package
+            gh release download "$tag" -p '*-windows-x64.zip' -O /tmp/win.zip 2>/dev/null && \
+              shipped=$(unzip -p /tmp/win.zip ProjectWorkspace/runtime.json | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf8')).electron)") || true
+          fi
+          echo "major=$major newest=$newest latest_major=$latest_major shipped=${shipped:-unknown} release=$tag"
+          echo "newest=$newest" >> "$GITHUB_OUTPUT"
+          echo "shipped=$shipped" >> "$GITHUB_OUTPUT"
+          echo "latest_major=$latest_major" >> "$GITHUB_OUTPUT"
+          echo "major=$major" >> "$GITHUB_OUTPUT"
+          if [ -n "$shipped" ] && [ "$newest" != "$shipped" ]; then echo "update=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Electron major support
+        if: steps.e.outputs.latest_major != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          major=${{ steps.e.outputs.major }}; latest=${{ steps.e.outputs.latest_major }}
+          # Electron supports the newest three majors; warn when ours is the oldest of them (or older)
+          if [ $((latest - major)) -ge 2 ]; then
+            title="Security: move to Electron $latest (Electron $major reaches its end of life soon)"
+            if ! gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[].number' | grep -q .; then
+              gh issue create --title "$title" --label security --body "Electron supports its newest three major versions. This app uses **$major**, the newest is **$latest**.
+
+          Set \`tools/electron/electron-version\` to \`$latest\`, run *Build Windows app* and *Build Linux app*, test, then release. See DESIGN.md, *Security*."
+            fi
+          fi
+      - name: Bundled libraries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node - <<'JS'
+          const { execSync } = require('child_process');
+          const list = require('./tools/vendor.json'); const out = [];
+          for (const [name, v] of Object.entries(list)) {
+            if (name.startsWith('_')) continue;
+            const latest = execSync(`npm view ${name} version`).toString().trim();
+            let advisories = [];
+            try {
+              const body = JSON.stringify({ [name]: [v.version] });
+              advisories = Object.values(JSON.parse(execSync(`curl -fsS -X POST -H 'Content-Type: application/json' -d '${body}' https://registry.npmjs.org/-/npm/v1/security/advisories/bulk`).toString())).flat();
+            } catch {}
+            console.log(`${name}: bundled ${v.version}, latest ${latest}, advisories ${advisories.length}`);
+            if (advisories.length || latest !== v.version) out.push({ name, ...v, latest, advisories });
+          }
+          for (const x of out) {
+            const sec = x.advisories.length > 0;
+            const title = `${sec ? 'Security: ' : ''}Update bundled ${x.name} ${x.version} → ${x.latest}`;
+            const open = execSync(`gh issue list --state open --search ${JSON.stringify('in:title "Update bundled ' + x.name + ' ' + x.version)} --json number --jq '.[].number'`).toString().trim();
+            if (open) continue;
+            if (!sec && process.env.GITHUB_EVENT_NAME !== 'workflow_dispatch' && new Date().getDate() > 7) continue; // plain updates: once a month
+            const body = `The app bundles **${x.name} ${x.version}** (\`${x.path}\`); the newest is **${x.latest}**.\n\n` +
+              (sec ? `Known vulnerabilities:\n${x.advisories.map(a => `- ${a.severity}: [${a.title}](${a.url}) (vulnerable: ${a.vulnerable_versions})`).join('\n')}\n\n` : '') +
+              `Update: \`${x.update}\`, then set the version in \`tools/vendor.json\`, run the tests and release.`;
+            require('fs').writeFileSync('/tmp/body.md', body);
+            execSync(`gh issue create --title ${JSON.stringify(title)} --body-file /tmp/body.md ${sec ? '--label security' : '--label enhancement'}`, { stdio: 'inherit' });
+          }
+          JS
+      - name: Patch release with the new Electron
+        if: steps.e.outputs.update == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          v=$(node -p "const v=require('./package.json').version.split('.').map(Number); v[2]++; v.join('.')")
+          node -e "const f='package.json';const p=require('./'+f);p.version='$v';require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')"
+          printf '### Security\n- The browser engine of the desktop app is updated to Electron %s (security fixes from Chromium and Node.js). Nothing else changed.\n' "${{ steps.e.outputs.newest }}" > "docs/releases/v$v.md"
+          git add package.json "docs/releases/v$v.md"
+          git commit -m "Release v$v: Electron ${{ steps.e.outputs.newest }} (security update)"
+          git push origin HEAD:main
+          gh workflow run release.yml --ref main
+          echo "Started release v$v"
