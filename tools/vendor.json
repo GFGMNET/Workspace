@@ -11,7 +11,7 @@
     "update": "node tools/build-highlight.js <path to node_modules/highlight.js>"
   },
   "mermaid": {
-    "version": "11.16.1",
+    "version": "12.3.0",
     "path": "app/public/vendor/mermaid.min.js",
     "update": "copy node_modules/mermaid/dist/mermaid.min.js"
   }
