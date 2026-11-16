@@ -160,7 +160,7 @@ Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 
 | Version | Feature | Plan |
 |---|---|---|
-| 1.1 | Ticketsystem: GLPI 11 (read, then write), osTicket (create tickets) | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md), #59 |
+| 1.1 | Ticketsystem: GLPI 11 (read, then write) | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md), #59 |
 | 1.2 | Versions: Git (local, share, own server), then SVN | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md), #60 |
 
 ## 6. Testing

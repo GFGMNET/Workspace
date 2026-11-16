@@ -505,11 +505,12 @@ The UI can be rebuilt freely on top of the API in section 7.
 
 | Feature | Plan | Issue |
 |---|---|---|
-| Ticketsystem (GLPI 11, osTicket) — v1.1, Rust | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
+| Ticketsystem (GLPI 11; osTicket dropped) — v1.1, Rust | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
 | Versions (Git or SVN, local or own server) — v1.2, Rust | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
 | Trusted releases (signed exe, update check) | [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) | #49, #31 |
 | macOS app | after 1.0 | #56 |
 | Chat: answer permission prompts inline | | #10 |
+| VS Code tab: focused layout (editor + explorer) | | #62 |
 
 ## 10. Version 1.0: Rust + Tauri (planned, #41)
 

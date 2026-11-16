@@ -1,4 +1,4 @@
-# Plan: feature "ticketsystem" (GLPI, osTicket)
+# Plan: feature "ticketsystem" (GLPI)
 
 Status: **planned for v1.1 (Rust)** · Issue #59 · [REQUIREMENTS.md](../REQUIREMENTS.md) B17
 
@@ -8,7 +8,7 @@ A project shows the tickets that belong to it from the company's ticket system, 
 open tickets, their history, what is due, and (later) answering or closing them from the workspace.
 Claude can read them too ("summarise the open tickets of this customer").
 
-Supported systems: **GLPI** (full) and **osTicket** (limited by its API, see §4).
+Supported system: **GLPI**. osTicket was considered and dropped (2026-11-16): its official API can only create tickets, and nothing can be installed on the server (see §4).
 
 ## 2. How it looks for the user
 
@@ -16,7 +16,7 @@ Supported systems: **GLPI** (full) and **osTicket** (limited by its API, see §4
 # data/projects/customer-x/project.yaml
 tickets:
   feature: ticketsystem
-  system: glpi                    # glpi | osticket
+  system: glpi                    # the only system for now; the setting leaves room for others
   url: https://glpi.example.com   # the server
   filter:                         # which tickets belong to this project
     entity: Customer X            # GLPI entity, and/or
@@ -55,22 +55,14 @@ GLPI has two APIs; the feature supports both, chosen automatically:
 **Phase A (read):** list with filters, ticket details with follow-ups/tasks/solution, due dates, attachments.
 **Phase B (write):** create a ticket, add a follow-up (public or private), change status, assign to me, add a solution, attach a file. Each write shows what will be sent and needs a click; Claude may only write when the project's chat permissions allow it.
 
-## 4. osTicket
+## 4. osTicket: not supported
 
-The official osTicket API can **only create tickets** (`POST /api/tickets.json`, `X-API-Key` header). Each API key is bound to one IP address, so it only works from a PC with a fixed address (or through a server).
-
-| What | How |
-|---|---|
-| **Create a ticket** from the workspace | official API: works out of the box |
-| **Read tickets** (list, details) | needs an extension on the osTicket server: a community REST API plugin. Without it, osTicket can't be read through a supported interface. |
-| *Not planned* | reading osTicket's database directly: it bypasses osTicket's permissions and breaks with updates |
-
-So for osTicket: phase A = *New ticket* + a link to the osTicket staff panel; phase C = reading, **if** a plugin can be installed on your osTicket server.
+Dropped on 2026-11-16. The official osTicket API can only **create** tickets (no reading), each API key works from one fixed IP address only, and installing a REST plugin on the osTicket server is not an option. A tab that can only create tickets isn't worth its own feature. If osTicket gets a full official API one day, it can be added as another `system:`.
 
 ## 5. How it is built
 
 - New storage type `tickets` with layout `tickets` (like the GitHub *issues* feature: nothing is stored in the project folder).
-- `app/lib/tickets/` with one provider per system: `glpi.js` (v1 and v2), `osticket.js`. Same interface: `list(filter)`, `get(id)`, later `create`, `followup`, `setStatus`.
+- `tickets/` with one provider per system (for now `glpi`: API v2, v1 if ever needed). Same interface: `list(filter)`, `get(id)`, later `create`, `followup`, `setStatus`.
 - Logins come from `settings.yaml` + [Secrets](../wiki/Secrets.md); sessions/tokens are kept in memory only and renewed automatically.
 - Results are cached for 2 minutes in memory (**Refresh** reloads). Ticket contents are **not** written to disk: they can contain personal data.
 - API: `GET /api/projects/<p>/f/<f>/tickets?…`, `GET …/tickets/<id>`, later `POST …/tickets`, `POST …/tickets/<id>/followups`, `PATCH …/tickets/<id>`.
@@ -80,50 +72,20 @@ So for osTicket: phase A = *New ticket* + a link to the osTicket staff panel; ph
 
 ## 6. Testing
 
-- A fake GLPI (v1 and v2) and osTicket in the automated tests.
-- On GitHub runners: the official GLPI and osTicket Docker images, checked once per release.
-- By hand: against your own GLPI / osTicket.
+- A fake GLPI (API v2) in the automated tests.
+- On GitHub runners: the official GLPI Docker image, checked once per release.
+- By hand: against your own GLPI.
 
 ## 7. Phases and effort
 
 | Phase | What | Days |
 |---|---|---|
 | A | GLPI 11 read (API v2), list, details, entity filter, due dates, links, MCP read tools | 4–5 |
-| A | osTicket: *New ticket* (official API), list of tickets created from the project | 1–2 |
 | B | GLPI write: new ticket, follow-up, status, assign, solution, attachment | 3–4 |
-| ~~C~~ | ~~osTicket read~~: not planned (no plugin on the server) | – |
 
 ## 8. Decisions (2026-11-16)
 
 1. **GLPI 11** → API v2 (OAuth2) is built first; the legacy API v1 only if someone needs GLPI 10.
-2. **osTicket: the latest version, nothing installed on the server.** So only the official API is used:
-   tickets are **created** from the workspace; reading tickets is not possible (see §4) and the tab links to the osTicket staff panel instead.
+2. **osTicket: dropped** — create-only API, no plugin possible on the server (see §4).
 3. Tickets belong to a project by **GLPI entity** (`filter: entity:`), optionally narrowed further by category or status.
 4. Built **with the Rust version** (after 1.0, see [MIGRATION-RUST.md](../MIGRATION-RUST.md)), not in 0.x.
-
-## 9. Connecting osTicket (no change on the server needed)
-
-What the osTicket admin does once, in the **admin panel**:
-
-1. **Admin Panel → Manage → API → Add New API Key.**
-2. **IP Address:** the address the workspace calls from. osTicket only accepts the key from this one address, so the PC needs a **fixed IP** (a DHCP reservation in the router) — or, for several PCs, the address of one machine that runs `project-workspace-server` for the team.
-3. Tick **Can Create Tickets**, add a note like *Project Workspace*, save, and copy the **API key**.
-
-What you do in the workspace:
-
-1. **Secrets → New secret**: name `osticket-key`, value: the API key.
-2. In the project:
-
-   ```yaml
-   tickets:
-     feature: ticketsystem
-     system: osticket
-     url: https://helpdesk.example.com      # where osTicket runs
-     key: ${secret:osticket-key}
-     topic: 2                               # optional: help topic id for new tickets
-   ```
-
-What you get: **New ticket** (subject, message, your name and e-mail, help topic, attachments) → osTicket answers with the **ticket number**. The workspace keeps a short list of the tickets created from this project (number, subject, date; no conversation), each with a link *Open in osTicket*. Everything else — replies, status, closing — happens in osTicket itself.
-
-If reading tickets is wanted later, it needs either a REST plugin on the osTicket server or a move to GLPI; neither is planned now.
-

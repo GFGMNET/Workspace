@@ -1,61 +1,75 @@
 # Plan: trusted releases
 
-Status: **to decide** · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
+Status: **proposed** · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
 
-A first attempt (a signing key on the maintainer's PC and scripts to sign each release by hand) was removed on 2026-11-16: too many steps, too easy to get wrong. This plan starts again from what you actually want to achieve.
+History: a first attempt (a signing key on the maintainer's PC, scripts to sign every release) was removed on 2026-11-16: too many steps. A paid certificate was the second idea; this plan replaces it with something **free, without keys or files to look after, and one click per release at most**.
 
-## 1. Two different goals
+## 1. What we want
 
-| Goal | What you see today | What solves it |
-|---|---|---|
-| **A. Windows trusts the app** | *Windows protected your PC* when starting ProjectWorkspace.exe | a **code-signing certificate** for the exe (Authenticode) |
-| **B. The app only installs genuine updates** | the app trusts whatever is published on the GitHub releases page | the updater checks *who made* the new version before installing it |
-
-Both have one weak point in common: **the GitHub account**. Whoever controls it can publish releases. So the first step protects the account itself.
-
-## 2. The plan, step by step
-
-### Step 1: protect the GitHub account (now, free, about 15 minutes)
-
-- Two-factor login with a **passkey** or an authenticator app; save the recovery codes in your password manager.
-- Settings → *Sessions*: sign out devices you don't use.
-- Repository → Settings → *Branches*: protect `main` (no force-push, no deletion).
-- Repository → Settings → *Actions*: allow only the actions this repository uses.
-
-This is the most important step: it protects against the realistic attack (a stolen password) for releases, code and wiki at once, without changing how releases work.
-
-### Step 2: a signed Windows exe (removes the Windows warning; decide first, see §3)
-
-The release workflow signs `ProjectWorkspace.exe` automatically with a code-signing certificate. Nothing changes for you: releases stay one click (*Run workflow*).
-
-Then the **updater checks the signature** of the new exe before installing on Windows: same publisher name as the running app, valid signature, otherwise the update is refused. That covers goal B on Windows without any extra keys or steps.
-
-### Step 3: the same check on Linux (with step 2)
-
-The Linux packages get a checksum list, and GitHub's own build attestation (*artifact attestations*: GitHub records that this exact file was built by this workflow from this commit). The updater checks the checksum; anyone can verify the attestation with `gh attestation verify`.
-
-### Not planned: a key only on your PC
-
-It protects even against a fully taken-over GitHub account, but needs a manual signing step on your PC for every release, including the automatic security releases. Reconsider only if the app gets many users outside your own organisation.
-
-## 3. Choosing the certificate (step 2)
-
-| Option | Cost | Who can get it | Notes |
-|---|---|---|---|
-| **Microsoft Azure Artifact Signing** (formerly Trusted Signing) | about $10 per month | organisations in the EU/UK (with company registration); individuals only in the USA/Canada | Microsoft keeps the key; GitHub Actions supported; no hardware token |
-| **Classic code-signing certificate** (OV) from a certificate authority | typically a few hundred euros per year | companies and, with some vendors, individuals | the key must live on a hardware token or a cloud key service; signing from GitHub then needs that cloud service |
-| **Stay unsigned** | free | | Windows keeps warning; *More info → Run anyway* once per version |
-
-## 4. Questions
-
-1. Is GFGMNET a **registered company** (in the EU)? Then Azure Artifact Signing is the simplest route.
-2. Budget: is about $10 per month acceptable, or should it stay unsigned for now?
-3. Step 1 (protecting the account) can be done right away. Should I write a short checklist for it in the wiki?
-
-## 5. Effort once decided
-
-| Step | Days |
+| Goal | Today |
 |---|---|
-| 1. account protection checklist | — (you, 15 minutes) |
-| 2. signing in the Windows build + updater check of the publisher | 1–2 (+ the certificate's identity check, which can take a few days) |
-| 3. checksums + attestations, Linux check | 1 |
+| **A. Windows trusts the app**: no *Windows protected your PC* | the exe is unsigned |
+| **B. Only genuine updates are installed** | the app trusts whatever is on the GitHub releases page |
+
+## 2. The proposal: three small parts
+
+### Part 1: protect the GitHub account (now, free, 15 minutes, once)
+
+Whoever controls the GitHub account can publish releases, so this protects everything else.
+
+- Two-factor login with a **passkey** or an authenticator app; recovery codes into your password manager.
+- Repository → Settings → Branches: protect `main` (no force-push, no deletion).
+
+### Part 2: free code signing for open-source projects (with version 1.0)
+
+**SignPath Foundation** signs open-source projects' Windows programs for free. The project qualifies: MIT licence, public repository, built automatically by GitHub Actions.
+
+How a release works then:
+
+1. You start the release as today (*Run workflow*, or it starts by itself for security updates).
+2. GitHub builds the program and sends it to SignPath.
+3. You get an e-mail from SignPath and click **Approve** in your browser. That is the only extra step; their rules require a person to approve each release.
+4. The signed program is published. Windows shows the publisher *SignPath Foundation* and no longer warns.
+
+No certificate to buy, no key file, no hardware token, nothing on your PC. Maintenance: the yearly check of the project's details by SignPath (a form).
+
+What the project has to do once: a short **Code signing policy** section in the README/wiki (who builds, who approves, privacy statement: the app only contacts GitHub for updates), and two-factor login for SignPath and GitHub (part 1).
+
+**Why with 1.0 and not now:** SignPath only signs programs built from the project's own source code. Today's `ProjectWorkspace.exe` is Electron's program, renamed; the 1.0 program (Rust + Tauri) is built from our source. So 0.x stays unsigned.
+
+### Part 3: the app checks updates by itself (with part 2)
+
+- **Windows:** before installing, the updater checks the new `ProjectWorkspace.exe`: valid signature, publisher *SignPath Foundation*, product name *Project Workspace*. Otherwise the update is refused. No keys involved: Windows does the check.
+- **Linux:** every package gets a GitHub **build attestation** (GitHub records which workflow built which file from which commit; free, automatic) and a checksum list. The updater checks the checksum; anyone can check the attestation with `gh attestation verify`.
+
+## 3. What changes for you
+
+| | Today | With the proposal |
+|---|---|---|
+| Start a release | 1 click (*Run workflow*) | the same |
+| Per release | nothing | 1 click **Approve** in SignPath's e-mail |
+| Automatic security releases | published by themselves | wait for that click |
+| Keys, certificates, scripts | none | none |
+| Cost | free | free |
+| Windows warning | yes | gone (after Windows has seen the signed program a few times) |
+
+## 4. Alternatives, if the approval click is too much
+
+| | Cost | Per release | Windows warning |
+|---|---|---|---|
+| Stay unsigned (only part 1) | free | nothing | stays |
+| Microsoft Azure Artifact Signing | about $10/month; in the EU only for registered companies | nothing (fully automatic) | gone |
+| Classic certificate | a few hundred euros/year, key on a token or cloud service | depends | gone |
+
+## 5. Steps and effort
+
+| Step | When | Effort |
+|---|---|---|
+| Part 1: account protection | now, by you | 15 minutes |
+| Apply at SignPath Foundation (form; they check the project) | before the 1.0 beta | 30 minutes + their review |
+| Part 2: signing in the Windows build of 1.0, code signing policy page | phase 4 of the Rust plan | 1 day |
+| Part 3: updater checks (Windows signature, Linux checksum + attestation) | phase 3 of the Rust plan | 1 day |
+
+## 6. Decision needed
+
+Is **one click per release** (Approve in SignPath) acceptable? Then this is the plan for 1.0; otherwise: stay unsigned.

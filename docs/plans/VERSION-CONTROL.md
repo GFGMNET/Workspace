@@ -43,8 +43,16 @@ Nothing leaves your network unless you choose such a server.
 versions:
   feature: versions
   tool: git              # git | svn   (found automatically if the folder already is a working copy)
-  remote: none           # none | the URL of your server or share, e.g. \\nas\git\website.git or https://svn.example.local/repos/website
+  remote: none           # none, a shared folder, or a server (below)
+  server:                # when the history lives on your own server
+    address: 192.168.1.20      # IP address or host name
+    port: 3000                 # e.g. 3000 Forgejo/Gitea (HTTP), 443 HTTPS, 22 SSH, 3690 svnserve, 443/80 VisualSVN
+    protocol: https            # https | http | ssh | svn
+    path: team/website.git     # repository on that server
+    login: ${secret:git-token} # token or password from Secrets (SSH: your SSH key, no setting)
 ```
+
+The app builds the URL from these parts (`https://192.168.1.20:3000/team/website.git`, `ssh://git@192.168.1.20:22/team/website.git`, `svn://192.168.1.20:3690/website` …), so a new IP address or port is one change in one place. *Test connection* checks that the address and port answer before anything is sent. A shared folder needs no server setting (`remote: \\nas\git\website.git`).
 
 The **Versions** tab:
 
@@ -90,6 +98,7 @@ The **Versions** tab:
 - No server yet: the feature works **without one** (history only on the PC) and can be connected to a server later without changing anything in the project.
 - Built **with the Rust version** (after 1.0, see [MIGRATION-RUST.md](../MIGRATION-RUST.md)), not in 0.x.
 - Git first (phases A, B), SVN after (phase C).
+- The server is set by **IP address (or host name) and port** (plus protocol and path), not only as a full URL.
 - The **whole data folder** is **not** put under version history; only single projects (backups: see the wiki page *Backup*).
 
 ## 8. When you want a server later
