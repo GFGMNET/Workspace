@@ -38,11 +38,11 @@ pub fn start(ws: Arc<Workspace>) {
         let mut ext: BTreeMap<String, (PathBuf, notify::RecommendedWatcher)> = BTreeMap::new();
         let mut pending: BTreeMap<String, String> = BTreeMap::new();
         let mut last_change = Instant::now();
-        let mut last_ext = Instant::now() - Duration::from_secs(3600);
+        let mut last_ext: Option<Instant> = None;
         loop {
             // projects with location: (checked now and then, and when a project.yaml changes)
-            if last_ext.elapsed() > Duration::from_secs(30) {
-                last_ext = Instant::now();
+            if last_ext.map(|t| t.elapsed() > Duration::from_secs(30)).unwrap_or(true) {
+                last_ext = Some(Instant::now());
                 let mut want: BTreeMap<String, PathBuf> = BTreeMap::new();
                 for x in ws.list_projects() {
                     if let Some(slug) = x["slug"].as_str() { if let Ok(p) = ws.load_project(slug) { if p.external { want.insert(slug.to_string(), p.dir); } } }
@@ -64,7 +64,7 @@ pub fn start(ws: Arc<Workspace>) {
                     if skipped(&r) { continue; }
                     let parts: Vec<&str> = r.split('/').collect();
                     let key = if parts.len() >= 2 && parts[0] == "projects" { format!("p:{}", parts[1]) } else if parts[0] == "features" { "features".into() } else { continue };
-                    if r.ends_with("project.yaml") { last_ext = Instant::now() - Duration::from_secs(3600); }
+                    if r.ends_with("project.yaml") { last_ext = None; }
                     pending.insert(key, r); last_change = Instant::now();
                 }
                 Ok(Msg::Ext(slug, p)) => {
