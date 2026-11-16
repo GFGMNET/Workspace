@@ -326,7 +326,7 @@ The release packages are a desktop app built with **Electron**: the workspace op
 
 ```
 ProjectWorkspace/                      (Linux: project-workspace/)
-  ProjectWorkspace.exe                 Electron runtime, renamed   (Linux: project-workspace)
+  ProjectWorkspace.exe                 Electron runtime, renamed   (Linux: project-workspace-bin + start script project-workspace)
   *.dll *.pak locales/ resources/ …    the rest of the runtime
   resources/app/                       bootstrap: loads app/electron/main.js from the folder next to the exe
   runtime.json                         Electron version, platform, arch, the runtime's file names
@@ -344,8 +344,9 @@ ProjectWorkspace/                      (Linux: project-workspace/)
 - **MCP for Claude CLI:** the runtime can run as plain Node:
   `claude mcp add project-workspace --scope user -e ELECTRON_RUN_AS_NODE=1 -- "<folder>\ProjectWorkspace.exe" "<folder>\app\mcp.js"`
   (the app shows the exact command on the home page).
-- **Linux:** portable zips can't carry the setuid sandbox helper, so the window runs with `--no-sandbox`
-  unless `chrome-sandbox` is set up (owned by root, mode 4755). The window only shows the local workspace.
+- **Linux:** portable zips can't carry the setuid sandbox helper, and Chromium stops before any app code runs without it.
+  So `project-workspace` is a start script that runs `project-workspace-bin --no-sandbox` unless `chrome-sandbox`
+  is set up (owned by root, mode 4755); restarts go through the script too. The window only shows the local workspace.
   `project-workspace-server` runs the server without a window (`ELECTRON_RUN_AS_NODE`), for machines without a desktop.
 - **Builds:** `.github/workflows/build-windows.yml` (x64) and `build-linux.yml` (x64 on `ubuntu-latest`, arm64 on
   `ubuntu-24.04-arm`) download Electron (major version in `tools/electron/electron-version`, latest patch),
