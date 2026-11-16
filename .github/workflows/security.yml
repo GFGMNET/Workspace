@@ -106,8 +106,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           v=$(node -p "const v=require('./package.json').version.split('.').map(Number); v[2]++; v.join('.')")
           node -e "const f='package.json';const p=require('./'+f);p.version='$v';require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')"
-          printf '### Security\n- The browser engine of the desktop app is updated to Electron %s (security fixes from Chromium and Node.js). Nothing else changed.\n' "${{ steps.e.outputs.newest }}" > "docs/releases/v$v.md"
-          git add package.json "docs/releases/v$v.md"
+          notes="docs/releases/v$v.md"
+          line="- The browser engine of the desktop app is updated to Electron ${{ steps.e.outputs.newest }} (security fixes from Chromium and Node.js)."
+          # changes already collected for this version on main are released too: keep their notes
+          if [ -f "$notes" ]; then { printf '### Security\n%s\n\n' "$line"; cat "$notes"; } > /tmp/notes.md; mv /tmp/notes.md "$notes"
+          else printf '### Security\n%s Nothing else changed.\n' "$line" > "$notes"; fi
+          git add package.json "$notes"
           git commit -m "Release v$v: Electron ${{ steps.e.outputs.newest }} (security update)"
           git push origin HEAD:main
           gh workflow run release.yml --ref main

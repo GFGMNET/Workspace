@@ -399,7 +399,7 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 
 | Component | Source of CVEs | How it is kept current |
 |---|---|---|
-| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and released automatically; the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
+| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and released automatically (together with whatever is already on main; notes collected in `docs/releases/vX.Y.Z.md` are kept); the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
 | Bundled libraries (yaml, Mermaid, highlight.js) | few | `tools/vendor.json` lists the versions; the same workflow checks npm for newer versions and known advisories → issue (security: right away, plain updates: monthly). |
 | Our own code | logic mistakes | CodeQL (`.github/workflows/codeql.yml`: JavaScript + workflows, on every push and weekly); tests in `app/test/smoke.js`. |
 | Build workflows | supply chain | Dependabot (`.github/dependabot.yml`) for GitHub Actions. |
