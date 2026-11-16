@@ -11,6 +11,7 @@
 - [[Secrets]]
 - [[Security]]
 - [[Data and Updates|Data-and-Updates]]
+- [[Beta of 1.0|Beta-1.0]]
 - [[Backup]]
 - [[Import and Export|Import-and-Export]]
 - [[FAQ]]
