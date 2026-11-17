@@ -49,5 +49,6 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 
 Decided 2026-11-16: **build everything first** (phases 2 and 3 without stopping), then the maintainer tests the beta once
 (chat with the real Claude CLI, VS Code tab, tray, everything), **SignPath last** (just before 1.0), then the OK to release 1.0.
-Version numbers: 0.9.0 = Rust beta (pre-release, unsigned), 0.9.1 = signed, 1.0.0 = final.
+Version numbers: 0.9.0 = Rust beta (pre-release, unsigned), more betas as 0.9.0.N (e.g. 0.9.0.5, set with the input of build-rust.yml), 0.9.1 = signed, 1.0.0 = final.
+Decided 2026-11-17: in 1.0 the window's X quits the app (no hiding to the tray).
 Everything else: keep going and report progress briefly.

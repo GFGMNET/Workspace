@@ -84,7 +84,7 @@ fn main() {
             { let d = d2.clone(); let h = h.clone(); std::thread::spawn(move || { std::thread::sleep(Duration::from_secs(8)); loop { d.check(&h, port); std::thread::sleep(CHECK_EVERY); } }); }
             if !answers(port) { fail(&h, &format!("The workspace did not start on {url2}. Is another program using port {port}?")); return Ok(()); }
             if browser { let _ = h.opener().open_url(&url2, None::<&str>); return Ok(()); }
-            if hidden && d2.settings()["tray"] == true { return Ok(()); }
+            if hidden { return Ok(()); } // started with the computer: wait in the tray
             open_window(&h, &url2, None);
             Ok(())
         })
@@ -93,20 +93,13 @@ fn main() {
     let d3 = desktop.clone(); let q3 = quitting.clone();
     app.run(move |h, event| match event {
         // with the tray icon on, closing the window keeps the workspace (and its reminders) running
-        RunEvent::ExitRequested { api, code, .. } => { if code.is_none() && !*q3.lock().unwrap() && d3.settings()["tray"] == true { api.prevent_exit(); } }
-        RunEvent::WindowEvent { label, event: WindowEvent::CloseRequested { api, .. }, .. } if label == "main" => {
-            let Some(w) = h.get_webview_window("main") else { return };
-            save_window(&d3.dir, &w);
-            if *q3.lock().unwrap() || d3.settings()["tray"] != true { return; } // closes; the app ends with its last window
-            // keep running in the tray: hide the window (never block this thread — it draws the window)
-            api.prevent_close();
-            let _ = w.hide();
-            if d3.settings()["trayHintShown"] != true {
-                d3.set("trayHintShown", json!(true));
-                let h = h.clone();
-                std::thread::spawn(move || { let _ = h.notification().builder().title("Project Workspace is still running").body("It stays in the tray to remind you of what is due. Quit it from the tray icon.").show(); });
-            }
+        // X quits the app (decided 2026-11-17); reminders run while the app runs
+        RunEvent::WindowEvent { label, event: WindowEvent::CloseRequested { .. }, .. } if label == "main" => {
+            *q3.lock().unwrap() = true;
+            if let Some(w) = h.get_webview_window("main") { save_window(&d3.dir, &w); }
+            let _ = pw_server::ide::stop();
         }
+        RunEvent::ExitRequested { api, code, .. } => { if code.is_none() && !*q3.lock().unwrap() { api.prevent_exit(); } }
         RunEvent::WindowEvent { label, event: WindowEvent::Resized(_) | WindowEvent::Moved(_), .. } if label == "main" => {
             if let Some(w) = h.get_webview_window("main") { if w.is_visible().unwrap_or(false) { save_window(&d3.dir, &w); } }
         }
@@ -214,7 +207,6 @@ impl Desktop {
         let st = self.settings(); let n = self.due.lock().unwrap().len();
         let open = MenuItem::with_id(h, "open", "Open Project Workspace", true, None::<&str>)?;
         let due = MenuItem::with_id(h, "due", if n > 0 { format!("Due today: {n}") } else { "Nothing due today".into() }, n > 0, None::<&str>)?;
-        let tray = CheckMenuItem::with_id(h, "tray", "Keep running in the tray when the window is closed", true, st["tray"] == true, None::<&str>)?;
         let rem = CheckMenuItem::with_id(h, "notifications", "Remind me of what is due", true, st["notifications"] == true, None::<&str>)?;
         let auto = CheckMenuItem::with_id(h, "autostart", format!("Start with {}", Self::os()), true, st["autostart"] == true, None::<&str>)?;
         let browser = MenuItem::with_id(h, "browser", "Open in browser", true, None::<&str>)?;
@@ -223,7 +215,7 @@ impl Desktop {
         let ver = MenuItem::with_id(h, "version", format!("Version {}", pw_server::VERSION), false, None::<&str>)?;
         let quit = MenuItem::with_id(h, "quit", "Quit", true, None::<&str>)?;
         let (s1, s2, s3) = (PredefinedMenuItem::separator(h)?, PredefinedMenuItem::separator(h)?, PredefinedMenuItem::separator(h)?);
-        let items: [&dyn IsMenuItem<tauri::Wry>; 13] = [&open, &due, &s1, &tray, &rem, &auto, &s2, &browser, &folder, &wiki, &ver, &s3, &quit];
+        let items: [&dyn IsMenuItem<tauri::Wry>; 12] = [&open, &due, &s1, &rem, &auto, &s2, &browser, &folder, &wiki, &ver, &s3, &quit];
         Menu::with_items(h, &items)
     }
     fn refresh_tray(self: &Arc<Self>, h: &AppHandle, url: &str, quitting: &Arc<Mutex<bool>>) -> tauri::Result<()> {
@@ -240,7 +232,6 @@ impl Desktop {
                 match e.id.as_ref() {
                     "open" => show_window(app, &url_m, None),
                     "due" => show_window(app, &url_m, Some("#/")),
-                    "tray" => { let v = me.settings()["tray"] != true; me.set("tray", json!(v)); }
                     "notifications" => { let v = me.settings()["notifications"] != true; me.set("notifications", json!(v)); }
                     "autostart" => { let v = me.settings()["autostart"] != true; me.set("autostart", json!(v)); me.apply_autostart(app); }
                     "browser" => { let _ = app.opener().open_url(&url_m, None::<&str>); }

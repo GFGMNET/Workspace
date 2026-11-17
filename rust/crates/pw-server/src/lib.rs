@@ -26,7 +26,8 @@ pub mod updater;
 pub mod live;
 pub mod mcp;
 
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+/// The version shown and used for updates: PW_VERSION at build time (e.g. a beta "0.9.0.5"), else the crate version.
+pub const VERSION: &str = match option_env!("PW_VERSION") { Some(v) => v, None => env!("CARGO_PKG_VERSION") };
 
 struct ApiError(HttpError);
 impl IntoResponse for ApiError {

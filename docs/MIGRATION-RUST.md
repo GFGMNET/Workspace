@@ -105,7 +105,7 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | 1 | Prototype, go/no-go | ✅ done — **go** |
 | 2 | The core | ✅ done (2026-11-16) |
 | 3 | Chat, VS Code, updater, MCP, desktop extras | ✅ done (2026-11-16) |
-| 4 | Beta next to 0.x | 0.9.0 published (pre-release, Windows x64 + Linux x64; arm64 #64) — the maintainer tests |
+| 4 | Beta next to 0.x | 0.9.0 tested 2026-11-17 → fixes #65–#69 → 0.9.0.5 |
 | 5 | Release 1.0 | |
 
 **Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), SignPath signing last, just before 1.0.
@@ -194,7 +194,7 @@ answers (`project-workspace-server mcp`). How it was done:
   release; a backup of the program in `.update/`, the files are swapped after the app has quit, then it starts again;
 - secrets: the key is protected with **Windows DPAPI** (`protected: dpapi`) or the **Linux keyring** (`protected: keyring`,
   desktop app). 0.x keys (`protected: os`) are taken over on Windows from `data/.app/Local State`; on Linux they are entered again;
-- desktop: tray menu (open, due today, keep in tray, reminders, start with the computer, open in browser, data folder, wiki,
+- desktop: X quits the app (decided 2026-11-17); tray menu (open, due today, reminders, start with the computer, open in browser, data folder, wiki,
   quit), reminders every 30 minutes, single instance, window size in `data/.window.json`, links outside the workspace open
   in the browser. Difference to 0.x: clicking a reminder doesn't open the item (Tauri can't do that on Windows/Linux yet).
 

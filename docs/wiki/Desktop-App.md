@@ -29,7 +29,7 @@ Links to the wiki, GitHub and other websites open in your normal browser.
 
 Right-click the **tray icon** (next to the clock):
 
-- **Keep running in the tray when the window is closed** (on by default). Closing the window hides it, so reminders keep coming. To stop the workspace, choose **Quit** in the tray menu or **Workspace → Quit** (Ctrl+Q). Turned off, closing the window stops the workspace.
+- **Keep running in the tray when the window is closed** (on by default; version 0.x only — from 1.0 the X always quits the app). Closing the window hides it, so reminders keep coming. To stop the workspace, choose **Quit** in the tray menu or **Workspace → Quit** (Ctrl+Q). Turned off, closing the window stops the workspace.
 - **Remind me of what is due** (on by default). Every 30 minutes the app checks all projects. It shows a notification for each task or event that is due today or overdue, once per day. Clicking it opens the item.
 - **Start with Windows** (off by default). The workspace starts in the tray when you sign in. If you move the program folder, start it once from the new place.
 

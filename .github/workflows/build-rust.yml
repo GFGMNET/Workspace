@@ -7,6 +7,10 @@ name: Build 1.0 (Rust)
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, e.g. 0.9.0.5 for a beta (empty: the version in rust/Cargo.toml)"
+        required: false
 
 permissions:
   contents: write
@@ -21,8 +25,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - id: v
+        env:
+          VERSION_IN: ${{ inputs.version }}
         run: |
-          v=$(sed -n 's/^version = "\(.*\)"/\1/p' rust/Cargo.toml | head -1)
+          v="$VERSION_IN"
+          [ -n "$v" ] || v=$(sed -n 's/^version = "\(.*\)"/\1/p' rust/Cargo.toml | head -1)
+          case "$v" in *[!0-9.]*|.*|*.) echo "::error::Version must be numbers and dots, e.g. 0.9.0.5 (now: $v)"; exit 1;; esac
           case "$v" in *-proto*|"") echo "::error::Set a real version in rust/Cargo.toml (now: $v)"; exit 1;; esac
           if git ls-remote --exit-code --tags origin "v$v" >/dev/null; then echo "::error::v$v already exists — raise the version first"; exit 1; fi
           echo "v=$v" >> "$GITHUB_OUTPUT"
@@ -39,6 +47,7 @@ jobs:
     continue-on-error: ${{ matrix.arch == 'arm64' }}
     env:
       PW_INSTALL: ${{ github.workspace }}
+      PW_VERSION: ${{ needs.version.outputs.v }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -90,6 +99,7 @@ jobs:
         shell: pwsh
     env:
       PW_INSTALL: ${{ github.workspace }}
+      PW_VERSION: ${{ needs.version.outputs.v }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
