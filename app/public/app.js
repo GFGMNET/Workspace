@@ -147,34 +147,45 @@ let currentTab = '';
 function renderTabs() {
   const p = S.project; const el = $('#ptabs'); if (!el) return;
   const counts = Object.fromEntries(((S.projects.find(x => x.slug === p.slug) || {}).features || []).map(f => [f.key, f.count]));
-  const ov = p.meta.overview !== false;
-  el.innerHTML = (ov ? `<a role="tab" class="tab ${currentTab === '_overview' ? 'active' : ''}" href="${projectHref('_overview')}" aria-selected="${currentTab === '_overview'}">${icon('cards', 15)} Overview</a>` : '') + p.features.map(f => `<a role="tab" class="tab ${f.key === currentTab ? 'active' : ''} ${f.missing ? 'missing' : ''}" href="${projectHref(f.key)}" aria-selected="${f.key === currentTab}">
-      ${f.missing ? icon('warn', 14) : featureIcon(f.def, 15)} ${esc(f.def ? f.def.name : f.key)}${!f.missing && counts[f.key] != null && f.def.stores !== 'chat' ? ` <span class="n">${counts[f.key]}</span>` : ''}</a>`).join('')
-    + `<a role="tab" class="tab ${currentTab === '_files' ? 'active' : ''}" href="${projectHref('_files')}" aria-selected="${currentTab === '_files'}">${icon('folder', 15)} Explorer</a>`
-    + `<a role="tab" class="tab ${currentTab === '_ide' ? 'active' : ''}" href="${projectHref('_ide')}" aria-selected="${currentTab === '_ide'}">${icon('terminal', 15)} VS Code</a>`
-    + `<a role="tab" class="tab ${currentTab === '_yaml' ? 'active' : ''}" href="${projectHref('_yaml')}" aria-selected="${currentTab === '_yaml'}"><span class="mono" style="font-size:12.5px">project.yaml</span></a>`
-    + `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature>${icon('plus', 14)} Feature</button>`;
+  const tab = (key, inner, cls = '') => ({ key, html: `<a role="tab" class="tab ${key === currentTab ? 'active' : ''} ${cls}" href="${projectHref(key)}" aria-selected="${key === currentTab}">${inner}</a>`, item: `<a role="menuitem" class="${key === currentTab ? 'active' : ''} ${cls}" href="${projectHref(key)}">${inner}</a>` });
+  const tabs = [];
+  if (p.meta.overview !== false) tabs.push(tab('_overview', `${icon('cards', 15)} Overview`));
+  for (const f of p.features) tabs.push(tab(f.key, `${f.missing ? icon('warn', 14) : featureIcon(f.def, 15)} ${esc(f.def ? f.def.name : f.key)}${!f.missing && counts[f.key] != null && f.def.stores !== 'chat' ? ` <span class="n">${counts[f.key]}</span>` : ''}`, f.missing ? 'missing' : ''));
+  tabs.push(tab('_files', `${icon('folder', 15)} Explorer`), tab('_ide', `${icon('terminal', 15)} VS Code`), tab('_yaml', `<span class="mono" style="font-size:12.5px">project.yaml</span>`));
+  const add = `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature title="Add a feature" aria-label="Add a feature">${icon('plus', 14)}</button>`;
+  // everything that doesn't fit goes into "More" (the open tab always stays visible)
+  const paint = hidden => {
+    const shown = tabs.filter(t => !hidden.includes(t)), moreActive = hidden.some(t => t.key === currentTab);
+    el.innerHTML = shown.map(t => t.html).join('') + (hidden.length ? `<div class="tabmore"><button type="button" class="tab ${moreActive ? 'active' : ''}" aria-haspopup="menu" aria-expanded="false" data-more>More <span class="n">${hidden.length}</span> ▾</button><div class="tmenu" role="menu">${hidden.map(t => t.item).join('')}</div></div>` : '') + add;
+  };
+  const hidden = [];
+  paint(hidden);
+  for (let i = tabs.length - 1; i >= 0 && el.scrollWidth > el.clientWidth + 1; i--) {
+    if (tabs[i].key === currentTab) continue;
+    hidden.unshift(tabs[i]); paint(hidden);
+  }
   $('[data-add-feature]', el).onclick = addFeatureDialog;
+  const more = $('[data-more]', el);
+  if (more) {
+    const box = more.parentElement;
+    const close = e => { if (!box.contains(e.target)) { box.classList.remove('open'); more.setAttribute('aria-expanded', 'false'); document.removeEventListener('click', close); } };
+    more.onclick = () => { const o = box.classList.toggle('open'); more.setAttribute('aria-expanded', String(o)); if (o) setTimeout(() => document.addEventListener('click', close)); };
+  }
 }
+let tabsResize; window.addEventListener('resize', () => { clearTimeout(tabsResize); tabsResize = setTimeout(renderTabs, 150); });
 async function renderProject(tab, sub, query) {
   const p = S.project;
   if (!tab) { tab = p.meta.overview !== false ? '_overview' : p.features.length ? p.features[0].key : '_yaml'; history.replaceState(null, '', projectHref(tab)); }
   currentTab = tab;
-  const cli = S.info.platform === 'win32' ? `cd /d "${p.path}" && claude` : `cd "${p.path}" && claude`;
   $('#main').innerHTML = `<div class="wrap">
     <div class="phead">${menuBtn}${avatar(p.name, p.meta.icon, p.meta.color, p.slug)}
       <div class="title"><h1>${esc(p.name)}</h1><div class="muted small">${esc(p.meta.description || '')}</div>${p.external ? `<div class="faint small" title="location: in project.yaml">${icon('folder', 12)} <span class="mono">${esc(p.path)}</span></div>` : ''}
         ${(Array.isArray(p.meta.tags) && p.meta.tags.length) || p.meta.status ? `<div class="chips" style="margin-top:6px">${(p.meta.tags || []).map(t => `<span class="chip accent">#${esc(t)}</span>`).join('')}${p.meta.status ? `<span class="chip">${esc(p.meta.status)}</span>` : ''}</div>` : ''}</div>
-      <button class="btn" type="button" data-cli title="Copies: ${esc(cli)}">${icon('terminal', 14)} Claude CLI</button>
-      <button class="btn" type="button" data-vscode title="Open this project in VS Code">${icon('terminal', 14)} VS Code</button>
-      <button class="btn" type="button" data-path title="${esc(p.path)}">${icon('copy', 14)} Copy path</button>
-      <button class="btn" type="button" data-manage title="Rename, archive or delete this project" aria-label="Manage project">${icon('edit', 14)} Manage</button></div>
+      <button class="btn ghost icon-btn" type="button" data-manage title="Manage project: rename, features, template, archive, delete" aria-label="Manage project">${icon('gear', 18)}</button></div>
     ${p.error ? `<div class="err" style="margin-top:12px" role="alert">project.yaml has an error: ${esc(p.error)}. Fix it in the project.yaml tab.</div>` : ''}
     ${!p.error && p.warning ? `<div class="note" style="margin-top:12px;background:var(--warn-bg)" role="status">${icon('warn', 14)} project.yaml: ${esc(p.warning)} <a href="${projectHref('_yaml')}">Open project.yaml</a></div>` : ''}
     <nav class="tabs" id="ptabs" role="tablist" aria-label="Features of ${esc(p.name)}"></nav>
     <div id="fnote"></div><section id="fbody"></section></div>`;
-  $('[data-cli]').onclick = () => copy(cli); $('[data-path]').onclick = () => copy(p.path);
-  $('[data-vscode]').onclick = () => openVSCode('p/' + p.slug, '');
   $('[data-manage]').onclick = () => manageProject(p);
   renderTabs();
   const body = $('#fbody');
@@ -304,6 +315,8 @@ function manageProject(p) {
     body: `<div class="field"><label for="mpn">Name</label><input id="mpn" name="name" value="${esc(p.name)}" required></div>
       <label class="row small" style="gap:8px;margin:-4px 0 12px"><input type="checkbox" name="folder" style="width:auto"> Also rename the folder <span class="mono faint">projects/${esc(p.slug)}</span></label>
       ${p.external ? `<p class="faint small" style="margin:0 0 12px">The content stays where it is (<span class="mono">${esc(p.path)}</span>).</p>` : ''}
+      <div class="mgsec"><b>Folder</b><span class="mono small" style="word-break:break-all">${esc(p.path)}</span>
+        <div class="row" style="gap:6px"><button class="btn sm" type="button" data-mpath>${icon('copy', 14)} Copy path</button><button class="btn sm" type="button" data-mcli>${icon('terminal', 14)} Copy Claude CLI command</button><button class="btn sm" type="button" data-mcode>${icon('terminal', 14)} Open in VS Code</button></div></div>
       <div class="mgsec"><b>Features</b><div class="mgfeat">${p.features.map(f => `<div class="row"><span style="flex:1">${esc(f.def ? f.def.name : f.key)} <span class="mono faint small">${esc(f.key)}</span></span><button class="btn sm ghost danger" type="button" data-rmf="${esc(f.key)}">Remove</button></div>`).join('') || '<span class="faint small">None</span>'}</div>
         <span class="faint small">Removing a feature takes it out of project.yaml; its files stay in the folder.</span></div>
       <div class="mgsec"><b>Template</b><span class="muted small">Start new projects like this one: saves its project.yaml and, if you like, its pages, records and files.</span>
@@ -316,6 +329,9 @@ function manageProject(p) {
       const r = await api(`/api/projects/${enc(p.slug)}`, { method: 'PATCH', body: { name: f.name.value.trim(), folder: f.folder.checked } });
       S.project = r; await App.refreshProjects(); toast('Renamed'); go('#/p/' + enc(r.slug));
     } });
+  const cli = S.info.platform === 'win32' ? `cd /d "${p.path}" && claude` : `cd "${p.path}" && claude`;
+  $('[data-mpath]', m.el).onclick = () => copy(p.path); $('[data-mcli]', m.el).onclick = () => copy(cli);
+  $('[data-mcode]', m.el).onclick = () => openVSCode('p/' + p.slug, '');
   $$('[data-rmf]', m.el).forEach(b => b.onclick = async () => {
     if (!confirm(`Remove “${b.dataset.rmf}” from this project? Its files stay in the folder.`)) return;
     S.project = await api(`/api/projects/${enc(p.slug)}/features/${enc(b.dataset.rmf)}`, { method: 'DELETE' }); m.close(); await App.refreshProjects(); go('#/p/' + enc(p.slug)); toast('Feature removed');

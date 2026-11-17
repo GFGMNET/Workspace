@@ -39,13 +39,24 @@ fn main() {
     #[cfg(target_os = "linux")]
     pw_core::secrets::set_protector(Box::new(keyring_protector::Keyring));
 
-    let port: u16 = args.iter().find_map(|a| a.parse().ok()).or_else(|| std::env::var("PORT").ok().and_then(|p| p.parse().ok())).unwrap_or(4321);
+    let wanted: u16 = args.iter().find_map(|a| a.parse().ok()).or_else(|| std::env::var("PORT").ok().and_then(|p| p.parse().ok())).unwrap_or(4321);
     let ws = pw_server::workspace_from_env();
     let data_dir = ws.root.clone();
     let _ = std::fs::create_dir_all(&data_dir);
+    // Reuse a workspace on the port only if it is this same program with this same data folder
+    // (e.g. started with the computer). Anything else there — like a running 0.x app with its own
+    // data — is left alone: we take the next free port instead.
+    let mut port = wanted; let mut reuse = false;
+    for p in wanted..wanted.saturating_add(30) {
+        match info(p) {
+            Some(i) if same_workspace(&i, &data_dir) => { port = p; reuse = true; break; }
+            Some(_) => continue,
+            None if std::net::TcpListener::bind(("127.0.0.1", p)).is_ok() => { port = p; break; }
+            None => continue,
+        }
+    }
     let url = format!("http://localhost:{port}");
-    // use a workspace that already runs on this port, else start our own server in this program
-    if !answers(port) {
+    if !reuse {
         std::thread::spawn(move || {
             let rt = tokio::runtime::Builder::new_multi_thread().enable_all().build().expect("runtime");
             if let Err(e) = rt.block_on(pw_server::serve(ws, port)) { eprintln!("server: {e}"); }
@@ -84,18 +95,32 @@ fn main() {
         // with the tray icon on, closing the window keeps the workspace (and its reminders) running
         RunEvent::ExitRequested { api, code, .. } => { if code.is_none() && !*q3.lock().unwrap() && d3.settings()["tray"] == true { api.prevent_exit(); } }
         RunEvent::WindowEvent { label, event: WindowEvent::CloseRequested { api, .. }, .. } if label == "main" => {
-            if let Some(w) = h.get_webview_window("main") { save_window(&d3.dir, &w); }
-            if !*q3.lock().unwrap() && d3.settings()["tray"] == true { api.prevent_close(); if let Some(w) = h.get_webview_window("main") { let _ = w.hide(); } d3.hidden_to_tray(h); }
+            let Some(w) = h.get_webview_window("main") else { return };
+            save_window(&d3.dir, &w);
+            if *q3.lock().unwrap() || d3.settings()["tray"] != true { return; } // closes; the app ends with its last window
+            // keep running in the tray: hide the window (never block this thread — it draws the window)
+            api.prevent_close();
+            let _ = w.hide();
+            if d3.settings()["trayHintShown"] != true {
+                d3.set("trayHintShown", json!(true));
+                let h = h.clone();
+                std::thread::spawn(move || { let _ = h.notification().builder().title("Project Workspace is still running").body("It stays in the tray to remind you of what is due. Quit it from the tray icon.").show(); });
+            }
         }
         RunEvent::WindowEvent { label, event: WindowEvent::Resized(_) | WindowEvent::Moved(_), .. } if label == "main" => {
-            if let Some(w) = h.get_webview_window("main") { save_window(&d3.dir, &w); }
+            if let Some(w) = h.get_webview_window("main") { if w.is_visible().unwrap_or(false) { save_window(&d3.dir, &w); } }
         }
         _ => {}
     });
 }
 
 /// Does a workspace answer on this port?
-fn answers(port: u16) -> bool { http_get(port, "/api/info").map(|v| !v["version"].is_null()).unwrap_or(false) }
+fn answers(port: u16) -> bool { info(port).is_some() }
+fn info(port: u16) -> Option<Value> { http_get(port, "/api/info").filter(|v| !v["version"].is_null()) }
+fn same_workspace(i: &Value, data: &std::path::Path) -> bool {
+    let canon = |p: &std::path::Path| std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
+    i["version"] == pw_server::VERSION && i["root"].as_str().map(|r| canon(std::path::Path::new(r)) == canon(data)).unwrap_or(false)
+}
 fn http_get(port: u16, path: &str) -> Option<Value> {
     let mut s = TcpStream::connect_timeout(&([127, 0, 0, 1], port).into(), Duration::from_millis(1500)).ok()?;
     let _ = s.set_read_timeout(Some(Duration::from_secs(10)));
@@ -262,12 +287,6 @@ impl Desktop {
             let title = format!("{}{}", if i["overdue"] == true { "Overdue: " } else { "Due today: " }, s(&i["title"]));
             let _ = h.notification().builder().title(title).body(format!("{} · {} · {}", s(&i["projectName"]), s(&i["featureName"]), s(&i["field"]))).show();
         }
-    }
-    /// The first time the window is closed into the tray: say so.
-    fn hidden_to_tray(&self, h: &AppHandle) {
-        if self.settings()["trayHintShown"] == true { return; }
-        self.set("trayHintShown", json!(true));
-        let _ = h.notification().builder().title("Project Workspace is still running").body("It stays in the tray to remind you of what is due. Quit it from the tray icon.").show();
     }
 }
 

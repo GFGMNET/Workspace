@@ -83,17 +83,23 @@ fn command(program: &Path) -> tokio::process::Command {
     c
 }
 
-/// GET /api/claude
+/// GET /api/claude. A working answer is kept for 5 minutes and only one check runs at a time,
+/// so switching projects doesn't start Claude CLI again and again (its first start can be slow).
 pub async fn claude_version() -> Value {
+    static LAST: tokio::sync::Mutex<Option<(Instant, Value)>> = tokio::sync::Mutex::const_new(None);
+    let mut last = LAST.lock().await;
+    if let Some((at, v)) = last.as_ref() { if v["ok"] == true && at.elapsed() < Duration::from_secs(300) { return v.clone(); } }
     let env = current_env(); let name = claude_command();
     let mut c = command(&find_program(&name, &env));
     c.arg("--version").env_clear().envs(env).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped()).kill_on_drop(true);
-    match tokio::time::timeout(Duration::from_secs(15), c.output()).await {
+    let v = match tokio::time::timeout(Duration::from_secs(45), c.output()).await {
         Ok(Ok(o)) if o.status.success() => json!({ "ok": true, "command": name, "version": String::from_utf8_lossy(&o.stdout).trim() }),
         Ok(Ok(o)) => json!({ "ok": false, "command": name, "error": String::from_utf8_lossy(&o.stderr).trim().lines().next().unwrap_or("Claude CLI failed") }),
         Ok(Err(e)) => json!({ "ok": false, "command": name, "error": e.to_string() }),
         Err(_) => json!({ "ok": false, "command": name, "error": "Claude CLI did not answer in time" }),
-    }
+    };
+    *last = Some((Instant::now(), v.clone()));
+    v
 }
 
 fn login_hint(msg: &str) -> String {

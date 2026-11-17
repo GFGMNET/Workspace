@@ -40,7 +40,11 @@ The example project **Workspace (development)** manages the workspace itself thi
 
 ## Rename, archive, delete
 
-**Manage** in the project header:
+**Manage** — the gear icon in the project header. It also shows the project's folder, with *Copy path*, *Copy Claude CLI command* and *Open in VS Code*.
+
+If a project has many features, the tabs that don't fit are under **More**.
+
+In **Manage**:
 
 - **Rename:** changes the name in `project.yaml`, and the rest of the file stays as it is. Tick *Also rename the folder* to rename `projects/<name>` too.
 - **Features:** remove a feature from the project. Its files stay in the folder.
