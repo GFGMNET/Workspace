@@ -459,7 +459,7 @@ fn write_private(p: &Path, text: &str) -> std::io::Result<()> {
     { std::fs::write(p, text) }
 }
 
-// ---------- the permission helper (`project-workspace-server permission-mcp`) ----------
+// ---------- the permission helper (`workspace-server permission-mcp`) ----------
 /// Tiny MCP server on stdio that Claude CLI calls for `--permission-prompt-tool mcp__pw_permission__approve`.
 /// It forwards the question to the app (PW_PERMISSION_URL with PW_PERMISSION_TOKEN) and waits for the answer.
 pub fn permission_mcp_main() {

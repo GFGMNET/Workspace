@@ -51,7 +51,7 @@ claude mcp add project-workspace --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\W
 From version 1.0 (Rust) the program is its own MCP server:
 
 ```
-claude mcp add project-workspace --scope user -- "C:\Workspace\ProjectWorkspace.exe" mcp
+claude mcp add project-workspace --scope user -- "C:\Workspace\Workspace.exe" mcp
 ```
 
 The name `workspace` is reserved in Claude CLI, so the server is called **project-workspace**.

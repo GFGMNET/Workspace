@@ -39,7 +39,7 @@ What the project has to do once: a short **Code signing policy** section in the 
 
 ### Part 3: the app checks updates by itself (with part 2)
 
-- **Windows:** before installing, the updater checks the new `ProjectWorkspace.exe`: valid signature, publisher *SignPath Foundation*, product name *Project Workspace*. Otherwise the update is refused. No keys involved: Windows does the check.
+- **Windows:** before installing, the updater checks the new `Workspace.exe` (1.0): valid signature, publisher *SignPath Foundation*, product name *Project Workspace*. Otherwise the update is refused. No keys involved: Windows does the check.
 - **Linux:** every package gets a GitHub **build attestation** (GitHub records which workflow built which file from which commit; free, automatic) and a checksum list. The updater checks the checksum; anyone can check the attestation with `gh attestation verify`.
 
 ## 3. What changes for you

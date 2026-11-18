@@ -114,14 +114,14 @@ fn unzip(bytes: &[u8], dest: &Path) -> Result<(), String> {
     }
     Ok(())
 }
-fn server_name() -> &'static str { if cfg!(windows) { "project-workspace-server.exe" } else { "project-workspace-server" } }
+fn server_name() -> &'static str { if cfg!(windows) { "workspace-server.exe" } else { "workspace-server" } }
 /// The program folder inside the package: it holds the server program and app/public.
 fn find_root(dir: &Path, depth: usize) -> Option<PathBuf> {
     if dir.join(server_name()).is_file() && dir.join("app").join("public").is_dir() { return Some(dir.to_path_buf()); }
     if depth > 2 { return None; }
     fs::read_dir(dir).ok()?.flatten().filter(|e| e.path().is_dir()).find_map(|e| find_root(&e.path(), depth + 1))
 }
-/// Windows: the new program must be signed by SignPath Foundation for Project Workspace (Windows checks the signature).
+/// Windows: the new program must be signed by SignPath Foundation for Workspace (Windows checks the signature).
 fn check_signature(exe: &Path) -> Result<(), String> {
     if !cfg!(windows) { return Ok(()); }
     let script = "$s = Get-AuthenticodeSignature -LiteralPath $env:PW_CHECK_FILE; \
@@ -137,7 +137,7 @@ fn check_signature(exe: &Path) -> Result<(), String> {
     let (status, subject, product) = (p.next().unwrap_or(""), p.next().unwrap_or(""), p.next().unwrap_or(""));
     if status != "Valid" { return Err(format!("The new program is not signed (signature: {})", if status.is_empty() { "none" } else { status })); }
     if !subject.contains("SignPath Foundation") { return Err("The new program is signed by someone else".into()); }
-    if !product.contains("Project Workspace") { return Err("The new program is not Project Workspace".into()); }
+    if product.trim() != "Workspace" { return Err("The new program is not Workspace".into()); }
     Ok(())
 }
 fn copy_all(from: &Path, to: &Path) -> std::io::Result<()> {
@@ -182,8 +182,8 @@ async fn apply_inner(ws: &Workspace) -> Result<Value, String> {
     let result: Result<Value, String> = (|| {
         fs::create_dir_all(&unpacked).map_err(|e| e.to_string())?;
         unzip(&bytes, &unpacked)?;
-        let src = find_root(&unpacked, 0).ok_or("The download does not look like Project Workspace")?;
-        if cfg!(windows) { check_signature(&src.join("ProjectWorkspace.exe"))?; }
+        let src = find_root(&unpacked, 0).ok_or("The download does not look like Workspace")?;
+        if cfg!(windows) { check_signature(&src.join("Workspace.exe"))?; }
         // backup of the current program (copied: the running program stays in place until the swap)
         fs::create_dir_all(&backup).map_err(|e| e.to_string())?;
         for e in fs::read_dir(&install).map_err(|e| e.to_string())?.flatten() {

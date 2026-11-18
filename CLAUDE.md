@@ -40,6 +40,7 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 - 1.0 drops the Node.js package (start.bat/start.sh); screens stay as files on disk; no macOS and no arm64 version (dropped 2026-11-18, #56, #64); Windows 11 only — Windows 10 not supported (#73).
 - Signing: GitHub account is protected (done). 1.0 Windows program signed for free by SignPath Foundation, one *Approve* click
   per release (`docs/plans/RELEASE-TRUST.md`). 0.x stays unsigned. No signing keys on anyone's PC, no signing scripts.
+- 1.0 is called **Workspace** everywhere (window, tray, `Workspace.exe`, `workspace`, `workspace-server`, zips `workspace-v…`); decided 2026-11-18 (#77).
 - Ticketsystem = GLPI 11 only, by entity, in v1.1 (osTicket dropped). Versions (Git first, then SVN; server by IP + port) in v1.2.
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).

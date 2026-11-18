@@ -534,6 +534,10 @@ built by `.github/workflows/build-rust.yml`, Windows x64 + Linux x64) are being 
 no Windows 10 (#73), no arm64 (#64), no macOS (#56) — decided 2026-11-18.
 Then SignPath (0.9.1) and 1.0.0. The code is in `rust/`; the plan and status: [MIGRATION-RUST.md](MIGRATION-RUST.md).
 
+**Name:** from 1.0 the app is called **Workspace** everywhere (window, tray, notifications, `Workspace.exe`, `workspace` on Linux,
+downloads `workspace-vX.Y.Z-…zip`); decided 2026-11-18 (#77). The MCP server keeps the name `project-workspace` (`workspace` is reserved
+in Claude CLI).
+
 **Differences to 0.x:** the window's X quits the app (no hiding in the tray); a running 0.x app on the same port is left alone
 (1.0 takes the next free port); clicking a reminder doesn't open the item yet; on Linux the secrets are entered again.
 
@@ -558,9 +562,9 @@ crates/
               (create, rename, archive, templates), secrets (AES-256-GCM; key via Windows DPAPI or the Linux keyring)
   pw-server   axum + tokio: the same routes as app/server.js; live refresh (notify); chat (Claude CLI, permission
               helper `permission-mcp`); VS Code proxy incl. WebSockets (hyper); updater; GitHub issues;
-              the workspace MCP server (`mcp`). Binary: project-workspace-server (no window, no WebKitGTK needed)
+              the workspace MCP server (`mcp`). Binary: workspace-server (no window, no WebKitGTK needed)
   pw-app      Tauri 2: window on http://localhost:<port>, tray, reminders, autostart, single instance, window size;
-              no Tauri IPC commands for the page (capabilities: none). Binary: ProjectWorkspace.exe / project-workspace
+              no Tauri IPC commands for the page (capabilities: none). Binary: Workspace.exe / workspace
 app/public    unchanged screens, served by pw-server
 ```
 
@@ -569,7 +573,7 @@ app/public    unchanged screens, served by pw-server
   Merge keys, anchors and several documents behave as in 0.x (YAML corpus 33/33).
 - The page is loaded from `http://localhost` inside WebView2/WebKitGTK; the VS Code tab (iframe, WebSockets), Mermaid, drag & drop
   and paste work.
-- Linux: WebKitGTK 4.1 must be installed (most desktops have it); `project-workspace-server` has no such need.
+- Linux: WebKitGTK 4.1 must be installed (most desktops have it); `workspace-server` has no such need.
 - Windows 10 is not supported (decided 2026-11-18, #73); Windows 11 always has WebView2.
 
 **Security work that comes with it**

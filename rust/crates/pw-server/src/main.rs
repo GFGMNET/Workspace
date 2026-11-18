@@ -1,6 +1,6 @@
-//! project-workspace-server: the workspace without a window (and helpers for the tests).
-//!   project-workspace-server [port]          serve on 127.0.0.1:<port> (default 4321)
-//!   project-workspace-server yaml parse <f>  print how the app reads a YAML file (tests/yaml-corpus)
+//! workspace-server: the workspace without a window (and helpers for the tests).
+//!   workspace-server [port]          serve on 127.0.0.1:<port> (default 4321)
+//!   workspace-server yaml parse <f>  print how the app reads a YAML file (tests/yaml-corpus)
 use serde_json::json;
 
 fn sort(v: serde_json::Value) -> serde_json::Value {

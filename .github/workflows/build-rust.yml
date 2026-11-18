@@ -62,9 +62,9 @@ jobs:
         run: cargo build --workspace --release
       - name: Tests (unit, YAML corpus, API contract)
         env:
-          PW_YAML_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server yaml
-          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server {port}
-          PW_MCP_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server mcp
+          PW_YAML_CMD: ${{ github.workspace }}/rust/target/release/workspace-server yaml
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
+          PW_MCP_CMD: ${{ github.workspace }}/rust/target/release/workspace-server mcp
         run: |
           (cd rust && cargo test -p pw-core -p pw-server --release)
           node --test tests/yaml-corpus/yaml.test.js
@@ -72,12 +72,12 @@ jobs:
       - name: Package
         run: |
           v=${{ needs.version.outputs.v }}
-          d=dist/project-workspace
+          d=dist/workspace
           mkdir -p $d/app
-          cp rust/target/release/project-workspace rust/target/release/project-workspace-server $d/
+          cp rust/target/release/workspace rust/target/release/workspace-server $d/
           cp -r app/public app/starter $d/app/
           cp LICENSE $d/ 2>/dev/null || true
-          (cd dist && zip -qry "project-workspace-v$v-linux-${{ matrix.arch }}.zip" project-workspace)
+          (cd dist && zip -qry "workspace-v$v-linux-${{ matrix.arch }}.zip" workspace)
           ls -l dist/*.zip
       - uses: actions/attest-build-provenance@v2
         with:
@@ -109,9 +109,9 @@ jobs:
         run: cargo build --workspace --release
       - name: Tests (unit, YAML corpus, API contract)
         env:
-          PW_YAML_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe yaml
-          PW_SERVER_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe {port}
-          PW_MCP_CMD: ${{ github.workspace }}\rust\target\release\project-workspace-server.exe mcp
+          PW_YAML_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe yaml
+          PW_SERVER_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe {port}
+          PW_MCP_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe mcp
         run: |
           Push-Location rust; cargo test -p pw-core -p pw-server --release; if ($LASTEXITCODE) { exit 1 }; Pop-Location
           node --test tests/yaml-corpus/yaml.test.js; if ($LASTEXITCODE) { exit 1 }
@@ -119,13 +119,13 @@ jobs:
       - name: Package
         run: |
           $v = "${{ needs.version.outputs.v }}"
-          $d = "dist/ProjectWorkspace"
+          $d = "dist/Workspace"
           New-Item -ItemType Directory -Force "$d/app" | Out-Null
-          Copy-Item rust/target/release/project-workspace.exe "$d/ProjectWorkspace.exe"
-          Copy-Item rust/target/release/project-workspace-server.exe $d
+          Copy-Item rust/target/release/workspace.exe "$d/Workspace.exe"
+          Copy-Item rust/target/release/workspace-server.exe $d
           Copy-Item -Recurse app/public, app/starter "$d/app"
           if (Test-Path LICENSE) { Copy-Item LICENSE $d }
-          Compress-Archive -Path $d -DestinationPath "dist/project-workspace-v$v-windows-x64.zip"
+          Compress-Archive -Path $d -DestinationPath "dist/workspace-v$v-windows-x64.zip"
           Get-Item dist/*.zip | Select-Object Name, Length
       - uses: actions/attest-build-provenance@v2
         with:
@@ -152,4 +152,4 @@ jobs:
           cd dist && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS && cd ..
           notes="docs/releases/v$v.md"
           if [ -f "$notes" ]; then n=(--notes-file "$notes"); else n=(--generate-notes); fi
-          gh release create "v$v" dist/*.zip dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Project Workspace v$v (1.0 beta, Rust)" "${n[@]}"
+          gh release create "v$v" dist/*.zip dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Workspace v$v (1.0 beta, Rust)" "${n[@]}"

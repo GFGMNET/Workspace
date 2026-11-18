@@ -1,12 +1,12 @@
-//! Project Workspace desktop app (Tauri): runs the server in the same program and shows it in a
+//! Workspace desktop app (Tauri): runs the server in the same program and shows it in a
 //! window that uses the system's browser engine (WebView2 on Windows, WebKitGTK on Linux).
 //! Like the 0.x app (app/electron/main.js + desktop.js):
-//!   ProjectWorkspace            open the window (starts the server, or uses one already running on the port)
-//!   ProjectWorkspace 4322       use another port
-//!   ProjectWorkspace --browser  open in the normal browser instead of the app window
-//!   ProjectWorkspace --hidden   start in the tray (used when it starts with the computer)
-//!   ProjectWorkspace --version  print the version
-//!   ProjectWorkspace mcp        the workspace MCP server for Claude CLI (no window)
+//!   Workspace                   open the window (starts the server, or uses one already running on the port)
+//!   Workspace        4322       use another port
+//!   Workspace        --browser  open in the normal browser instead of the app window
+//!   Workspace        --hidden   start in the tray (used when it starts with the computer)
+//!   Workspace        --version  print the version
+//!   Workspace        mcp        the workspace MCP server for Claude CLI (no window)
 //! Tray icon, reminders for what is due and "start with the computer" are set in the tray menu;
 //! they are kept in data/.desktop.json, the window size in data/.window.json.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -135,7 +135,7 @@ fn dechunk(s: &str) -> String {
 }
 fn fail(h: &AppHandle, msg: &str) {
     eprintln!("{msg}");
-    let _ = h.notification().builder().title("Project Workspace").body(msg).show();
+    let _ = h.notification().builder().title("Workspace").body(msg).show();
     h.exit(1);
 }
 
@@ -205,7 +205,7 @@ impl Desktop {
     fn os() -> &'static str { if cfg!(windows) { "Windows" } else if cfg!(target_os = "macos") { "macOS" } else { "the computer" } }
     fn menu(&self, h: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         let st = self.settings(); let n = self.due.lock().unwrap().len();
-        let open = MenuItem::with_id(h, "open", "Open Project Workspace", true, None::<&str>)?;
+        let open = MenuItem::with_id(h, "open", "Open Workspace", true, None::<&str>)?;
         let due = MenuItem::with_id(h, "due", if n > 0 { format!("Due today: {n}") } else { "Nothing due today".into() }, n > 0, None::<&str>)?;
         let rem = CheckMenuItem::with_id(h, "notifications", "Remind me of what is due", true, st["notifications"] == true, None::<&str>)?;
         let auto = CheckMenuItem::with_id(h, "autostart", format!("Start with {}", Self::os()), true, st["autostart"] == true, None::<&str>)?;
@@ -220,7 +220,7 @@ impl Desktop {
     }
     fn refresh_tray(self: &Arc<Self>, h: &AppHandle, url: &str, quitting: &Arc<Mutex<bool>>) -> tauri::Result<()> {
         let n = self.due.lock().unwrap().len();
-        let tip = if n > 0 { format!("Project Workspace — {n} due today") } else { "Project Workspace".into() };
+        let tip = if n > 0 { format!("Workspace — {n} due today") } else { "Workspace".into() };
         let mut t = self.tray.lock().unwrap();
         if let Some(tray) = t.as_ref() {
             tray.set_menu(Some(self.menu(h)?))?; tray.set_tooltip(Some(&tip))?;
@@ -257,7 +257,7 @@ impl Desktop {
         *self.due.lock().unwrap() = items.clone();
         if let Some(t) = self.tray.lock().unwrap().as_ref() {
             let n = items.len();
-            let _ = t.set_tooltip(Some(if n > 0 { format!("Project Workspace — {n} due today") } else { "Project Workspace".into() }));
+            let _ = t.set_tooltip(Some(if n > 0 { format!("Workspace — {n} due today") } else { "Workspace".into() }));
             if let Ok(m) = self.menu(h) { let _ = t.set_menu(Some(m)); }
         }
         let st = self.settings();

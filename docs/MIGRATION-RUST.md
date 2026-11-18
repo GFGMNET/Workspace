@@ -52,9 +52,9 @@ rust/                         Cargo workspace (same repository, next to app/)
     pw-server/                axum on 127.0.0.1: the HTTP API, SSE, static files, security checks
       chat.rs ide.rs updater.rs github.rs watch.rs
     pw-mcp/                   workspace MCP server (stdio JSON-RPC)
-    pw-cli/                   console program: project-workspace-server(.exe)
+    pw-cli/                   console program: workspace-server(.exe)
                               = server without window, and --mcp
-    pw-app/                   Tauri 2 shell: ProjectWorkspace.exe / project-workspace
+    pw-app/                   Tauri 2 shell: Workspace.exe / project-workspace
                               = window on http://localhost:<port>, tray, notifications,
                                 autostart, single instance, window size
 app/public/                   the screens, served by pw-server from the program folder
@@ -68,14 +68,14 @@ tests/yaml-corpus/            YAML files + the answers today's app gives (golden
 
 ```
 ProjectWorkspace/
-  ProjectWorkspace.exe            Tauri app (~8–12 MB)
-  project-workspace-server.exe    console: server without window, MCP (--mcp)
+  Workspace.exe            Tauri app (~8–12 MB)
+  workspace-server.exe    console: server without window, MCP (--mcp)
   app/public/  docs/  README.md  LICENSE  package.json (version, update repo)
   runtime.json                    {"engine":"system-webview"} (tells 0.x updaters what's runtime)
   data/                           created on first start
 ```
 
-Linux: `project-workspace`, `project-workspace-server`; needs `libwebkit2gtk-4.1` and, for the tray, `libayatana-appindicator3` (installed on most desktops; the server needs neither).
+Linux: `workspace`, `workspace-server`; needs `libwebkit2gtk-4.1` and, for the tray, `libayatana-appindicator3` (installed on most desktops; the server needs neither).
 
 ## 4. Crates (to confirm in the prototype)
 
@@ -136,8 +136,8 @@ Decided 2026-11-16, details in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) 
 | Measured | Electron (0.6) | Rust + Tauri prototype |
 |---|---|---|
 | Windows download (zip) | 157 MB | **4.7 MB** |
-| Desktop program | Electron runtime (~180 MB unpacked) | `ProjectWorkspace.exe` 6.9 MB |
-| Server without window | runtime + `ELECTRON_RUN_AS_NODE` | `project-workspace-server.exe` 1.4 MB |
+| Desktop program | Electron runtime (~180 MB unpacked) | `Workspace.exe` 6.9 MB |
+| Server without window | runtime + `ELECTRON_RUN_AS_NODE` | `workspace-server.exe` 1.4 MB |
 | Starts and answers (CI, Windows + Linux) | yes | yes |
 | YAML corpus | 33/33 | 26/33 (missing: lenient reading of broken files, duplicate keys, comment-keeping updates) |
 | API contract tests | 32/32 | 5/32 (prototype: info, features, projects, pages; the rest is phase 2–3) |
@@ -153,7 +153,7 @@ In the prototype: project list, project pages, overview tiles, wiki/knowledge pa
 
 - `pw-core` complete: features (aliases, normalisation), projects (`location:`, overview, rename, archive, restore, delete), items for every storage type (markdown, images, files, records, diagram, chat history), search, links and backlinks, templates, due, explorer, photo dates, secrets.
 - `pw-server` routes for all of it, SSE file watching.
-- Done when: contract tests and YAML corpus green against the Rust server (`PW_SERVER_CMD=project-workspace-server`), except chat, VS Code, updates, MCP.
+- Done when: contract tests and YAML corpus green against the Rust server (`PW_SERVER_CMD=workspace-server`), except chat, VS Code, updates, MCP.
 
 **Result:** YAML corpus 33/33; every core contract test passes. New modules: `pw-core::{items, files, links, projects, secrets}`,
 `pw-server::live`.
@@ -186,11 +186,11 @@ Steps, in this order (after each step: how many contract tests and YAML cases pa
 - Done when: the full contract suite is green against Rust; the MCP tools give the same answers as `app/mcp.js`.
 
 **Result of phase 3:** the full contract suite is green against Rust (32/32, also on Windows in CI), the MCP tools give the same
-answers (`project-workspace-server mcp`). How it was done:
+answers (`workspace-server mcp`). How it was done:
 - chat: `pw-server::chat`; the permission helper is the program itself (`permission-mcp`), no Node.js needed;
 - VS Code: `pw-server::ide` (hyper client; WebSockets as raw bytes with the token cookie, then joined);
-- updater: `pw-server::updater` — Windows: the new `ProjectWorkspace.exe` must be signed by *SignPath Foundation* with product
-  name *Project Workspace* (checked with PowerShell's `Get-AuthenticodeSignature`); Linux: SHA-256 from `SHA256SUMS` of the
+- updater: `pw-server::updater` — Windows: the new `Workspace.exe` must be signed by *SignPath Foundation* with product
+  name *Workspace* (checked with PowerShell's `Get-AuthenticodeSignature`); Linux: SHA-256 from `SHA256SUMS` of the
   release; a backup of the program in `.update/`, the files are swapped after the app has quit, then it starts again;
 - secrets: the key is protected with **Windows DPAPI** (`protected: dpapi`) or the **Linux keyring** (`protected: keyring`,
   desktop app). 0.x keys (`protected: os`) are taken over on Windows from `data/.app/Local State`; on Linux they are entered again;
@@ -210,7 +210,7 @@ answers (`project-workspace-server mcp`). How it was done:
 - Before 1.0: cargo-deny/cargo-audit + Cargo.lock (#72), reminder click (#75).
 - Platforms of 1.0 (decided 2026-11-18): Windows 11 x64 and Linux x64. Not supported: Windows 10 (#73), arm64 (#64), macOS (#56).
 - 0.9.0.x (betas) and 0.9.1 (signed) are **pre-releases**; only 1.0.0 is a full release, so 0.x apps never see the betas.
-- Last 0.x release (0.x.y) first (#74): its updater must recognise the 1.0 package (it has `project-workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
+- Last 0.x release (0.x.y) first (#74): its updater must recognise the 1.0 package (it has `workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
 - Release 1.0.0 as the latest release. 0.x apps offer the update; after the restart the Tauri app starts.
 - Docs: README, Getting started, wiki (Desktop App, Data and Updates, Security), DESIGN.md (the Node/Electron sections become "history").
 - macOS is not built (#56, not planned).
@@ -263,7 +263,7 @@ Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 
 ## 9. Decisions
 
-1. **Node.js package:** 1.0 drops the "run with Node.js" package (`start.bat`/`start.sh`); machines without a screen use `project-workspace-server`. **Decided: yes** (2026-11-16).
+1. **Node.js package:** 1.0 drops the "run with Node.js" package (`start.bat`/`start.sh`); machines without a screen use `workspace-server`. **Decided: yes** (2026-11-16).
 2. **macOS:** not planned (#56). **Decided** (2026-11-16, confirmed 2026-11-18). Also no arm64 (#64) and no Windows 10 (#73).
 3. **Where the screens live:** served from `app/public` on disk, updates replace files as today. **Decided: on disk** (2026-11-16).
 4. **Signing:** reopened, see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).

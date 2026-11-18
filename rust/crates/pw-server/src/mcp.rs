@@ -1,5 +1,5 @@
 //! The workspace MCP server (app/mcp.js) on stdio, so Claude CLI can manage the workspace:
-//! `project-workspace-server mcp` (register: claude mcp add project-workspace --scope user -- "<exe>" mcp).
+//! `workspace-server mcp` (register: claude mcp add project-workspace --scope user -- "<exe>" mcp).
 use pw_core::workspace::{self as w, Project, Workspace};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
