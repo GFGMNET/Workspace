@@ -2,7 +2,7 @@
 
 Version 1.0 is the same app, rebuilt in Rust. It uses your system's browser engine (WebView2 on Windows, WebKitGTK on Linux), so the download is small (about 6 MB) and far fewer security updates are needed. The screens, the data folder and all files stay the same.
 
-The current beta is **0.9.0.5** (the first was 0.9.0). It is a *pre-release* on the [Releases page](https://github.com/GFGMNET/Workspace/releases): installed 0.x apps never get it by themselves.
+The current beta is **0.9.0.6** (earlier: 0.9.0, 0.9.0.5). It is a *pre-release* on the [Releases page](https://github.com/GFGMNET/Workspace/releases): installed 0.x apps never get it by themselves.
 
 ## Try it
 1. Make a **copy of your data folder**.
