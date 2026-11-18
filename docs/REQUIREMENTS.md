@@ -34,8 +34,9 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B9 | Org chart | ✅ v0.1 | |
 | B10 | Map: offline image with pins | ✅ v0.1 | |
 | B11 | Calendar | ✅ v0.1 | |
-| B12 | Chat window that uses Claude CLI | ✅ v0.1 · real-CLI test open | #9 |
+| B12 | Chat window that uses Claude CLI | ✅ v0.1 · tested with the real CLI in the 1.0 beta | #9 |
 | B13 | Chat permissions defined per project | ✅ v0.1 | |
+| B18 | Chat keeps working when you go to another page; Stop stops it; *Always allow* counts at once | ✅ | #70, #71 |
 | B14 | Tables, lists, cards for records; files | ✅ v0.1 | |
 | B15 | Scripts: create scripts inside a project with a code editor | ✅ | #23 |
 | B16 | GitHub issues of a repository as a feature | ✅ | #28 |
@@ -64,6 +65,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W15 | Everything due in all projects on the home page; reminders, tray icon, start with Windows (desktop app) | ✅ | #40 |
 | W16 | Backup of the data folder | ❌ not built: documented in the wiki (*Backup*) | |
 | W18 | Versions: Git or SVN per project, local, on a share or an own server (set by IP address and port), no GitHub needed (plan: [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md)) | 📋 v1.2 (Rust) | #60 |
+| W19 | Project header: tabs that don't fit go into *More*; *Manage* is a gear icon (folder path, Claude CLI command, VS Code inside) | ✅ | #68, #69 |
 | W17 | Import / export | ❌ not built: files are copied in and out, documented in the wiki (*Import and Export*) | |
 
 ## Delivery and operations
@@ -90,8 +92,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D18 | The app restarts by itself after an update | ✅ | #35 |
 | D19 | Desktop app in its own window instead of the browser (Electron, Windows and Linux) | ✅ v0.6.0 · to test on Windows | #36 |
 | D20 | Security: weekly check of Electron and bundled libraries, automatic security releases, CodeQL, Dependabot, SECURITY.md | ✅ | |
-| D21 | Version 1.0: core in Rust with Tauri, no bundled browser engine (fewer CVEs) — plan: [MIGRATION-RUST.md](MIGRATION-RUST.md) | 📋 planned | #41, #49–#55 |
-| D22 | Trusted releases: account protection, free code signing (SignPath Foundation) with 1.0, updater checks (plan: [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md)) | 📋 decided: account protection now, signing with 1.0 | #49, #31 |
+| D21 | Version 1.0: core in Rust with Tauri, no bundled browser engine (fewer CVEs) — plan: [MIGRATION-RUST.md](MIGRATION-RUST.md) | 🚧 beta (0.9.0.x) — phases 0–3 done, phase 4 testing | #41, #49–#55 |
+| D22 | Trusted releases: account protection, free code signing (SignPath Foundation) with 1.0, updater checks (plan: [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md)) | 🚧 account protection ✅, updater checks ✅ (signature on Windows, checksum on Linux), build attestations ✅; SignPath signing next (0.9.1) | #49, #31 |
 
 ## Open questions
-

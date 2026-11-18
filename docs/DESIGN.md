@@ -524,13 +524,17 @@ The UI can be rebuilt freely on top of the API in section 7.
 | macOS app | after 1.0 | #56 |
 | VS Code tab: focused layout (editor + explorer) | | #62 |
 
-## 10. Version 1.0: Rust + Tauri (in progress, #41)
+## 10. Version 1.0: Rust + Tauri (beta, #41)
 
 The detailed plan (inventory, crates, phases with exit criteria, tests, risks, decisions) is in [MIGRATION-RUST.md](MIGRATION-RUST.md); milestone *v1.0 (Rust)*, issues #49–#55.
 
-**Status:** phases 0–3 ✅ — the Rust server passes the whole API contract suite (32/32, incl. chat, VS Code proxy, updates,
-GitHub issues, MCP server) and the YAML corpus (33/33) on Linux and Windows. Next: phase 4, the beta **0.9.0** (pre-release,
-unsigned, built by `.github/workflows/build-rust.yml`), tested once by the maintainer; then SignPath (0.9.1) and 1.0.0. The code is in `rust/`.
+**Status:** phases 0–3 ✅ — the Rust server passes the whole API contract suite (34/34, incl. chat, VS Code proxy, updates,
+GitHub issues, MCP server) and the YAML corpus (33/33) on Linux and Windows. Phase 4: betas **0.9.0.x** (pre-releases, unsigned,
+built by `.github/workflows/build-rust.yml`, Windows x64 + Linux x64; arm64 #64) are being tested by the maintainer.
+Then SignPath (0.9.1) and 1.0.0. The code is in `rust/`; the plan and status: [MIGRATION-RUST.md](MIGRATION-RUST.md).
+
+**Differences to 0.x:** the window's X quits the app (no hiding in the tray); a running 0.x app on the same port is left alone
+(1.0 takes the next free port); clicking a reminder doesn't open the item yet; on Linux the secrets are entered again.
 
 **Why.** Security, not speed: most CVEs we have to ship come from Chromium and Node.js inside Electron (7g).
 With Tauri the app uses the browser engine of the system — **WebView2** on Windows (updated by Windows/Edge, not by us),
@@ -559,30 +563,31 @@ crates/
 app/public    unchanged screens, served by pw-server
 ```
 
-**Choices to confirm in the prototype**
-- YAML: `serde_yaml` is unmaintained; candidates `saphyr` / `yaml-rust2`. Comment-preserving record updates (today
-  `YAML.updateMapping`) need our own text-level edit of top-level keys. Merge keys, anchors, several documents must behave as today.
-- The page loaded from `http://localhost` inside WebView2/WebKitGTK: VS Code tab (iframe, WebSockets), Mermaid, file drag & drop, paste.
+**Choices made in the prototype**
+- YAML: `yaml-rust2`, plus our own forgiving reader for sloppy files and a text-level, comment-keeping update of records.
+  Merge keys, anchors and several documents behave as in 0.x (YAML corpus 33/33).
+- The page is loaded from `http://localhost` inside WebView2/WebKitGTK; the VS Code tab (iframe, WebSockets), Mermaid, drag & drop
+  and paste work.
 - Linux: WebKitGTK 4.1 must be installed (most desktops have it); `project-workspace-server` has no such need.
-- Windows 10 without WebView2: Tauri's bootstrapper, or a clear message.
+- Open: Windows 10 without WebView2 — Tauri's bootstrapper or a clear message (to do before 1.0).
 
 **Security work that comes with it**
-- `cargo-deny` / `cargo-audit` in CI (advisories, licences, duplicate crates), `Cargo.lock` committed, rustls instead of OpenSSL,
-  minimal crate features. Weekly check like 7g, for crates.
+- rustls instead of OpenSSL, minimal crate features ✅. Still to do before 1.0: `cargo-deny` / `cargo-audit` in CI (advisories,
+  licences, duplicate crates) and `Cargo.lock` committed. Weekly check like 7g, for crates.
 - **Trusted releases:** see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md); whatever is chosen there carries over to 1.0.
 - The security check of 7g then watches crates and the bundled JS libraries; there is no browser engine of our own to patch.
 
-**Moving from 0.x.** The 0.x updater installs 1.0 like any release (program files + new runtime). The last 0.x release removes
+**Moving from 0.x** (to do, phase 5). Today's 0.x updater can't install 1.0 (it looks for `package.json`); the last 0.x release must learn it. The last 0.x release removes
 runtime files that the new package doesn't list (Electron's DLLs and `resources/`), so no leftovers stay behind. Data is untouched.
 
 **Phases**
-0. **API contract tests:** move the HTTP-level checks into a test suite that runs against a server URL, and run it against today's
+0. ✅ **API contract tests:** move the HTTP-level checks into a test suite that runs against a server URL, and run it against today's
    Node server. The Rust server must pass the same suite.
-1. **Prototype** (Windows + Linux): Tauri window, project list, wiki feature, YAML reading incl. the sloppy example, VS Code tab.
+1. ✅ **Prototype** (Windows + Linux): Tauri window, project list, wiki feature, YAML reading incl. the sloppy example, VS Code tab.
    → Decision: go / no go.
-2. **Core:** everything in `pw-core` with the contract tests green.
-3. **The rest:** chat, VS Code proxy, MCP server, updater with signatures, secrets, desktop extras (tray, reminders, autostart).
-4. **Beta** next to 0.x (separate download, same data folder after a backup; 0.x keeps getting security releases).
+2. ✅ **Core:** everything in `pw-core` with the contract tests green.
+3. ✅ **The rest:** chat, VS Code proxy, MCP server, updater with signatures, secrets, desktop extras (tray, reminders, autostart).
+4. 🚧 **Beta** next to 0.x (separate download, same data folder after a backup; 0.x keeps getting security releases).
 5. **1.0**: the 0.x apps are offered the update.
 
 Effort: several weeks; most of it in phases 2–3. The screens are reused, which saves about half of the work.

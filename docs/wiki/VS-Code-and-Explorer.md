@@ -14,7 +14,7 @@ The **Scripts** feature is an explorer for the `scripts/` folder of a project. *
 
 ## Desktop VS Code
 
-- **VS Code** in the project header opens the project folder in your installed VS Code.
+- **Manage** (gear icon in the project header) → **Open in VS Code** opens the project folder in your installed VS Code.
 - **Open in VS Code** on a file opens the folder and jumps to that file.
 - This uses the `code` command. If nothing happens, make sure VS Code is installed with "Add to PATH", or set `VSCODE_COMMAND`.
 

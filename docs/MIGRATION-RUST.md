@@ -105,7 +105,7 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | 1 | Prototype, go/no-go | ✅ done — **go** |
 | 2 | The core | ✅ done (2026-11-16) |
 | 3 | Chat, VS Code, updater, MCP, desktop extras | ✅ done (2026-11-16) |
-| 4 | Beta next to 0.x | 0.9.0 tested 2026-11-17 → fixes #65–#69 → 0.9.0.5 |
+| 4 | Beta next to 0.x | 0.9.0 tested 2026-11-17 → fixes #65–#69 → 0.9.0.5 tested → fixes #70, #71 → 0.9.0.6 |
 | 5 | Release 1.0 | |
 
 **Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), SignPath signing last, just before 1.0.
@@ -207,8 +207,9 @@ answers (`project-workspace-server mcp`). How it was done:
 
 ### Phase 5: release 1.0 (1–2 days)
 
-- 0.9.0 (beta) and 0.9.1 (signed) are **pre-releases**; only 1.0.0 is a full release, so 0.x apps never see the betas.
-- Last 0.x release (0.x.y) first: its updater must recognise the 1.0 package (it has `project-workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
+- Before 1.0: cargo-deny/cargo-audit + Cargo.lock (#72), Windows 10 without WebView2 (#73), reminder click (#75).
+- 0.9.0.x (betas) and 0.9.1 (signed) are **pre-releases**; only 1.0.0 is a full release, so 0.x apps never see the betas.
+- Last 0.x release (0.x.y) first (#74): its updater must recognise the 1.0 package (it has `project-workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
 - Release 1.0.0 as the latest release. 0.x apps offer the update; after the restart the Tauri app starts.
 - Docs: README, Getting started, wiki (Desktop App, Data and Updates, Security), DESIGN.md (the Node/Electron sections become "history").
 - macOS is not built (#56, later).

@@ -32,7 +32,7 @@ chat:
 
 ## Claude CLI in a terminal
 
-**Claude CLI** in the project header copies `cd <project> && claude`. Skills and MCP work there too.
+In a project, open **Manage** (gear icon) → **Copy Claude CLI command**: it copies `cd <project> && claude`. Skills and MCP work there too.
 
 ## Let Claude manage the workspace
 
@@ -46,6 +46,12 @@ With the desktop app (no Node.js installed), use the app's own runtime. The home
 
 ```
 claude mcp add project-workspace --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\Workspace\ProjectWorkspace.exe" "C:\Workspace\app\mcp.js"
+```
+
+From version 1.0 (Rust) the program is its own MCP server:
+
+```
+claude mcp add project-workspace --scope user -- "C:\Workspace\ProjectWorkspace.exe" mcp
 ```
 
 The name `workspace` is reserved in Claude CLI, so the server is called **project-workspace**.
