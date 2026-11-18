@@ -549,6 +549,8 @@ VIEWS.chat = async ctx => {
     <span class="faint small">Allowed tools stay allowed in this chat.</span></div></div>`;
   let chat = { messages: [] }, chatId = id, running = null;
   if (id) { try { chat = (await api(itemsUrl(ctx, '/' + enc(id)))).chat; } catch { chat = { messages: [] }; } }
+  const liveUrl = cid => `/api/projects/${enc(ctx.p.slug)}/f/${enc(ctx.f.key)}/chat/${enc(cid)}`;
+  const alive = () => document.body.contains(msgs);
   const paint = () => {
     const last = chat.messages[chat.messages.length - 1];
     msgs.innerHTML = chat.messages.map((m, i) => renderMsg({ ...m, pending: m === last && !running })).join('') ||
@@ -562,7 +564,7 @@ VIEWS.chat = async ctx => {
   paint();
   const send = async (text, allowTools = []) => {
     if (running || !text.trim()) return;
-    App.dirty = true;
+    // no "unsaved changes": the answer keeps coming on the server when you go to another page
     chat.messages.push({ role: 'user', text });
     const reply = { role: 'assistant', text: '', tools: [] }; chat.messages.push(reply);
     paint();
@@ -604,12 +606,51 @@ VIEWS.chat = async ctx => {
         }
       }
     } catch (e) { if (e.name === 'AbortError') reply.stopped = true; else reply.error = e.message; }
-    running = null; App.dirty = false;
+    running = null;
+    if (!alive()) return; // the person went to another page; the answer is saved in the chat
     sendBtn.innerHTML = icon('send', 14) + ' Send'; sendBtn.classList.add('primary');
     try { chat = (await api(itemsUrl(ctx, '/' + enc(chatId)))).chat; } catch {}
     paint(); App.refreshProjects(); App.refreshProjectOnly();
   };
-  form.onsubmit = e => { e.preventDefault(); if (running) { running.abort(); return; } send(ta.value); };
+  // Stop asks the server to stop Claude (leaving the page doesn't); an older server stops when the stream closes
+  const stop = async () => { const ac = running; try { if (!chatId) throw 0; const r = await api(liveUrl(chatId) + '/stop', { method: 'POST' }); if (!r.stopped) throw 0; } catch { ac && ac.abort(); } };
+  form.onsubmit = e => { e.preventDefault(); if (running) { stop(); return; } send(ta.value); };
+  // Claude is still working on this chat (started before you came back): show the answer so far until it is done
+  const follow = async () => {
+    let st; try { st = await api(liveUrl(id)); } catch { return; }
+    if (!st.running) return;
+    running = { abort() {} };
+    sendBtn.innerHTML = icon('stop', 14) + ' Stop'; sendBtn.classList.remove('primary');
+    let lastText = null, asked = '';
+    while (st.running && alive()) {
+      const key = st.permissions.map(q => q.req).join();
+      if (st.reply.text !== lastText || key !== asked) {
+        lastText = st.reply.text; asked = key;
+        paint();
+        const live = document.createElement('div'); live.className = 'msg assistant';
+        live.innerHTML = `${st.reply.tools.length ? `<div class="tools">${st.reply.tools.map(t => `<span class="tool ${t.error ? 'err' : ''}" title="${esc(t.input)}">${esc(t.name)}${t.input ? ' · ' + esc(t.input) : ''}</span>`).join('')}</div>` : ''}
+          ${st.permissions.map(q => `<div class="deny permq" data-req="${esc(q.req)}"><b>Claude wants to use ${esc(q.tool)}</b>${q.input ? `<span class="mono small">${esc(q.input)}</span>` : ''}
+            ${q.detail && q.detail !== q.input ? `<pre class="code small" style="max-height:220px;overflow:auto;margin:6px 0">${esc(q.detail)}</pre>` : ''}
+            <div class="row"><button class="btn sm primary" type="button" data-a="once">Allow</button><button class="btn sm" type="button" data-a="always">Always allow in this chat</button><button class="btn sm ghost" type="button" data-a="no">Don't allow</button></div></div>`).join('')}
+          <div class="md typing">${md(st.reply.text || '')}</div><div class="faint small">Claude is still working on this…</div>`;
+        msgs.appendChild(live); hydrateMarkdown(live); msgs.scrollTop = msgs.scrollHeight;
+        $$('[data-req]', live).forEach(box => $$('[data-a]', box).forEach(b => b.onclick = async () => {
+          $$('button', box).forEach(x => (x.disabled = true));
+          const q = st.permissions.find(x => x.req === box.dataset.req);
+          try { await api(`/api/chat-permission/${q.turn}/${q.req}/answer`, { body: { allow: b.dataset.a !== 'no', always: b.dataset.a === 'always' } }); }
+          catch (e) { box.insertAdjacentHTML('beforeend', `<div class="err small">${esc(e.message)}</div>`); }
+        }));
+      }
+      await new Promise(r => setTimeout(r, 1000));
+      try { st = await api(liveUrl(id)); } catch { break; }
+    }
+    if (!alive()) return;
+    running = null;
+    sendBtn.innerHTML = icon('send', 14) + ' Send'; sendBtn.classList.add('primary');
+    try { chat = (await api(itemsUrl(ctx, '/' + enc(id)))).chat; } catch {}
+    paint();
+  };
+  if (id) follow();
   ta.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); } };
   ta.oninput = () => { ta.style.height = 'auto'; ta.style.height = Math.min(200, ta.scrollHeight) + 'px'; };
   ta.focus();

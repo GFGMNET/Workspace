@@ -59,6 +59,8 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/info", get(info))
         .route("/api/claude", get(|| async { Json(chat::claude_version().await) }))
         .route("/api/projects/{p}/f/{f}/chat", post(chat_turn))
+        .route("/api/projects/{p}/f/{f}/chat/{id}", get(|Path((p, f, id)): Path<(String, String, String)>| async move { Json(chat::live_status(&p, &f, &id)) }))
+        .route("/api/projects/{p}/f/{f}/chat/{id}/stop", post(|Path((p, f, id)): Path<(String, String, String)>| async move { Json(chat::stop_turn(&p, &f, &id)) }))
         .route("/api/chat-permission/{turn}", post(chat_permission))
         .route("/api/chat-permission/{turn}/{req}/answer", post(chat_answer))
         .route("/api/examples", post(examples))

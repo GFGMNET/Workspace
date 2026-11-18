@@ -75,6 +75,8 @@ const turns = new Map(); // turnId → { token, emit, pending: Map(reqId → res
 function requestPermission(turnId, token, body) {
   const t = turns.get(turnId);
   if (!t || !token || token !== t.token) return Promise.resolve({ allow: false, message: 'This chat turn is over.' });
+  // "Always allow in this chat" counts at once, also for the rest of this answer (e.g. every website for WebFetch)
+  if (body.tool && t.allowed && t.allowed(String(body.tool))) return Promise.resolve({ allow: true });
   const req = crypto.randomBytes(6).toString('hex');
   return new Promise(resolve => {
     const timer = setTimeout(() => { t.pending.delete(req); resolve({ allow: false, message: 'No answer in time.' }); t.emit({ type: 'permission_done', req }); }, 10 * 60 * 1000);
@@ -138,6 +140,7 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   if (mode === 'ask' && process.env.PW_PORT) {
     const toolOf = new Map();
     const turn = { token: crypto.randomBytes(16).toString('hex'), emit: ev => { if (ev.type === 'permission') toolOf.set(ev.req, ev.tool); emit(ev); }, pending: new Map(), tool: r => toolOf.get(r),
+      allowed: tool => chat.allowedTools.includes(tool),
       allowAlways: tool => { if (!chat.allowedTools.includes(tool)) { chat.allowedTools.push(tool); save(); } } };
     turns.set(turnId, turn);
     permFile = path.join(os.tmpdir(), `pw-permission-${turnId}.json`);
@@ -165,7 +168,7 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   const finish = (extra) => {
     if (finished) return; finished = true; cleanup();
     Object.assign(reply, extra || {});
-    if (reply.text || reply.tools.length || reply.error || (reply.denials && reply.denials.length)) chat.messages.push(reply);
+    if (reply.text || reply.tools.length || reply.error || reply.stopped || (reply.denials && reply.denials.length)) chat.messages.push(reply);
     save();
   };
 

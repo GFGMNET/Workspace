@@ -86,6 +86,46 @@ test('permission questions come into the chat and wait for the answer', async ()
   assert.equal((await s.api('POST', `/api/chat-permission/${q.turn}/abcdef/answer`, { body: { allow: true } })).status, 404);
 });
 
+test('a turn keeps running when the screen leaves; its answer so far can be seen and it can be stopped', async () => {
+  const waitDone = async id => { for (let i = 0; i < 100; i++) { const st = (await s.api('GET', `${CHAT}/${id}`)).body; if (!st.running) return st; await new Promise(r => setTimeout(r, 100)); } throw new Error('still running'); };
+  // leave while Claude waits for a permission answer
+  const ev = await s.sse('POST', CHAT, { body: { message: 'PERMISSION' }, until: e => e.type === 'permission' });
+  const id = ev.find(e => e.type === 'chat').id; const q = ev.find(e => e.type === 'permission');
+  const st = (await s.api('GET', `${CHAT}/${id}`)).body;
+  assert.equal(st.running, true);
+  assert.equal(st.permissions.length, 1); assert.equal(st.permissions[0].req, q.req); assert.equal(st.permissions[0].tool, 'Bash');
+  // a second message to the same chat waits
+  const busy = await turn({ chatId: id, message: 'hello' });
+  assert.ok(busy.some(e => e.type === 'error' && /still working/.test(e.message)));
+  // the answer still arrives and is saved
+  await s.api('POST', `/api/chat-permission/${q.turn}/${q.req}/answer`, { body: { allow: true } });
+  await waitDone(id);
+  const saved = (await s.api('GET', `/api/projects/test-2/f/chat/items/${id}`)).body.chat.messages;
+  assert.equal(saved[saved.length - 1].text, 'permission: allow');
+  assert.equal(saved.filter(m => m.role === 'user').length, 1);
+  // Stop ends it
+  const ev2 = await s.sse('POST', CHAT, { body: { message: 'PERMISSION' }, until: e => e.type === 'permission' });
+  const id2 = ev2.find(e => e.type === 'chat').id;
+  assert.equal((await s.api('POST', `${CHAT}/${id2}/stop`)).body.stopped, true);
+  await waitDone(id2);
+  const m2 = (await s.api('GET', `/api/projects/test-2/f/chat/items/${id2}`)).body.chat.messages;
+  assert.equal(m2[m2.length - 1].stopped, true);
+  assert.equal((await s.api('GET', `${CHAT}/nothing`)).body.running, false);
+});
+
+test('"Always allow in this chat" is not asked again', async () => {
+  let id;
+  const ev = await s.sse('POST', CHAT, { body: { message: 'PERMISSION' }, until: e => {
+    if (e.type === 'chat') id = e.id;
+    if (e.type === 'permission') s.api('POST', `/api/chat-permission/${e.turn}/${e.req}/answer`, { body: { allow: true, always: true } });
+    return e.type === 'done' || e.type === 'error';
+  } });
+  assert.ok(ev.some(e => e.type === 'permission'));
+  const ev2 = await turn({ chatId: id, message: 'PERMISSION' });
+  assert.ok(!ev2.some(e => e.type === 'permission'), 'asked again');
+  assert.equal(ev2.filter(e => e.type === 'text').map(e => e.delta).join(''), 'permission: allow');
+});
+
 test('read-only and auto modes are passed to Claude CLI', async () => {
   await s.api('PUT', '/api/projects/test/yaml', { body: { yaml: (await s.api('GET', '/api/projects/test')).body.yaml + 'chat:\n  permissions: read-only\n' } });
   await s.sse('POST', '/api/projects/test/f/chat/chat', { body: { message: 'hi' }, until: e => e.type === 'done' || e.type === 'error' });

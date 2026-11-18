@@ -164,14 +164,38 @@ const routes = [
     ws.saveUpload(d(m[1]), d(m[2]), q.get('folder') || '', q.get('filename') || 'upload.bin', await readBody(req), { mapImage: q.get('map') === '1' })],
 ];
 
+// Chat turns keep running when the screen goes to another page; what Claude said so far is kept here
+// (GET …/chat/<id> shows it, POST …/chat/<id>/stop stops it).
+const liveTurns = new Map();
 async function chatRoute(req, res, slug, key) {
   const body = await json(req);
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
-  const emit = ev => { if (!res.writableEnded) res.write(`data: ${JSON.stringify(ev)}\n\n`); if (ev.type === 'done' || ev.type === 'error') res.end(); };
-  let handle;
+  const write = ev => { if (!res.writableEnded && !res.destroyed) res.write(`data: ${JSON.stringify(ev)}\n\n`); if (ev.type === 'done' || ev.type === 'error') res.end(); };
+  if (body.chatId && liveTurns.has(`${slug}/${key}/${body.chatId}`)) return write({ type: 'error', message: 'Claude is still working on this chat. Wait for the answer or stop it first.' });
+  let live = null, handle;
+  const emit = ev => {
+    if (ev.type === 'chat') { live = { key: `${slug}/${key}/${ev.id}`, reply: { role: 'assistant', text: '', tools: [] }, permissions: [], stop: () => handle && handle.stop() }; liveTurns.set(live.key, live); }
+    if (live) {
+      if (ev.type === 'text') live.reply.text += ev.delta;
+      if (ev.type === 'tool') live.reply.tools.push({ id: ev.id, name: ev.name, input: ev.input });
+      if (ev.type === 'tool_result') { const t = live.reply.tools.find(x => x.id === ev.id); if (t) { t.error = ev.error; t.done = true; } }
+      if (ev.type === 'permission') live.permissions.push(ev);
+      if (ev.type === 'permission_done') live.permissions = live.permissions.filter(x => x.req !== ev.req);
+      if (ev.type === 'done' || ev.type === 'error') liveTurns.delete(live.key);
+    }
+    write(ev);
+  };
   try { handle = chat.runTurn({ slug, key, chatId: body.chatId, message: body.message, allowTools: body.allowTools || [] }, emit); }
   catch (e) { emit({ type: 'error', message: e.message }); return; }
-  res.on('close', () => { if (!res.writableEnded) handle.stop(); });
+}
+function chatLive(slug, key, id) {
+  const l = liveTurns.get(`${slug}/${key}/${id}`);
+  return l ? { running: true, reply: l.reply, permissions: l.permissions } : { running: false };
+}
+function chatStop(slug, key, id) {
+  const l = liveTurns.get(`${slug}/${key}/${id}`);
+  if (l) l.stop();
+  return { ok: true, stopped: !!l };
 }
 
 const server = http.createServer(async (req, res) => {
@@ -198,6 +222,8 @@ const server = http.createServer(async (req, res) => {
     }
     const cm = url.pathname.match(new RegExp(`^${P}/f/([^/]+)/chat$`));
     if (cm && req.method === 'POST') return chatRoute(req, res, d(cm[1]), d(cm[2]));
+    const cl = url.pathname.match(new RegExp(`^${P}/f/([^/]+)/chat/([^/]+)(/stop)?$`));
+    if (cl && req.method === (cl[4] ? 'POST' : 'GET')) return send(res, 200, cl[4] ? chatStop(d(cl[1]), d(cl[2]), d(cl[3])) : chatLive(d(cl[1]), d(cl[2]), d(cl[3])));
     if (url.pathname === '/api/fs/raw') {
       const f = files.absPath(url.searchParams.get('scope'), url.searchParams.get('path'));
       if (!fs.statSync(f).isFile()) return send(res, 404, { error: 'Not a file' });

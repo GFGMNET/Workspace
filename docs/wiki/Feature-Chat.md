@@ -74,3 +74,9 @@ projects/<project>/chats/
 - Set permissions per project — e.g. `auto` for a scratch project, `read-only` for client data.
 
 See also: [[Features]] · [[Building Blocks|Building-Blocks]] · [[Projects]]
+
+## While Claude works
+- You can go to another page while Claude answers. It keeps working; come back to the chat to see the answer so far and any question it is waiting for.
+- **Stop** stops Claude.
+- **Always allow in this chat** counts at once: Claude isn't asked again for that tool, not even later in the same answer (e.g. each website it reads).
+

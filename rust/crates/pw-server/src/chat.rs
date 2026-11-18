@@ -148,10 +148,56 @@ impl ChatFile {
     }
 }
 
+// ---------- turns that run in the background ----------
+/// A turn keeps running when the screen goes to another page; its answer so far is kept here
+/// (GET …/chat/<id> shows it, POST …/chat/<id>/stop stops it).
+struct Live { reply: Value, permissions: Vec<Value>, stop: Option<oneshot::Sender<()>> }
+fn live_map() -> &'static Mutex<HashMap<String, Live>> {
+    static L: OnceLock<Mutex<HashMap<String, Live>>> = OnceLock::new();
+    L.get_or_init(Default::default)
+}
+fn live_key(slug: &str, key: &str, id: &str) -> String { format!("{slug}/{key}/{id}") }
+/// Sends an event to the screen (if it is still listening) and keeps the live answer up to date.
+#[derive(Clone)]
+struct Emitter { tx: mpsc::UnboundedSender<Value>, key: String }
+impl Emitter {
+    fn send(&self, ev: Value) -> Result<(), ()> {
+        {
+            let mut all = live_map().lock().unwrap();
+            match ev["type"].as_str().unwrap_or("") {
+                "done" | "error" => { all.remove(&self.key); }
+                t => if let Some(l) = all.get_mut(&self.key) {
+                    match t {
+                        "text" => { let s = l.reply["text"].as_str().unwrap_or("").to_string() + ev["delta"].as_str().unwrap_or(""); l.reply["text"] = json!(s); }
+                        "tool" => { if let Some(a) = l.reply["tools"].as_array_mut() { a.push(json!({ "id": ev["id"], "name": ev["name"], "input": ev["input"] })); } }
+                        "tool_result" => { if let Some(x) = l.reply["tools"].as_array_mut().and_then(|a| a.iter_mut().find(|x| x["id"] == ev["id"])) { x["error"] = ev["error"].clone(); x["done"] = json!(true); } }
+                        "permission" => l.permissions.push(ev.clone()),
+                        "permission_done" => l.permissions.retain(|p| p["req"] != ev["req"]),
+                        _ => {}
+                    }
+                },
+            }
+        }
+        self.tx.send(ev).map_err(|_| ())
+    }
+}
+/// GET /api/projects/<p>/f/<chat>/chat/<id>: is Claude still working on it, and what it has said so far.
+pub fn live_status(slug: &str, key: &str, id: &str) -> Value {
+    match live_map().lock().unwrap().get(&live_key(slug, key, id)) {
+        Some(l) => json!({ "running": true, "reply": l.reply, "permissions": l.permissions }),
+        None => json!({ "running": false }),
+    }
+}
+/// POST /api/projects/<p>/f/<chat>/chat/<id>/stop
+pub fn stop_turn(slug: &str, key: &str, id: &str) -> Value {
+    let s = live_map().lock().unwrap().get_mut(&live_key(slug, key, id)).and_then(|l| l.stop.take());
+    json!({ "ok": true, "stopped": s.map(|s| s.send(()).is_ok()).unwrap_or(false) })
+}
+
 // ---------- permission questions ----------
 struct Turn {
     token: String,
-    tx: mpsc::UnboundedSender<Value>,
+    tx: Emitter,
     pending: HashMap<String, (String, oneshot::Sender<Value>)>,
     chat: Arc<Mutex<ChatFile>>,
 }
@@ -167,6 +213,8 @@ pub async fn request_permission(turn: &str, token: &str, body: &Value) -> Value 
         let Some(t) = all.get_mut(turn).filter(|t| !token.is_empty() && t.token == token) else { return json!({ "allow": false, "message": "This chat turn is over." }) };
         let (stx, srx) = oneshot::channel();
         let tool = body["tool"].as_str().unwrap_or("").to_string();
+        // "Always allow in this chat" counts at once, also for the rest of this answer (e.g. every website for WebFetch)
+        if !tool.is_empty() && t.chat.lock().unwrap().chat["allowedTools"].as_array().map(|a| a.iter().any(|x| x == tool.as_str())).unwrap_or(false) { return json!({ "allow": true }); }
         let input = body.get("input").cloned().unwrap_or(json!({}));
         t.pending.insert(req.clone(), (tool.clone(), stx));
         let _ = t.tx.send(json!({ "type": "permission", "turn": turn, "req": req, "tool": tool, "input": summarize(&input), "detail": detail(&tool, &input) }));
@@ -210,6 +258,8 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
         }
     };
     let file = pw_core::items::item_path(&p, f, &id)?;
+    let lk = live_key(slug, key, &id);
+    if live_map().lock().unwrap().contains_key(&lk) { return Err(err(409, "Claude is still working on this chat. Wait for the answer or stop it first.")); }
     let mut chat: Value = std::fs::read_to_string(&file).ok().and_then(|t| serde_json::from_str(&t).ok()).ok_or_else(|| err(404, format!("Item \"{id}\" not found")))?;
     let mut allowed: Vec<String> = chat["allowedTools"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
     for t in body["allowTools"].as_array().into_iter().flatten().filter_map(|x| x.as_str()) { if !allowed.iter().any(|a| a == t) { allowed.push(t.to_string()); } }
@@ -222,7 +272,13 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
     let cf = Arc::new(Mutex::new(ChatFile { path: file, chat }));
     cf.lock().unwrap().save();
 
-    let (tx, rx) = mpsc::unbounded_channel::<Value>();
+    let (stop_tx, mut stop_rx) = oneshot::channel::<()>();
+    {
+        let mut all = live_map().lock().unwrap();
+        all.insert(lk.clone(), Live { reply: json!({ "role": "assistant", "text": "", "tools": [] }), permissions: vec![], stop: Some(stop_tx) });
+    }
+    let (raw_tx, rx) = mpsc::unbounded_channel::<Value>();
+    let tx = Emitter { tx: raw_tx, key: lk.clone() };
     let _ = tx.send(json!({ "type": "chat", "id": id, "title": title, "mode": mode }));
 
     // the prompt, with the project's notes on the first turn
@@ -280,7 +336,7 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
         let finish = |reply: &mut Value, extra: Value| {
             if let Value::Object(o) = extra { for (k, v) in o { if !v.is_null() { reply[k] = v; } } }
             let mut c = cf.lock().unwrap();
-            let keep = reply["text"] != "" || reply["tools"].as_array().map(|a| !a.is_empty()).unwrap_or(false) || !reply["error"].is_null()
+            let keep = reply["text"] != "" || reply["tools"].as_array().map(|a| !a.is_empty()).unwrap_or(false) || !reply["error"].is_null() || reply["stopped"] == true
                 || reply["denials"].as_array().map(|a| !a.is_empty()).unwrap_or(false);
             if keep { c.chat["messages"].as_array_mut().unwrap().push(reply.clone()); }
             c.save();
@@ -305,7 +361,8 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
         loop {
             let line = tokio::select! {
                 l = lines.next_line() => match l { Ok(Some(l)) => l, _ => break },
-                _ = tx.closed() => { let _ = child.kill().await; stopped = true; break; }
+                // only Stop ends a turn early; leaving the page doesn't
+                _ = &mut stop_rx => { let _ = child.kill().await; stopped = true; break; }
             };
             let Ok(ev) = serde_json::from_str::<Value>(line.trim()) else { continue };
             match ev["type"].as_str().unwrap_or("") {
