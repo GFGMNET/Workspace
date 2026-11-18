@@ -10,7 +10,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 
 - Runs on **Windows 11 (x64)** and **Linux (x64)**. Not supported: Windows 10, ARM (e.g. Raspberry Pi), macOS.
 - Try the beta: [pre-releases](https://github.com/GFGMNET/Workspace/releases) (`workspace-v0.9…`), steps in the wiki: [Beta of 1.0](https://github.com/GFGMNET/Workspace/wiki/Beta-1.0). Work on a **copy** of your data folder.
-- Status and plan: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md). Installed 0.x apps are offered 1.0 when it is released.
+- Status and plan: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md). The Windows program is signed — [Code signing policy](CODE-SIGNING-POLICY.md). Installed 0.x apps are offered 1.0 when it is released.
 
 ## Start (current version 0.x)
 
@@ -93,7 +93,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 - **New here?** [Getting started](docs/GETTING-STARTED.md) · [Wiki](https://github.com/GFGMNET/Workspace/wiki)
 - Full design and rebuild guide: [docs/DESIGN.md](docs/DESIGN.md)
 - Requirements and their status: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
-- Security, reporting a vulnerability: [SECURITY.md](SECURITY.md)
+- Security, reporting a vulnerability: [SECURITY.md](SECURITY.md) · [Code signing policy](CODE-SIGNING-POLICY.md)
 - Bugs and ideas: [Issues](https://github.com/GFGMNET/Workspace/issues)
 - Tests: `npm test` (unit checks), `npm run test:contract` (API contract, also run against the Rust version), `npm run test:yaml`
 - Settings (environment variables): `PORT` (default 4321), `WORKSPACE_DIR` (data folder, default `data/`), `CLAUDE_COMMAND` (default `claude`)

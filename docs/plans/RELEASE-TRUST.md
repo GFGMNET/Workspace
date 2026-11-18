@@ -66,7 +66,7 @@ What the project has to do once: a short **Code signing policy** section in the 
 | Step | When | Effort |
 |---|---|---|
 | Part 1: account protection | now, by you | 15 minutes |
-| Apply at SignPath Foundation (form; they check the project) | before the 1.0 beta | 30 minutes + their review |
+| Apply at SignPath Foundation (form; they check the project) — code signing policy ready: `CODE-SIGNING-POLICY.md` (2026-11-18) | now, by the maintainer | 30 minutes + their review |
 | Part 2: signing in the Windows build of 1.0, code signing policy page | phase 4 of the Rust plan | 1 day |
 | Part 3: updater checks (Windows signature, Linux checksum + attestation) | phase 3 of the Rust plan | 1 day |
 

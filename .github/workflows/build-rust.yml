@@ -151,5 +151,7 @@ jobs:
           v=${{ needs.version.outputs.v }}
           cd dist && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS && cd ..
           notes="docs/releases/v$v.md"
-          if [ -f "$notes" ]; then n=(--notes-file "$notes"); else n=(--generate-notes); fi
+          # every release page links the code signing policy (SignPath Foundation rule)
+          { [ -f "$notes" ] && cat "$notes"; printf '\n\n---\n[Code signing policy](https://github.com/GFGMNET/Workspace/blob/main/CODE-SIGNING-POLICY.md) · free code signing by SignPath.io, certificate by SignPath Foundation\n'; } > /tmp/notes.md
+          n=(--notes-file /tmp/notes.md)
           gh release create "v$v" dist/*.zip dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Workspace v$v (1.0 beta, Rust)" "${n[@]}"
