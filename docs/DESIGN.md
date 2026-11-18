@@ -539,7 +539,7 @@ downloads `workspace-vX.Y.Z-…zip`); decided 2026-11-18 (#77). The MCP server k
 in Claude CLI).
 
 **Differences to 0.x:** the window's X quits the app (no hiding in the tray); a running 0.x app on the same port is left alone
-(1.0 takes the next free port); clicking a reminder doesn't open the item yet; on Linux the secrets are entered again.
+(1.0 takes the next free port); a reminder can't be clicked (the due items are listed in the tray menu instead — one click opens the item, #75); on Linux the secrets are entered again.
 
 **Why.** Security, not speed: most CVEs we have to ship come from Chromium and Node.js inside Electron (7g).
 With Tauri the app uses the browser engine of the system — **WebView2** on Windows (updated by Windows/Edge, not by us),

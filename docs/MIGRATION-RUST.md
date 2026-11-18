@@ -196,7 +196,7 @@ answers (`workspace-server mcp`). How it was done:
   desktop app). 0.x keys (`protected: os`) are taken over on Windows from `data/.app/Local State`; on Linux they are entered again;
 - desktop: X quits the app (decided 2026-11-17); tray menu (open, due today, reminders, start with the computer, open in browser, data folder, wiki,
   quit), reminders every 30 minutes, single instance, window size in `data/.window.json`, links outside the workspace open
-  in the browser. Difference to 0.x: clicking a reminder doesn't open the item (Tauri can't do that on Windows/Linux yet).
+  in the browser. Difference to 0.x: a reminder can't be clicked (Tauri can't do that on Windows/Linux); instead the tray menu lists what is due — one click opens the item (#75).
 
 ### Phase 4: beta next to 0.x (2–4 weeks of use, little work)
 
@@ -207,7 +207,7 @@ answers (`workspace-server mcp`). How it was done:
 
 ### Phase 5: release 1.0 (1–2 days)
 
-- Before 1.0: cargo-deny/cargo-audit + Cargo.lock (#72), reminder click (#75).
+- Before 1.0: cargo-deny + Cargo.lock (#72, check added 2026-11-18), reminder click (#75, done via the tray menu).
 - Platforms of 1.0 (decided 2026-11-18): Windows 11 x64 and Linux x64. Not supported: Windows 10 (#73), arm64 (#64), macOS (#56).
 - 0.9.0.x (betas) and 0.9.1 (signed) are **pre-releases**; only 1.0.0 is a full release, so 0.x apps never see the betas.
 - Last 0.x release (0.x.y) first (#74): its updater must recognise the 1.0 package (it has `workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.

@@ -164,6 +164,10 @@ fn open_window(h: &AppHandle, url: &str, hash: Option<&str>) {
     if let (Some(x), Some(y)) = (st["x"].as_f64(), st["y"].as_f64()) { b = b.position(x, y); }
     if let Ok(w) = b.build() { if st["maximized"] == true { let _ = w.maximize(); } }
 }
+/// Like encodeURIComponent, for the parts of a screen address.
+fn enc(s: &str) -> String {
+    s.bytes().map(|b| if b.is_ascii_alphanumeric() || b"-_.!~*'()".contains(&b) { (b as char).to_string() } else { format!("%{b:02X}") }).collect()
+}
 fn show_window(h: &AppHandle, url: &str, hash: Option<&str>) {
     match h.get_webview_window("main") {
         None => open_window(h, url, hash),
@@ -215,7 +219,15 @@ impl Desktop {
         let ver = MenuItem::with_id(h, "version", format!("Version {}", pw_server::VERSION), false, None::<&str>)?;
         let quit = MenuItem::with_id(h, "quit", "Quit", true, None::<&str>)?;
         let (s1, s2, s3) = (PredefinedMenuItem::separator(h)?, PredefinedMenuItem::separator(h)?, PredefinedMenuItem::separator(h)?);
-        let items: [&dyn IsMenuItem<tauri::Wry>; 12] = [&open, &due, &s1, &rem, &auto, &s2, &browser, &folder, &wiki, &ver, &s3, &quit];
+        // the due items themselves (a click opens it; notifications can't be clicked on Windows/Linux, #75)
+        let list: Vec<MenuItem<tauri::Wry>> = self.due.lock().unwrap().iter().take(8).enumerate().map(|(i, d)| {
+            let t = |k: &str| d[k].as_str().unwrap_or("").to_string();
+            let label: String = format!("{}{} — {}", if d["overdue"] == true { "⚠ " } else { "   " }, t("title"), t("projectName")).chars().take(70).collect();
+            MenuItem::with_id(h, format!("due:{i}"), label, true, None::<&str>)
+        }).collect::<tauri::Result<_>>()?;
+        let mut items: Vec<&dyn IsMenuItem<tauri::Wry>> = vec![&open, &due];
+        items.extend(list.iter().map(|m| m as &dyn IsMenuItem<tauri::Wry>));
+        items.extend([&s1 as &dyn IsMenuItem<tauri::Wry>, &rem, &auto, &s2, &browser, &folder, &wiki, &ver, &s3, &quit]);
         Menu::with_items(h, &items)
     }
     fn refresh_tray(self: &Arc<Self>, h: &AppHandle, url: &str, quitting: &Arc<Mutex<bool>>) -> tauri::Result<()> {
@@ -232,6 +244,13 @@ impl Desktop {
                 match e.id.as_ref() {
                     "open" => show_window(app, &url_m, None),
                     "due" => show_window(app, &url_m, Some("#/")),
+                    id if id.starts_with("due:") => {
+                        let d = id[4..].parse::<usize>().ok().and_then(|i| me.due.lock().unwrap().get(i).cloned());
+                        if let Some(d) = d {
+                            let part = |k: &str| enc(d[k].as_str().unwrap_or(""));
+                            show_window(app, &url_m, Some(&format!("#/p/{}/{}/{}", part("project"), part("feature"), part("id"))));
+                        }
+                    }
                     "notifications" => { let v = me.settings()["notifications"] != true; me.set("notifications", json!(v)); }
                     "autostart" => { let v = me.settings()["autostart"] != true; me.set("autostart", json!(v)); me.apply_autostart(app); }
                     "browser" => { let _ = app.opener().open_url(&url_m, None::<&str>); }

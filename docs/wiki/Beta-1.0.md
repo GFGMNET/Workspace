@@ -17,7 +17,7 @@ Check what you use every day: projects, records, pictures, the chat with Claude,
 - 0.9.0 is **not signed**: Windows SmartScreen warns. Choose *More info → Run anyway*. 0.9.1 will be signed.
 - Linux needs WebKitGTK 4.1 for the window (most desktops have it). `workspace-server` runs without a window.
 - Secrets: on Windows they are taken over from 0.x; on Linux enter them again once.
-- Clicking a reminder does not open the item yet.
+- A reminder can't be clicked; the tray menu lists what is due — click an entry to open it.
 - The X closes the app (it doesn't hide in the tray like 0.x).
 - Quit a running 0.x app first (tray → Quit).
 
