@@ -105,7 +105,7 @@ fn unzip(bytes: &[u8], dest: &Path) -> Result<(), String> {
     z.validate_header_consistency().map_err(|e| format!("The zip file is not consistent: {e}"))?;
     for i in 0..z.len() {
         let mut f = z.by_index(i).map_err(|e| e.to_string())?;
-        let rel = f.enclosed_name().ok_or_else(|| format!("Unsafe path in zip: {}", f.name()))?;
+        let rel = f.enclosed_name().ok_or_else(|| format!("Unsafe path in zip: {}", f.name().map(|n| n.to_string()).unwrap_or_default()))?;
         let target = dest.join(rel);
         if f.is_symlink() { continue; } // a release never contains links
         if f.is_dir() { fs::create_dir_all(&target).map_err(|e| e.to_string())?; continue; }
