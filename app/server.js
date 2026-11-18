@@ -101,7 +101,7 @@ const routes = [
   ['POST', /^\/api\/update\/check$/, () => updater.check({ force: true })],
   ['POST', /^\/api\/update\/skip$/, async (m, q, req) => updater.skip((await json(req)).version)],
   ['POST', /^\/api\/update\/later$/, () => updater.later()],
-  ['POST', /^\/api\/update\/apply$/, async () => { const r = await updater.apply(); setTimeout(() => restart(r.swap), 600); return { ...r, restarting: true }; }],
+  ['POST', /^\/api\/update\/apply$/, async () => { const r = await updater.apply(); setTimeout(() => restart(r.swap, r.handover), 600); const { handover, ...shown } = r; return { ...shown, restarting: true }; }],
   // chat permission questions: asked by lib/permission-mcp.js (token), answered from the chat
   ['POST', /^\/api\/chat-permission\/([a-f0-9]+)$/, async (m, q, req) => chat.requestPermission(m[1], req.headers['x-pw-token'], await json(req))],
   ['POST', /^\/api\/chat-permission\/([a-f0-9]+)\/([a-f0-9]+)\/answer$/, async (m, q, req) => chat.answerPermission(m[1], m[2], await json(req))],
@@ -260,11 +260,12 @@ const server = http.createServer(async (req, res) => {
 
 // Restart after an update. start.bat/start.sh run the server in a loop and restart it on exit code 75;
 // without them we start a new process ourselves.
-function restart(swap) {
+function restart(swap, handover) {
   console.log('\n  Updated — restarting…\n');
   try { ide.stop(); } catch {}
   server.close();
-  if (global.pwRestart) return global.pwRestart({ swap }); // desktop app (app/electron/main.js)
+  if (global.pwRestart) return global.pwRestart({ swap, handover }); // desktop app (app/electron/main.js)
+  if (handover) { updater.runHandover(handover.src, handover.backup, handover.unpacked); return setTimeout(() => process.exit(0), 300); } // 1.0 takes over
   if (swap) { updater.runSwap(swap); return setTimeout(() => process.exit(0), 300); } // new runtime: swapped after we quit
   if (process.env.PW_LAUNCHER === 'loop') return process.exit(75);
   // The Windows exe was moved into the backup folder by the update: start the new one in its place.

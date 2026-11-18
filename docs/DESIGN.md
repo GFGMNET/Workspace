@@ -582,8 +582,12 @@ app/public    unchanged screens, served by pw-server
 - **Trusted releases:** see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md); whatever is chosen there carries over to 1.0.
 - The security check of 7g then watches crates and the bundled JS libraries; there is no browser engine of our own to patch.
 
-**Moving from 0.x** (to do, phase 5). Today's 0.x updater can't install 1.0 (it looks for `package.json`); the last 0.x release must learn it. The last 0.x release removes
-runtime files that the new package doesn't list (Electron's DLLs and `resources/`), so no leftovers stay behind. Data is untouched.
+**Moving from 0.x** (#74, built, in the next 0.x release 0.6.3). The 0.x desktop app's updater recognises the 1.0 package
+(`Workspace.exe`/`workspace`, `workspace-server`, `app/public`, no `package.json`), checks it like 1.0 does (Windows: signature of
+SignPath Foundation, product name *Workspace*; Linux: SHA-256 from `SHA256SUMS`), switches off its own "start with the computer"
+entry (1.0 makes its own from the same `data/.desktop.json`), and after it has quit a small script moves the old program files
+into `.update/backup-<version>-…`, moves 1.0 in and starts it. `data/`, `.update/` and `.git/` stay where they are. The Node.js
+package (start.bat/start.sh) isn't offered 1.0: download it by hand.
 
 **Phases**
 0. ✅ **API contract tests:** move the HTTP-level checks into a test suite that runs against a server URL, and run it against today's

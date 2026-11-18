@@ -52,6 +52,7 @@ function main() {
   // Called by the server after an update was installed.
   global.pwRestart = (opts = {}) => {
     process.env.PW_RESTARTED = '1'; quitting = true;
+    if (opts.handover) { require(path.join(APP_DIR, 'lib', 'updater.js')).runHandover(opts.handover.src, opts.handover.backup, opts.handover.unpacked); app.exit(0); return; } // version 1.0 takes over
     if (opts.swap) { require(path.join(APP_DIR, 'lib', 'updater.js')).runSwap(opts.swap); app.exit(0); return; }
     app.relaunch({ execPath: LAUNCH, args: ARGS.filter(a => a !== '--browser' && a !== '--hidden') });
     app.exit(0);

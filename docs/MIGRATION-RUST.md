@@ -210,7 +210,7 @@ answers (`workspace-server mcp`). How it was done:
 - Before 1.0: cargo-deny + Cargo.lock (#72, check added 2026-11-18), reminder click (#75, done via the tray menu).
 - Platforms of 1.0 (decided 2026-11-18): Windows 11 x64 and Linux x64. Not supported: Windows 10 (#73), arm64 (#64), macOS (#56).
 - 0.9.0.x (betas) and 0.9.1 (signed) are **pre-releases**; only 1.0.0 is a full release, so 0.x apps never see the betas.
-- Last 0.x release (0.x.y) first (#74): its updater must recognise the 1.0 package (it has `workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
+- Last 0.x release (0.6.3) first (#74, built 2026-11-18; Linux handover tested, Windows to test with the first signed 1.0 build): its updater must recognise the 1.0 package (it has `workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
 - Release 1.0.0 as the latest release. 0.x apps offer the update; after the restart the Tauri app starts.
 - Docs: README, Getting started, wiki (Desktop App, Data and Updates, Security), DESIGN.md (the Node/Electron sections become "history").
 - macOS is not built (#56, not planned).

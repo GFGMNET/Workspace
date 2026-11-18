@@ -54,8 +54,9 @@ async function check({ force = false } = {}) {
     // The Windows exe package for installations started from the exe, the plain package otherwise.
     const asset = pickAsset(rel.assets || []);
     if (process.env.PW_EXE && !asset) return view(writeState({ lastCheck: Date.now(), latest: null, updateError: null }));
+    const sums = (rel.assets || []).find(a => /^sha256sums(\.txt)?$|\.sha256$/i.test(a.name));
     const latest = { version: String(rel.tag_name || '').replace(/^v/i, ''), name: rel.name || rel.tag_name, notes: rel.body || '', published: rel.published_at,
-      page: rel.html_url, zip: asset ? asset.browser_download_url : rel.zipball_url };
+      page: rel.html_url, zip: asset ? asset.browser_download_url : rel.zipball_url, asset: asset ? asset.name : null, sums: sums ? sums.browser_download_url : null };
     return view(writeState({ lastCheck: Date.now(), latest, updateError: null }));
   } catch (e) {
     return view(writeState({ lastCheck: Date.now(), updateError: 'Could not check for updates: ' + e.message }));
@@ -97,6 +98,67 @@ function findRoot(dir, depth = 0) {
   if (depth > 2) return null;
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) if (e.isDirectory()) { const r = findRoot(path.join(dir, e.name), depth + 1); if (r) return r; }
   return null;
+}
+// Version 1.0 (Workspace, Rust): its package has the server program and the screens, but no package.json.
+const IS_WIN = process.platform === 'win32';
+const NEW_EXE = IS_WIN ? 'Workspace.exe' : 'workspace';
+function findRoot10(dir, depth = 0) {
+  if (fs.existsSync(path.join(dir, IS_WIN ? 'workspace-server.exe' : 'workspace-server')) && fs.existsSync(path.join(dir, NEW_EXE)) && fs.existsSync(path.join(dir, 'app', 'public'))) return dir;
+  if (depth > 2) return null;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) if (e.isDirectory()) { const r = findRoot10(path.join(dir, e.name), depth + 1); if (r) return r; }
+  return null;
+}
+// Windows: 1.0 must be signed by SignPath Foundation, product name "Workspace" (like the 1.0 updater checks).
+function checkSignature(file) {
+  const ps = "$s = Get-AuthenticodeSignature -LiteralPath $env:PW_CHECK_FILE; $v = (Get-Item -LiteralPath $env:PW_CHECK_FILE).VersionInfo.ProductName; Write-Output ('{0}|{1}|{2}' -f $s.Status, $s.SignerCertificate.Subject, $v)";
+  let out = '';
+  try { out = require('child_process').execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', ps], { env: { ...process.env, PW_CHECK_FILE: file }, windowsHide: true, encoding: 'utf8' }).trim(); }
+  catch (e) { throw new Error('The signature could not be checked: ' + e.message); }
+  const [status, subject, product] = out.split('|');
+  if (status !== 'Valid') throw new Error(`The new program is not signed (signature: ${status || 'none'})`);
+  if (!/SignPath Foundation/.test(subject || '')) throw new Error('The new program is signed by someone else');
+  if ((product || '').trim() !== 'Workspace') throw new Error('The new program is not Workspace');
+}
+// Linux: the download must match the SHA-256 in the release's SHA256SUMS.
+async function checkSum(buf, latest) {
+  if (!latest.sums) throw new Error('The release has no checksum list (SHA256SUMS)');
+  const r = await fetch(latest.sums, { headers: { 'User-Agent': 'project-workspace/' + PKG.version }, signal: AbortSignal.timeout(30000) });
+  if (!r.ok) throw new Error(`Checksum list: download failed (${r.status})`);
+  const line = (await r.text()).split('\n').map(l => l.trim().split(/\s+/)).find(([, n]) => n && n.replace(/^\*/, '') === latest.asset);
+  if (!line) throw new Error('The checksum list does not name the download');
+  if (require('crypto').createHash('sha256').update(buf).digest('hex') !== line[0].toLowerCase()) throw new Error('The download is damaged or changed (checksum differs)');
+}
+// The old app's own "start with the computer" entry would point to a program that is gone: remove it.
+// (1.0 reads the same setting from data/.desktop.json and makes its own entry.)
+function oldAutostartOff() {
+  try { if (process.versions.electron) require('electron').app.setLoginItemSettings({ openAtLogin: false, path: process.execPath, args: ['--hidden'] }); } catch {}
+  try { fs.rmSync(path.join(process.env.XDG_CONFIG_HOME || path.join(require('os').homedir(), '.config'), 'autostart', 'project-workspace.desktop'), { force: true }); } catch {}
+}
+// After this app has quit: the old program files go into the backup folder, 1.0 is moved in and started.
+// data/, .update/ and .git/ stay where they are.
+function runHandover(src, backup, unpacked = src) {
+  const install = ws.INSTALL_DIR; const pid = process.pid;
+  const { spawn } = require('child_process');
+  const env = { ...process.env, PW_RESTARTED: '1' };
+  delete env.PW_EXE; delete env.ELECTRON_RUN_AS_NODE;
+  if (IS_WIN) {
+    const script = path.join(install, '.update', 'handover.cmd');
+    fs.writeFileSync(script, ['@echo off',
+      ':wait', `tasklist /FI "PID eq ${pid}" 2>nul | find "${pid}" >nul && (ping -n 2 127.0.0.1 >nul & goto wait)`,
+      `if not exist "${backup}" mkdir "${backup}"`,
+      `for /f "delims=" %%F in ('dir /b /a "${install}"') do if /I not "%%F"=="data" if /I not "%%F"==".update" if /I not "%%F"==".git" move "${install}\%%F" "${backup}\" >nul`,
+      `robocopy "${src}" "${install}" /E /MOVE /R:20 /W:1 /NFL /NDL /NJH /NJS /NP >nul`,
+      `rmdir /S /Q "${unpacked}" 2>nul`,
+      `start "" "${path.join(install, NEW_EXE)}"`, ''].join('\r\n'));
+    spawn('cmd.exe', ['/c', script], { detached: true, stdio: 'ignore', windowsHide: true, env }).unref();
+  } else {
+    const q = s => "'" + String(s).replace(/'/g, "'\\''") + "'";
+    const script = `while kill -0 ${pid} 2>/dev/null; do sleep 0.5; done; mkdir -p ${q(backup)}; ` +
+      `for f in ${q(install)}/* ${q(install)}/.[!.]*; do [ -e "$f" ] || continue; case "$(basename "$f")" in data|.update|.git) ;; *) mv "$f" ${q(backup)}/ ;; esac; done; ` +
+      `cp -a ${q(src)}/. ${q(install)}/ && rm -rf ${q(unpacked)}; chmod +x ${q(path.join(install, 'workspace'))} ${q(path.join(install, 'workspace-server'))} 2>/dev/null; ` +
+      `${q(path.join(install, NEW_EXE))} >/dev/null 2>&1 &`;
+    spawn('/bin/sh', ['-c', script], { detached: true, stdio: 'ignore', env }).unref();
+  }
 }
 const readJson = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
 
@@ -148,7 +210,17 @@ async function apply() {
     fs.mkdirSync(unpacked, { recursive: true });
     unzip(buf, unpacked);
     const src = findRoot(unpacked);
-    if (!src) throw new Error('The download does not look like Project Workspace');
+    if (!src) {
+      // version 1.0 (Workspace): check it, then hand over after this app has quit
+      const src10 = findRoot10(unpacked);
+      if (!src10) throw new Error('The download does not look like Project Workspace');
+      if (!process.env.PW_EXE) throw new Error('Version 1.0 replaces the desktop app; download it from the Releases page');
+      if (IS_WIN) checkSignature(path.join(src10, NEW_EXE)); else await checkSum(buf, latest);
+      oldAutostartOff();
+      writeState({ updatedFrom: PKG.version, updatedTo: latest.version, updatedAt: Date.now(), backup: path.relative(install, backup), updateError: null, skipped: null });
+      busy = false;
+      return { ok: true, from: PKG.version, to: latest.version, backup: path.relative(install, backup), notes: ['Workspace 1.0 replaces this app when it restarts. Your data stays where it is.'], handover: { src: src10, backup, unpacked } };
+    }
     const pkg = JSON.parse(fs.readFileSync(path.join(src, 'package.json'), 'utf8'));
     if (pkg.name !== PKG.name) throw new Error(`Unexpected package "${pkg.name}"`);
     const rt = runtimePlan(install, src); let swap = null;
@@ -190,4 +262,4 @@ async function apply() {
   }
 }
 
-module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset, runSwap };
+module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset, runSwap, runHandover, findRoot10 };
