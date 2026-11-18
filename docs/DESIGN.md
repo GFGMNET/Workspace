@@ -521,7 +521,7 @@ The UI can be rebuilt freely on top of the API in section 7.
 | Ticketsystem (GLPI 11; osTicket dropped) — v1.1, Rust | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
 | Versions (Git or SVN, local or own server) — v1.2, Rust | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
 | Trusted releases (signed exe, update check) | [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) | #49, #31 |
-| macOS app | after 1.0 | #56 |
+| macOS app | ❌ not planned (2026-11-18) | #56 |
 | VS Code tab: focused layout (editor + explorer) | | #62 |
 
 ## 10. Version 1.0: Rust + Tauri (beta, #41)
@@ -530,7 +530,8 @@ The detailed plan (inventory, crates, phases with exit criteria, tests, risks, d
 
 **Status:** phases 0–3 ✅ — the Rust server passes the whole API contract suite (34/34, incl. chat, VS Code proxy, updates,
 GitHub issues, MCP server) and the YAML corpus (33/33) on Linux and Windows. Phase 4: betas **0.9.0.x** (pre-releases, unsigned,
-built by `.github/workflows/build-rust.yml`, Windows x64 + Linux x64; arm64 #64) are being tested by the maintainer.
+built by `.github/workflows/build-rust.yml`, Windows x64 + Linux x64) are being tested by the maintainer. 1.0 is built for **Windows 11 x64 and Linux x64** only:
+no Windows 10 (#73), no arm64 (#64), no macOS (#56) — decided 2026-11-18.
 Then SignPath (0.9.1) and 1.0.0. The code is in `rust/`; the plan and status: [MIGRATION-RUST.md](MIGRATION-RUST.md).
 
 **Differences to 0.x:** the window's X quits the app (no hiding in the tray); a running 0.x app on the same port is left alone
@@ -569,7 +570,7 @@ app/public    unchanged screens, served by pw-server
 - The page is loaded from `http://localhost` inside WebView2/WebKitGTK; the VS Code tab (iframe, WebSockets), Mermaid, drag & drop
   and paste work.
 - Linux: WebKitGTK 4.1 must be installed (most desktops have it); `project-workspace-server` has no such need.
-- Open: Windows 10 without WebView2 — Tauri's bootstrapper or a clear message (to do before 1.0).
+- Windows 10 is not supported (decided 2026-11-18, #73); Windows 11 always has WebView2.
 
 **Security work that comes with it**
 - rustls instead of OpenSSL, minimal crate features ✅. Still to do before 1.0: `cargo-deny` / `cargo-audit` in CI (advisories,

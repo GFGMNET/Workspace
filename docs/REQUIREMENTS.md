@@ -88,11 +88,12 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D14 | New versions are published as GitHub releases by a GitHub Action when a version tag is pushed | ✅ | #26 |
 | D15 | Wiki: a details page per feature with all its options | ✅ | |
 | D16 | Link to the wiki inside the app (sidebar, Help on every feature) | ✅ | |
-| D17 | Linux variant in every release (x64 and arm64, nothing to install) | ✅ | #32 |
+| D17 | Linux variant in every release (x64 and arm64, nothing to install) | ✅ 0.x · 1.0: Linux x64 only (no arm64, #64) | #32 |
 | D18 | The app restarts by itself after an update | ✅ | #35 |
 | D19 | Desktop app in its own window instead of the browser (Electron, Windows and Linux) | ✅ v0.6.0 · to test on Windows | #36 |
 | D20 | Security: weekly check of Electron and bundled libraries, automatic security releases, CodeQL, Dependabot, SECURITY.md | ✅ | |
 | D21 | Version 1.0: core in Rust with Tauri, no bundled browser engine (fewer CVEs) — plan: [MIGRATION-RUST.md](MIGRATION-RUST.md) | 🚧 beta (0.9.0.x) — phases 0–3 done, phase 4 testing | #41, #49–#55 |
+| D23 | Platforms of 1.0: Windows 11 x64 and Linux x64 (no Windows 10, no arm64, no macOS) | ✅ decided 2026-11-18 | #73, #64, #56 |
 | D22 | Trusted releases: account protection, free code signing (SignPath Foundation) with 1.0, updater checks (plan: [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md)) | 🚧 account protection ✅, updater checks ✅ (signature on Windows, checksum on Linux), build attestations ✅; SignPath signing next (0.9.1) | #49, #31 |
 
 ## Open questions

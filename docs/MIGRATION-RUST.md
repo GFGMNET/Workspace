@@ -200,19 +200,20 @@ answers (`project-workspace-server mcp`). How it was done:
 
 ### Phase 4: beta next to 0.x (2–4 weeks of use, little work)
 
-- `.github/workflows/build-rust.yml` (ready) builds Windows x64, Linux x64/arm64, runs all tests, adds build attestations and `SHA256SUMS`, and publishes a **pre-release** (`v0.9.0`; version from `rust/Cargo.toml`). The 0.x updater only looks at the latest *full* release, so nobody gets the beta by accident.
+- `.github/workflows/build-rust.yml` (ready) builds Windows x64 and Linux x64 (no arm64, #64), runs all tests, adds build attestations and `SHA256SUMS`, and publishes a **pre-release** (`v0.9.0`; version from `rust/Cargo.toml`). The 0.x updater only looks at the latest *full* release, so nobody gets the beta by accident.
 - You (and anyone who wants) run the beta on a **copy** of the data folder, then on the real one.
 - Security check (§7) runs for Rust too. Bugs → issues with label `v1.0`.
 - 0.x keeps getting automatic security releases.
 
 ### Phase 5: release 1.0 (1–2 days)
 
-- Before 1.0: cargo-deny/cargo-audit + Cargo.lock (#72), Windows 10 without WebView2 (#73), reminder click (#75).
+- Before 1.0: cargo-deny/cargo-audit + Cargo.lock (#72), reminder click (#75).
+- Platforms of 1.0 (decided 2026-11-18): Windows 11 x64 and Linux x64. Not supported: Windows 10 (#73), arm64 (#64), macOS (#56).
 - 0.9.0.x (betas) and 0.9.1 (signed) are **pre-releases**; only 1.0.0 is a full release, so 0.x apps never see the betas.
 - Last 0.x release (0.x.y) first (#74): its updater must recognise the 1.0 package (it has `project-workspace-server` and `app/public`, no `package.json`/`app/server.js`) and hand over to it; it removes runtime files that the new package doesn't list (Electron's DLLs, `resources/`, `locales/`), so the move to 1.0 leaves nothing behind.
 - Release 1.0.0 as the latest release. 0.x apps offer the update; after the restart the Tauri app starts.
 - Docs: README, Getting started, wiki (Desktop App, Data and Updates, Security), DESIGN.md (the Node/Electron sections become "history").
-- macOS is not built (#56, later).
+- macOS is not built (#56, not planned).
 - `app/server.js`, `app/lib`, `app/electron`, `start.bat`/`start.sh` are removed from the package (kept in git history).
 
 **Total:** about 6–8 weeks of work, plus the beta period.
@@ -254,7 +255,7 @@ Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 |---|---|---|
 | YAML parity (lenient reading, comment-keeping updates) | files read differently | corpus in phase 0; own text-level update of top-level keys |
 | WebKitGTK differences (Linux) | something looks or works differently | test in phase 1; WebKitGTK only where Linux users have a desktop |
-| Old Windows 10 without WebView2 | window doesn't open | Tauri's WebView2 bootstrapper, or a clear message with the download link |
+| Old Windows 10 without WebView2 | window doesn't open | Windows 10 is not supported (#73) |
 | Electron safeStorage on Linux | secrets can't be migrated | re-enter them (documented); Windows migrates automatically |
 | Unsigned exe (#31) | SmartScreen warning stays | separate decision; a smaller exe doesn't change it |
 | Rust know-how for later changes | slower changes by hand | Claude does most changes; DESIGN.md explains the crates; screens stay JavaScript |
@@ -263,7 +264,7 @@ Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 ## 9. Decisions
 
 1. **Node.js package:** 1.0 drops the "run with Node.js" package (`start.bat`/`start.sh`); machines without a screen use `project-workspace-server`. **Decided: yes** (2026-11-16).
-2. **macOS:** not part of 1.0; later improvement (#56). **Decided** (2026-11-16).
+2. **macOS:** not planned (#56). **Decided** (2026-11-16, confirmed 2026-11-18). Also no arm64 (#64) and no Windows 10 (#73).
 3. **Where the screens live:** served from `app/public` on disk, updates replace files as today. **Decided: on disk** (2026-11-16).
 4. **Signing:** reopened, see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).
 

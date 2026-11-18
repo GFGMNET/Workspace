@@ -1,4 +1,4 @@
-# Builds version 1.0 (Rust + Tauri) for Windows x64, Linux x64 and Linux arm64 and publishes it as a
+# Builds version 1.0 (Rust + Tauri) for Windows 11 x64 and Linux x64 (no arm64: #64) and publishes it as a
 # GitHub **pre-release** v<version> (version from rust/Cargo.toml). Installed 0.x apps only look at the
 # latest full release, so nobody gets a pre-release by accident. Run by hand: Actions → "Build 1.0 (Rust)".
 # Every package gets a build attestation (gh attestation verify <zip> -R GFGMNET/Workspace) and is listed
@@ -41,10 +41,7 @@ jobs:
       matrix:
         include:
           - { arch: x64, runner: ubuntu-24.04 }
-          - { arch: arm64, runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.runner }}
-    # arm64: the runner was shut down during the contract tests (#64); the beta goes out without it then
-    continue-on-error: ${{ matrix.arch == 'arm64' }}
     env:
       PW_INSTALL: ${{ github.workspace }}
       PW_VERSION: ${{ needs.version.outputs.v }}
@@ -69,7 +66,6 @@ jobs:
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server {port}
           PW_MCP_CMD: ${{ github.workspace }}/rust/target/release/project-workspace-server mcp
         run: |
-          (while true; do echo "mem: $(free -m | awk '/Mem:/{print $3"/"$2" MB"}') top: $(ps -eo rss,comm --sort=-rss | sed -n 2,4p | tr '\n' ' ')"; sleep 3; done) &
           (cd rust && cargo test -p pw-core -p pw-server --release)
           node --test tests/yaml-corpus/yaml.test.js
           node tests/contract/run.js

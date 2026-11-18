@@ -14,7 +14,7 @@ You need:
 
 **Easiest on Windows:** download `project-workspace-…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest) and unzip it anywhere, for example `C:\Workspace` or a folder in OneDrive. It contains **ProjectWorkspace.exe**, so you don't need Node.js.
 
-**Linux:** download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi), unzip it (`unzip project-workspace-…zip`), and run `./project-workspace` inside the folder. Node.js isn't needed there either. On a server without a desktop, run `./project-workspace-server` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
+**Linux:** download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi — only up to 0.x; 1.0 runs on Windows 11 and Linux x64), unzip it (`unzip project-workspace-…zip`), and run `./project-workspace` inside the folder. Node.js isn't needed there either. On a server without a desktop, run `./project-workspace-server` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
 
 **Otherwise:** download the other zip of the release (or **Code → Download ZIP**) and install Node.js.
 

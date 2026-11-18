@@ -6,13 +6,14 @@ The current beta is **0.9.0.6** (earlier: 0.9.0, 0.9.0.5). It is a *pre-release*
 
 ## Try it
 1. Make a **copy of your data folder**.
-2. Download the zip for your computer: `windows-x64`, `linux-x64` or `linux-arm64`.
+2. Download the zip for your computer: `windows-x64` (Windows 11) or `linux-x64`.
 3. Unzip it into a **new** folder and put the copy of your data folder next to the program, named `data`.
 4. Start `ProjectWorkspace.exe` (Windows) or `project-workspace` (Linux).
 
 Check what you use every day: projects, records, pictures, the chat with Claude, the VS Code tab, the tray and reminders, start with the computer.
 
 ## Good to know
+- Version 1.0 runs on **Windows 11** and **Linux (x64)**. Windows 10, ARM computers (e.g. Raspberry Pi) and macOS are not supported.
 - 0.9.0 is **not signed**: Windows SmartScreen warns. Choose *More info → Run anyway*. 0.9.1 will be signed.
 - Linux needs WebKitGTK 4.1 for the window (most desktops have it). `project-workspace-server` runs without a window.
 - Secrets: on Windows they are taken over from 0.x; on Linux enter them again once.

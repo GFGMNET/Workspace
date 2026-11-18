@@ -37,7 +37,7 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 ## Decisions already made (don't ask again)
 
 - 0.x stays on Node/Electron until 1.0 replaces it; 1.0 = Rust + Tauri (go after the prototype, 2026-11-16).
-- 1.0 drops the Node.js package (start.bat/start.sh); screens stay as files on disk; no macOS for now (#56).
+- 1.0 drops the Node.js package (start.bat/start.sh); screens stay as files on disk; no macOS and no arm64 version (dropped 2026-11-18, #56, #64); Windows 11 only — Windows 10 not supported (#73).
 - Signing: GitHub account is protected (done). 1.0 Windows program signed for free by SignPath Foundation, one *Approve* click
   per release (`docs/plans/RELEASE-TRUST.md`). 0.x stays unsigned. No signing keys on anyone's PC, no signing scripts.
 - Ticketsystem = GLPI 11 only, by entity, in v1.1 (osTicket dropped). Versions (Git first, then SVN; server by IP + port) in v1.2.

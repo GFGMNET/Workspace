@@ -16,7 +16,7 @@ The app tells you: once a week it checks GitHub and shows *Version X is availabl
 The exe isn't code-signed yet, so SmartScreen doesn't know the publisher. Click **More info → Run anyway**; Windows remembers it. Signing is planned ([#31](https://github.com/GFGMNET/Workspace/issues/31)).
 
 **Does it run on Linux?**
-Yes. Download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi), unzip it, and run `./project-workspace`. On a server without a desktop, run `./project-workspace-server` instead (no window).
+Yes. Download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi — 0.x only; 1.0 is x64 only), unzip it, and run `./project-workspace`. On a server without a desktop, run `./project-workspace-server` instead (no window).
 
 The app only listens on the machine itself (`127.0.0.1`). To reach it from another computer, use an SSH tunnel (`ssh -L 4321:localhost:4321 server`) rather than opening it to the network.
 
