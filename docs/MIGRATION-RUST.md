@@ -105,7 +105,7 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | 1 | Prototype, go/no-go | ✅ done — **go** |
 | 2 | The core | ✅ done (2026-11-16) |
 | 3 | Chat, VS Code, updater, MCP, desktop extras | ✅ done (2026-11-16) |
-| 4 | Beta next to 0.x | 0.9.0 tested 2026-11-17 → fixes #65–#69 → 0.9.0.5 tested → fixes #70, #71 → 0.9.0.6 |
+| 4 | Beta next to 0.x | 0.9.0 tested 2026-11-17 → fixes #65–#69 → 0.9.0.5 tested → fixes #70, #71 → 0.9.0.6 ✅ test OK (2026-11-18) |
 | 5 | Release 1.0 | |
 
 **Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), SignPath signing last, just before 1.0.
