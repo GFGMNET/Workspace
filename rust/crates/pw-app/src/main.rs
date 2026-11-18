@@ -151,7 +151,7 @@ fn open_window(h: &AppHandle, url: &str, hash: Option<&str>) {
     let Ok(parsed) = target.parse() else { return };
     let h2 = h.clone(); let base = url.to_string();
     let mut b = WebviewWindowBuilder::new(h, "main", WebviewUrl::External(parsed))
-        .title("Project Workspace")
+        .title("Workspace")
         .inner_size(st["width"].as_f64().unwrap_or(1360.0), st["height"].as_f64().unwrap_or(880.0))
         .min_inner_size(720.0, 480.0)
         .disable_drag_drop_handler() // the page handles dropped files itself
