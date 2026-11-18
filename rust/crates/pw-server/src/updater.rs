@@ -101,10 +101,13 @@ fn hex(b: &[u8]) -> String { b.iter().map(|x| format!("{x:02x}")).collect() }
 /// Unpacks with path checks; keeps the executable bit of files zipped on Linux.
 fn unzip(bytes: &[u8], dest: &Path) -> Result<(), String> {
     let mut z = zip::ZipArchive::new(std::io::Cursor::new(bytes)).map_err(|e| format!("Not a zip file: {e}"))?;
+    // the file names in the zip must agree with each other (no hidden second name for a file)
+    z.validate_header_consistency().map_err(|e| format!("The zip file is not consistent: {e}"))?;
     for i in 0..z.len() {
         let mut f = z.by_index(i).map_err(|e| e.to_string())?;
         let rel = f.enclosed_name().ok_or_else(|| format!("Unsafe path in zip: {}", f.name()))?;
         let target = dest.join(rel);
+        if f.is_symlink() { continue; } // a release never contains links
         if f.is_dir() { fs::create_dir_all(&target).map_err(|e| e.to_string())?; continue; }
         if let Some(d) = target.parent() { fs::create_dir_all(d).map_err(|e| e.to_string())?; }
         let mut out = fs::File::create(&target).map_err(|e| e.to_string())?;

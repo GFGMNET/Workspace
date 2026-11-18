@@ -15,7 +15,10 @@ fn md_items(p: &Project, f: &ProjectFeature) -> Vec<Value> { feature_dir(p, f).m
 fn lc(a: &str, b: &str) -> std::cmp::Ordering { natural_cmp(a, b) }
 
 /// Local date as YYYY-MM-DD, `days` from today.
-pub fn local_day(days: i64) -> String { (chrono::Local::now().date_naive() + chrono::Duration::days(days)).format("%Y-%m-%d").to_string() }
+pub fn local_day(days: i64) -> String {
+    let today = jiff::Zoned::now().date();
+    today.checked_add(jiff::Span::new().days(days)).unwrap_or(today).to_string()
+}
 
 fn snippet(text: &str, at_byte: usize) -> String {
     let chars: Vec<(usize, char)> = text.char_indices().collect();
@@ -175,7 +178,7 @@ impl Workspace {
                 "markdown" => for it in md_items(&p, f) { recent.push(item(&it["title"], &it["id"], it["modified"].clone())); },
                 "diagram" => for it in list_diagrams(&p, f) { recent.push(item(&it["title"], &it["id"], it["modified"].clone())); },
                 "chat" => for it in list_chats(&p, f) {
-                    let ms = chrono::DateTime::parse_from_rfc3339(&s(&it["updated"])).map(|t| t.timestamp_millis()).unwrap_or(0);
+                    let ms = s(&it["updated"]).parse::<jiff::Timestamp>().map(|t| t.as_millisecond()).unwrap_or(0);
                     recent.push(item(&it["title"], &it["id"], json!(ms)));
                 },
                 "images" | "files" => if let Ok(l) = list_folder(&p, f, "", true) {
