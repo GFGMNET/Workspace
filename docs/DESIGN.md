@@ -577,8 +577,9 @@ app/public    unchanged screens, served by pw-server
 - Windows 10 is not supported (decided 2026-11-18, #73); Windows 11 always has WebView2.
 
 **Security work that comes with it**
-- rustls instead of OpenSSL, minimal crate features ✅. Still to do before 1.0: `cargo-deny` / `cargo-audit` in CI (advisories,
-  licences, duplicate crates) and `Cargo.lock` committed. Weekly check like 7g, for crates.
+- rustls instead of OpenSSL, minimal crate features ✅. `cargo-deny` checks vulnerabilities, licences and sources on every change
+  and every Monday (`.github/workflows/rust-security.yml`, `rust/deny.toml`; a weekly finding opens an issue) ✅; `rust/Cargo.lock` is
+  committed and builds use `--locked` ✅ (#72). Weekly check like 7g, for crates.
 - **Trusted releases:** see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md); whatever is chosen there carries over to 1.0.
 - The security check of 7g then watches crates and the bundled JS libraries; there is no browser engine of our own to patch.
 

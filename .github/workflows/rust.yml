@@ -33,7 +33,7 @@ jobs:
         run: cargo test --workspace --release
       - name: Build
         working-directory: rust
-        run: cargo build --workspace --release
+        run: cargo build --workspace --release --locked
       - name: Server answers
         run: |
           export WORKSPACE_DIR="$RUNNER_TEMP/data"
@@ -86,7 +86,7 @@ jobs:
           node-version: 22
       - name: Build
         working-directory: rust
-        run: cargo build --workspace --release
+        run: cargo build --workspace --release --locked
       - name: Unit tests
         working-directory: rust
         run: cargo test -p pw-core -p pw-server --release

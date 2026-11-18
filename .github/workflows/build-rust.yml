@@ -59,7 +59,7 @@ jobs:
           workspaces: rust
       - name: Build
         working-directory: rust
-        run: cargo build --workspace --release
+        run: cargo build --workspace --release --locked
       - name: Tests (unit, YAML corpus, API contract)
         env:
           PW_YAML_CMD: ${{ github.workspace }}/rust/target/release/workspace-server yaml
@@ -106,7 +106,7 @@ jobs:
           workspaces: rust
       - name: Build
         working-directory: rust
-        run: cargo build --workspace --release
+        run: cargo build --workspace --release --locked
       - name: Tests (unit, YAML corpus, API contract)
         env:
           PW_YAML_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe yaml
