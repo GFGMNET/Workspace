@@ -221,10 +221,11 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
     const msg = err.code === 'ENOENT' ? `Claude CLI was not found (command "${CLAUDE}"). Install it and sign in, or set CLAUDE_COMMAND.` : err.message;
     finish({ error: msg }); emit({ type: 'error', message: msg });
   });
+  let stopAsked = false;
   child.on('close', code => {
     if (!finished) {
       const msg = loginHint(stderr.trim().split('\n').slice(-3).join(' ') || `Claude CLI stopped (exit code ${code})`);
-      const stopped = code === null || child.killed;
+      const stopped = code === null || child.killed || stopAsked;
       finish(stopped ? { stopped: true } : { error: msg });
       emit(stopped ? { type: 'done', id, stopped: true, mode } : { type: 'error', message: msg });
     }
@@ -232,6 +233,7 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
   // Stop ends Claude CLI and what it started (on Windows `claude` is a .cmd that starts node)
   const stop = () => {
     if (finished) return;
+    stopAsked = true;
     if (IS_WIN && child.pid) { try { require('child_process').execFileSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true }); } catch {} }
     try { child.kill(); } catch {}
   };
