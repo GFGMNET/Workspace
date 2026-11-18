@@ -362,7 +362,7 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
             let line = tokio::select! {
                 l = lines.next_line() => match l { Ok(Some(l)) => l, _ => break },
                 // only Stop ends a turn early; leaving the page doesn't
-                _ = &mut stop_rx => { let _ = child.kill().await; stopped = true; break; }
+                _ = &mut stop_rx => { kill_tree(&mut child).await; stopped = true; break; }
             };
             let Ok(ev) = serde_json::from_str::<Value>(line.trim()) else { continue };
             match ev["type"].as_str().unwrap_or("") {
@@ -417,7 +417,8 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
         }
         if !finished {
             let status = if stopped { None } else { child.wait().await.ok() };
-            let stderr = stderr_task.await.unwrap_or_default();
+            // what Claude CLI wrote on stderr (don't wait long: a process it started may still hold the pipe)
+            let stderr = tokio::time::timeout(Duration::from_secs(3), stderr_task).await.ok().and_then(|r| r.ok()).unwrap_or_default();
             cleanup(&turn_id, &perm_file);
             let code = status.and_then(|s| s.code());
             if stopped || code.is_none() {
@@ -433,6 +434,17 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
         }
     });
     Ok(rx)
+}
+
+/// Stops Claude CLI and everything it started (on Windows `claude` is often a .cmd that starts node).
+async fn kill_tree(child: &mut tokio::process::Child) {
+    #[cfg(windows)]
+    if let Some(pid) = child.id() {
+        let mut c = tokio::process::Command::new("taskkill");
+        c.args(["/pid", &pid.to_string(), "/T", "/F"]).stdout(Stdio::null()).stderr(Stdio::null()).creation_flags(0x0800_0000);
+        let _ = c.status().await;
+    }
+    let _ = child.kill().await;
 }
 
 fn write_private(p: &Path, text: &str) -> std::io::Result<()> {

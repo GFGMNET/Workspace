@@ -229,7 +229,13 @@ function runTurn({ slug, key, chatId, message, allowTools = [] }, emit) {
       emit(stopped ? { type: 'done', id, stopped: true, mode } : { type: 'error', message: msg });
     }
   });
-  return { id, stop: () => { if (!finished) { try { child.kill(); } catch {} } } };
+  // Stop ends Claude CLI and what it started (on Windows `claude` is a .cmd that starts node)
+  const stop = () => {
+    if (finished) return;
+    if (IS_WIN && child.pid) { try { require('child_process').execFileSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true }); } catch {} }
+    try { child.kill(); } catch {}
+  };
+  return { id, stop };
 }
 
 module.exports = { claudeVersion, runTurn, requestPermission, answerPermission };
