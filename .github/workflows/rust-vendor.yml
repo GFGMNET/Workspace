@@ -20,11 +20,13 @@ jobs:
           sed -e 's/members = \[.*\]/members = ["pw-core", "pw-server"]/' rust/Cargo.toml > /tmp/v/Cargo.toml
           cd /tmp/v && cargo generate-lockfile && cargo vendor --versioned-dirs vendor > /dev/null
           du -sh vendor; ls vendor | wc -l
+      - name: Lock file of the whole Rust workspace (incl. the desktop app), to commit to main as rust/Cargo.lock
+        run: cd rust && cargo generate-lockfile && mkdir -p /tmp/v/full && cp Cargo.lock /tmp/v/full/Cargo.lock
       - name: Push to the branch rust-vendor
         run: |
           cd /tmp/v
           git init -q -b rust-vendor
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.lock vendor
+          git add Cargo.lock full vendor
           git commit -qm "Vendored crates for pw-core and pw-server ($(date -u +%F))"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" rust-vendor

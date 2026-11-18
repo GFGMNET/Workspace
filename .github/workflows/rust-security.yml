@@ -1,0 +1,35 @@
+# Security check of version 1.0's crates (Rust libraries): known vulnerabilities (RustSec), licences and sources,
+# with cargo-deny (rust/deny.toml). Runs on every change in rust/, every Monday, and by hand.
+# On the weekly run a finding opens an issue, so a new vulnerability in a library is not missed (#72).
+name: Rust security check
+
+on:
+  push:
+    branches: [main]
+    paths: ['rust/**', '.github/workflows/rust-security.yml']
+  schedule:
+    - cron: '41 4 * * 1'   # Mondays 04:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: rust/Cargo.toml
+          command: check advisories licenses sources bans
+          arguments: --workspace
+      - name: Open an issue (weekly run)
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" --label security \
+            --title "Rust security check found a problem ($(date -u +%F))" \
+            --body "The weekly cargo-deny check failed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID — usually a crate with a known vulnerability that needs an update."

@@ -1,0 +1,27 @@
+# cargo-deny: checks the crates (Rust libraries) of version 1.0 — known vulnerabilities, licences, where they come from.
+# Run by .github/workflows/rust-security.yml on every change in rust/ and once a week (#72).
+[graph]
+all-features = false
+
+[advisories]
+# vulnerabilities always fail; "unmaintained" only for crates we use directly (Tauri's GTK crates on Linux are flagged upstream)
+unmaintained = "workspace"
+yanked = "warn"
+
+[licenses]
+# open-source licences that allow use in an MIT project
+allow = [
+  "MIT", "MIT-0", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib",
+  "Unicode-3.0", "Unicode-DFS-2016", "MPL-2.0", "CC0-1.0", "BSL-1.0", "CDLA-Permissive-2.0", "0BSD",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
