@@ -13,7 +13,7 @@ No, except for the Claude chat, the first start of the in-app VS Code, MCP serve
 The app tells you: once a week it checks GitHub and shows *Version X is available* with an **Update now** button. See [[Data and Updates|Data-and-Updates]].
 
 **Windows says "Windows protected your PC" when I start the exe**
-The exe isn't code-signed yet, so SmartScreen doesn't know the publisher. Click **More info → Run anyway**; Windows remembers it. Signing is planned ([#31](https://github.com/GFGMNET/Workspace/issues/31)).
+0.x isn't code-signed, so SmartScreen doesn't know the publisher: click **More info → Run anyway**; Windows remembers it. From 0.9.1 (*Workspace*), the program is signed with the project's own certificate; trust it once and the warning is gone: [[Signing certificate|Signing-certificate]].
 
 **Does it run on Linux?**
 Yes. Download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi — 0.x only; 1.0 is x64 only), unzip it, and run `./project-workspace`. On a server without a desktop, run `./project-workspace-server` instead (no window).
