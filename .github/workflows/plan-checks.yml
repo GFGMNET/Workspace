@@ -36,13 +36,17 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          choco install -y --no-progress visualsvn-server
-          $env:PSModulePath += ";C:\Program Files\VisualSVN Server\PowerShell\Modules"
-          Import-Module VisualSVN
+          $msi = "$env:RUNNER_TEMP\visualsvn.msi"
+          Invoke-WebRequest https://www.visualsvn.com/files/VisualSVN-Server-5.4.6-x64.msi -OutFile $msi
+          $p = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /norestart USE_SSL=0 SERVERPORT=8082" -Wait -PassThru
+          Write-Host "msiexec exit: $($p.ExitCode)"
+          $mod = Get-ChildItem "C:\Program Files\VisualSVN Server" -Recurse -Filter VisualSVN.psd1 -ErrorAction SilentlyContinue | Select-Object -First 1
+          Write-Host "module: $($mod.FullName)"
+          Import-Module $mod.FullName
           New-SvnRepository -Name svnrepo | Out-Null
           New-SvnLocalUser -Name alice -Password (ConvertTo-SecureString 's3cret-XYZ' -AsPlainText -Force) | Out-Null
           Add-SvnAccessRule -Repository svnrepo -Path / -AuthorizationProfile SubversionLocal -Name alice -AccessLevel ReadWrite | Out-Null
-          $u = (Get-SvnRepository svnrepo).URL.TrimEnd('/') + '/trunk'
+          $u = "http://localhost:8082/svn/svnrepo/trunk"
           "SVN_HTTP_URL=$u" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           Write-Host "SVN web server: $u"
       - name: Git/SVN integration plan — read access with login

@@ -76,12 +76,12 @@ for f in svn-import.err svn-login.err svnserve.log; do [ -s $f ] && { echo "--- 
 
 
 # ---------- Git over ssh: own sshd on 127.0.0.1:2222, login = key from the secrets (handed over via stdin) ----------
-SSHD=$(command -v sshd || ls /usr/sbin/sshd /usr/bin/sshd 2>/dev/null | head -1)
+SSHD=$(ls /usr/bin/sshd /usr/bin/sshd.exe /usr/sbin/sshd 2>/dev/null | head -1)   # on Windows the one from Git for Windows
 if [ -n "$SSHD" ]; then
   ssh-keygen -q -t ed25519 -N '' -f hostkey; ssh-keygen -q -t ed25519 -N '' -f userkey; ssh-keygen -q -t ed25519 -N '' -f otherkey
   cp userkey.pub authorized_keys; chmod 600 authorized_keys hostkey
-  printf 'Port 2222\nListenAddress 127.0.0.1\nHostKey %s/hostkey\nAuthorizedKeysFile %s/authorized_keys\nPasswordAuthentication no\nStrictModes no\nPidFile %s/sshd.pid\nAcceptEnv GIT_PROTOCOL\n' "$T" "$T" "$T" > sshd_config
-  "$SSHD" -f "$T/sshd_config" -D -e > sshd.log 2>&1 & DP=$!; sleep 2
+  printf 'Port 2222\nListenAddress 127.0.0.1\nHostKey %s/hostkey\nAuthorizedKeysFile %s/authorized_keys\nPasswordAuthentication no\nStrictModes no\nPidFile %s/sshd.pid\nAcceptEnv GIT_PROTOCOL\n' "$(nat "$T")" "$(nat "$T")" "$(nat "$T")" > sshd_config
+  echo "ssh server: $SSHD"; "$SSHD" -f "$T/sshd_config" -D -e > sshd.log 2>&1 & DP=$!; sleep 2
   KEY=$(cat userkey); OTHER=$(cat otherkey); rm -f userkey otherkey     # from here on the key exists only in the secrets
   eval "$(ssh-agent -s)" > /dev/null; printf '%s\n' "$KEY" | ssh-add - 2> /dev/null
   export GIT_SSH_COMMAND="ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=no -o BatchMode=yes"
@@ -102,10 +102,11 @@ else
 fi
 
 # ---------- Git over git:// (git daemon): does it support a login? ----------
-g daemon --reuseaddr --export-all --base-path="$T" --listen=127.0.0.1 --port=9418 > daemon.log 2>&1 & GDP=$!; sleep 2
-git -c credential.helper= ls-remote git://127.0.0.1:9418/srv.git > /dev/null 2>&1
+git -c core.fsmonitor=false daemon --reuseaddr --export-all --base-path="$T" --listen=127.0.0.1 --port=9418 > daemon.log 2>&1 & GDP=$!; sleep 2
+git -c credential.helper= ls-remote git://127.0.0.1:9418/srv.git > /dev/null 2> git-daemon.err
 if [ $? = 0 ]; then echo "NOT FEASIBLE  Git git://  log in to the server (anyone can read without a login; git:// has no login)"; FAILS=$((FAILS+1)); else res 1 "Git git://  server reachable"; fi
 kill $GDP 2>/dev/null
+for f in git-daemon.err daemon.log; do [ -s $f ] && { echo "--- $f:"; tail -5 $f; }; done
 
 # ---------- SVN over http: Apache with mod_dav_svn (Linux) or a given server (SVN_HTTP_URL) ----------
 APACHE=$(command -v apache2 || ls /usr/sbin/apache2 2>/dev/null | head -1)
