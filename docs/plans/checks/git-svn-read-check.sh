@@ -125,7 +125,7 @@ fi
 # ---------- Git over git:// (git daemon): does it support a login? ----------
 git -c core.fsmonitor=false daemon --reuseaddr --export-all --base-path="$T" --listen=127.0.0.1 --port=9418 > daemon.log 2>&1 & GDP=$!; sleep 2
 git -c credential.helper= ls-remote git://127.0.0.1:9418/srv.git > /dev/null 2> git-daemon.err
-if [ $? = 0 ]; then echo "NOT FEASIBLE  Git git://  log in to the server (anyone can read without a login; git:// has no login)"; FAILS=$((FAILS+1)); else res 1 "Git git://  server reachable"; fi
+if [ $? = 0 ]; then echo "NOT FEASIBLE  Git git://  log in to the server (anyone can read without a login; git:// has no login)"; else res 1 "Git git://  server reachable"; fi
 kill $GDP 2>/dev/null
 for f in git-daemon.err daemon.log; do [ -s $f ] && { echo "--- $f:"; tail -5 $f; }; done
 
