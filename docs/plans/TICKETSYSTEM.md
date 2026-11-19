@@ -47,6 +47,7 @@ None.
 | 7 | Login: for the test the account Hermes; in the live environment the account is set in the YAML file (the token as `${secret:…}`, project rule: no secrets in project files). |
 | 8 | The tab is called "Ticket". |
 | 9 | The screens as in the approved screenshots: [list](img/glpi-list.png), [one ticket](img/glpi-ticket.png). |
+| 10 | New ticket: a "+" button with the help text "New Ticket"; no text line above the list. |
 
 ## 7) Risks
 
