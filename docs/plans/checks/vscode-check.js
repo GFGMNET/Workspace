@@ -46,7 +46,10 @@ const secs = t => Math.round((Date.now() - t) / 1000) + ' s';
   try {
     const st = await s3.api('POST', '/api/ide/start', { body: {} });
     const log = (st.body.log || []).join(' | ');
-    res(st.body.running === false && log.length > 0, `VS Code not installed → not started, message: "${log.slice(0, 200)}"`);
+    res(st.body.running === false && log.length > 0, `VS Code not installed → not started, message right away: "${log.slice(0, 200)}"`);
+    await new Promise(r => setTimeout(r, 2000));
+    const later = ((await s3.api('GET', '/api/ide')).body.log || []).join(' | ');
+    console.log(`info  message 2 s later: "${later.slice(0, 200)}"`);
   } finally { await s3.stop(); }
 
   console.log('failed: ' + fails);
