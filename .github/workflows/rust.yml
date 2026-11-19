@@ -58,6 +58,25 @@ jobs:
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
           PW_MCP_CMD: ${{ github.workspace }}/rust/target/release/workspace-server mcp
         run: node tests/contract/run.js
+      - name: VS Code tab (docs/plans/VSCODE.md) — real VS Code in a real browser
+        shell: bash
+        timeout-minutes: 20
+        env:
+          PW_INSTALL: ${{ github.workspace }}
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
+        run: |
+          T="$RUNNER_TEMP"; command -v cygpath > /dev/null && T="$(cygpath -u "$RUNNER_TEMP")"
+          mkdir -p "$T/vscode"
+          if [ "$RUNNER_OS" = Windows ]; then
+            curl -sSL -o "$T/vscode.zip" "https://update.code.visualstudio.com/latest/win32-x64-archive/stable"
+            unzip -q "$T/vscode.zip" -d "$T/vscode"
+            npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null && npx playwright install chromium > /dev/null
+          else
+            curl -sSL -o "$T/vscode.tgz" "https://update.code.visualstudio.com/latest/linux-x64/stable"
+            tar -xzf "$T/vscode.tgz" -C "$T/vscode" --strip-components=1
+            npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null && npx playwright install --with-deps chromium > /dev/null
+          fi
+          PATH="$T/vscode/bin:$PATH" node docs/plans/checks/vscode-check.js
       - name: Package
         run: |
           d=dist/workspace-proto
@@ -100,6 +119,25 @@ jobs:
           PW_SERVER_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe {port}
           PW_MCP_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe mcp
         run: node tests/contract/run.js
+      - name: VS Code tab (docs/plans/VSCODE.md) — real VS Code in a real browser
+        shell: bash
+        timeout-minutes: 20
+        env:
+          PW_INSTALL: ${{ github.workspace }}
+          PW_SERVER_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe {port}
+        run: |
+          T="$RUNNER_TEMP"; command -v cygpath > /dev/null && T="$(cygpath -u "$RUNNER_TEMP")"
+          mkdir -p "$T/vscode"
+          if [ "$RUNNER_OS" = Windows ]; then
+            curl -sSL -o "$T/vscode.zip" "https://update.code.visualstudio.com/latest/win32-x64-archive/stable"
+            unzip -q "$T/vscode.zip" -d "$T/vscode"
+            npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null && npx playwright install chromium > /dev/null
+          else
+            curl -sSL -o "$T/vscode.tgz" "https://update.code.visualstudio.com/latest/linux-x64/stable"
+            tar -xzf "$T/vscode.tgz" -C "$T/vscode" --strip-components=1
+            npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null && npx playwright install --with-deps chromium > /dev/null
+          fi
+          PATH="$T/vscode/bin:$PATH" node docs/plans/checks/vscode-check.js
       - name: Signing with the own certificate (test certificate; docs/plans/SIGNING.md)
         timeout-minutes: 10
         run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe

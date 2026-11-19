@@ -53,6 +53,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W5 | Open projects and files in VS Code | ✅ | #21 |
 | W6 | Full VS Code inside the app (browser VS Code via `code serve-web`, or code-server / OpenVSCode Server) | ✅ | #24 |
 | W6b | VS Code tab: focused layout with just explorer and editor | 📋 | #62 |
+| W6c | VS Code tab opens the editor by itself (no button), shows "VS Code is starting…", only the editor; "VS Code is not installed" with download link — plan [plans/VSCODE.md](plans/VSCODE.md) | 🚧 built, release 1.0.0.5 (planned 2026-12-01) | |
 | W6a | VS Code tab must work without changing browser settings (served through the app's own address) | ✅ checked on a runner (Chromium + Electron) · to re-test on Windows | #30, #33, #34, #57 |
 | W7 | Collapsible left sidebar | ✅ | #15 |
 | W8 | Rename and archive projects in the app; delete = delete the project folder | ✅ | #11 |

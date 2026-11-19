@@ -1,6 +1,6 @@
 # Plan: VS Code
 
-**Ready 2 Deploy**
+**Ready 2 Deploy** · building (steps 1–3 and 5 done, step 4: automatic test running) · release planned 2026-12-01
 
 
 ## 1) Name
