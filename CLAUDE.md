@@ -49,6 +49,11 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 
 ## How plans are written (decided 2026-11-19)
 
+Order: 1) the maintainer describes the functions they want to see — never plan from your own guess, ask first;
+2) check each function: feasible (how it was checked), not feasible, or can't be checked here (then say how to check it);
+3) a function that is not checked or whose check failed cannot be approved. Checks live in `docs/plans/checks/`.
+
+
 Every plan answers: goal (and when it is done), steps (who does what), assumptions (checked or only assumed), risks with
 plan B, costs (also of plan B), what depends on others, open questions, status. **Before work starts, the maintainer gets the open
 questions and risks, and nothing begins until they have seen them.** While building: if a step cannot be done as planned,
