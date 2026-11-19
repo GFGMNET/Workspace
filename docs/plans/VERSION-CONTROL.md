@@ -36,8 +36,6 @@ Read access to the files from the repository, to show them and their history, fo
 
 | id | question |
 |---|---|
-| 1 | Which way does the app connect: Git over http, ssh or git; SVN over svn or http? |
-| 2 | SVN: always show the folder `trunk`, or can it be another folder? |
 
 ## 6) Decisions, only about this feature
 
@@ -46,7 +44,9 @@ Read access to the files from the repository, to show them and their history, fo
 | 1 | Server and port are set in the YAML file. |
 | 2 | Git and SVN use a login. |
 | 3 | The tab is called "Version Control". |
-| 4 | The test servers for the checks (Git and SVN, with login) are set up by Claude on GitHub's Windows and Linux machines. |
+| 4 | The protocol is set in the YAML file. |
+| 5 | The tab shows whatever folder `path` names (also for SVN). |
+| 6 | The test servers for the checks (Git and SVN, with login) are set up by Claude on GitHub's Windows and Linux machines. |
 
 ## 7) Risks
 

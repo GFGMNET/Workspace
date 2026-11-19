@@ -1,5 +1,5 @@
-# Runs the feasibility checks of the plans in docs/plans/checks/ on Windows 11-like and Linux machines.
-# Started by hand (Actions → "Plan checks") or by Claude before a plan is given for approval.
+# Runs the feasibility checks of the plans in docs/plans/checks/ on Windows and Linux machines,
+# with test servers set up only for the run. Started by hand (Actions → "Plan checks") or by Claude.
 name: Plan checks
 
 on:
@@ -20,11 +20,32 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v7
-      - name: Install SVN
+      - name: Install SVN, ssh server, SVN web server (Linux)
+        if: runner.os == 'Linux'
         run: |
-          if [ "$RUNNER_OS" = Windows ]; then choco install -y --no-progress sliksvn > /dev/null; echo "C:/Program Files/SlikSvn/bin" >> "$GITHUB_PATH"
-          else sudo apt-get update -qq && sudo apt-get install -y -qq subversion > /dev/null; fi
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq subversion openssh-server apache2 apache2-utils libapache2-mod-svn > /dev/null
+          sudo mkdir -p /run/sshd
+      - name: Install SVN (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install -y --no-progress sliksvn > /dev/null
+          echo "C:/Program Files/SlikSvn/bin" >> "$GITHUB_PATH"
+      - name: SVN web server (Windows, VisualSVN Server)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          choco install -y --no-progress visualsvn-server
+          $env:PSModulePath += ";C:\Program Files\VisualSVN Server\PowerShell\Modules"
+          Import-Module VisualSVN
+          New-SvnRepository -Name svnrepo | Out-Null
+          New-SvnLocalUser -Name alice -Password (ConvertTo-SecureString 's3cret-XYZ' -AsPlainText -Force) | Out-Null
+          Add-SvnAccessRule -Repository svnrepo -Path / -AuthorizationProfile SubversionLocal -Name alice -AccessLevel ReadWrite | Out-Null
+          $u = (Get-SvnRepository svnrepo).URL.TrimEnd('/') + '/trunk'
+          "SVN_HTTP_URL=$u" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          Write-Host "SVN web server: $u"
       - name: Git/SVN integration plan — read access with login
         env:
-          PYTHON: python
+          PYTHON: ${{ runner.os == 'Windows' && 'python' || 'python3' }}
         run: sh docs/plans/checks/git-svn-read-check.sh
