@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn or vscode"
+        description: "Which plan to check: all, git-svn, vscode or signing"
         default: all
 
 permissions:
@@ -133,3 +133,18 @@ jobs:
         with:
           name: vscode-check-${{ matrix.os }}
           path: check-out/
+
+  signing:
+    if: inputs.plan == 'all' || inputs.plan == 'signing'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build the app server (1.0) to have a real program to sign
+        working-directory: rust
+        run: cargo build -p pw-server --release --locked
+      - name: Signing plan — own certificate
+        shell: pwsh
+        run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe
