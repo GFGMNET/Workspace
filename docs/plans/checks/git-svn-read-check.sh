@@ -77,11 +77,14 @@ for f in svn-import.err svn-login.err svnserve.log; do [ -s $f ] && { echo "--- 
 
 # ---------- Git over ssh: own sshd on 127.0.0.1:2222, login = key from the secrets (handed over via stdin) ----------
 SSHD=$(ls /usr/bin/sshd /usr/bin/sshd.exe /usr/sbin/sshd 2>/dev/null | head -1)   # on Windows the one from Git for Windows
-if [ -n "$SSHD" ]; then
+if [ -n "$SSHD" ] || [ -n "$SSH_AUTH_KEYS" ]; then
   ssh-keygen -q -t ed25519 -N '' -f hostkey; ssh-keygen -q -t ed25519 -N '' -f userkey; ssh-keygen -q -t ed25519 -N '' -f otherkey
+  if [ -n "$SSH_AUTH_KEYS" ]; then cat userkey.pub >> "$SSH_AUTH_KEYS"; echo "ssh server: given (port 2222)"; DP=""
+  else
   cp userkey.pub authorized_keys; chmod 600 authorized_keys hostkey
   printf 'Port 2222\nListenAddress 127.0.0.1\nHostKey %s/hostkey\nAuthorizedKeysFile %s/authorized_keys\nPasswordAuthentication no\nStrictModes no\nPidFile %s/sshd.pid\nAcceptEnv GIT_PROTOCOL\n' "$(nat "$T")" "$(nat "$T")" "$(nat "$T")" > sshd_config
   echo "ssh server: $SSHD"; "$SSHD" -f "$T/sshd_config" -D -e > sshd.log 2>&1 & DP=$!; sleep 2
+  fi
   KEY=$(cat userkey); OTHER=$(cat otherkey); rm -f userkey otherkey     # from here on the key exists only in the secrets
   eval "$(ssh-agent -s)" > /dev/null; printf '%s\n' "$KEY" | ssh-add - 2> /dev/null
   export GIT_SSH_COMMAND="ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=no -o BatchMode=yes"
@@ -95,7 +98,7 @@ if [ -n "$SSHD" ]; then
   ! grep -rqs "PRIVATE KEY" cache-ssh.git; res $? "Git ssh  key is in no file"
   ssh-add -D > /dev/null 2>&1; printf '%s\n' "$OTHER" | ssh-add - 2> /dev/null
   gx ls-remote "$SU" > /dev/null 2>&1; [ $? != 0 ]; res $? "Git ssh  wrong login is refused"
-  ssh-agent -k > /dev/null; kill $DP 2>/dev/null; unset GIT_SSH_COMMAND
+  ssh-agent -k > /dev/null; [ -n "$DP" ] && kill $DP 2>/dev/null; unset GIT_SSH_COMMAND
   for f in git-ssh.err sshd.log; do [ -s $f ] && { echo "--- $f:"; tail -5 $f; }; done
 else
   skip "Git ssh  all functions" "no ssh server program on this machine"

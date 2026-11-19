@@ -45,10 +45,28 @@ jobs:
           Import-Module $mod.FullName
           New-SvnRepository -Name svnrepo | Out-Null
           New-SvnLocalUser -Name alice -Password (ConvertTo-SecureString 's3cret-XYZ' -AsPlainText -Force) | Out-Null
-          Add-SvnAccessRule -Repository svnrepo -Path / -AuthorizationProfile SubversionLocal -Name alice -AccessLevel ReadWrite | Out-Null
+          Get-Command Add-SvnAccessRule -Syntax | Write-Host
+          Add-SvnAccessRule -Repository svnrepo -Path / -AccountName alice -Access ReadWrite | Out-Null
           $u = "http://localhost:8082/svn/svnrepo/trunk"
           "SVN_HTTP_URL=$u" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           Write-Host "SVN web server: $u"
+      - name: ssh server (Windows, built-in OpenSSH)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $cap = Get-WindowsCapability -Online -Name 'OpenSSH.Server*' | Select-Object -First 1
+          Write-Host "OpenSSH server: $($cap.Name) $($cap.State)"
+          if ($cap.State -ne 'Installed') { Add-WindowsCapability -Online -Name $cap.Name | Out-Null }
+          Start-Service sshd; Stop-Service sshd
+          New-ItemProperty HKLM:\SOFTWARE\OpenSSH -Name DefaultShell -Value 'C:\Program Files\Git\bin\bash.exe' -PropertyType String -Force | Out-Null
+          Add-Content C:\ProgramData\ssh\sshd_config "`nPort 2222`nListenAddress 127.0.0.1`nAcceptEnv GIT_PROTOCOL`nPasswordAuthentication no"
+          $k = 'C:\ProgramData\ssh\administrators_authorized_keys'
+          New-Item -ItemType File -Force $k | Out-Null
+          icacls $k /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F' | Out-Null
+          Start-Service sshd
+          "SSH_AUTH_KEYS=$k" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          Write-Host "ssh server ready on 127.0.0.1:2222"
       - name: Git/SVN integration plan — read access with login
         env:
           PYTHON: ${{ runner.os == 'Windows' && 'python' || 'python3' }}
