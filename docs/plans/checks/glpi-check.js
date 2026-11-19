@@ -29,10 +29,17 @@ const id = r => (r.json && (r.json.id || (Array.isArray(r.json) && r.json[0] && 
   const s = await call('GET', '/initSession?get_full_session=true', null, 'user_token ' + TOKEN);
   session = s.json && s.json.session_token || '';
   const who = s.json && s.json.session && s.json.session.glpiname;
-  res(s.status === 200 && !!session, `log in with the API token (user: ${who || '?'}${process.env.GLPI_USER && who && who !== process.env.GLPI_USER ? ', expected ' + process.env.GLPI_USER : ''})`);
+  res(s.status === 200 && !!session, `log in with the API token (user: ${who || '?'}${process.env.GLPI_USER && who && who.toLowerCase() !== process.env.GLPI_USER.toLowerCase() ? ', expected ' + process.env.GLPI_USER : ''})`);
   if (!session) { info('answer: ' + s.status + ' ' + s.text); process.exit(1); }
   try {
     await call('POST', '/changeActiveEntities', { entities_id: 0, is_recursive: true });
+    // first: the entity of a project does not exist yet -> the app creates it (decision 11)
+    const newName = `Workspace-Test-New-${RUN}`;
+    const before = await call('GET', `/Entity?searchText[name]=^${encodeURIComponent(newName)}$`);
+    const ce = await call('POST', '/Entity', { input: { name: newName, entities_id: 0 } });
+    res(!(Array.isArray(before.json) && before.json.length) && !!id(ce), `entity: a missing entity is created (${newName})`);
+    if (!id(ce)) info(`answer: ${ce.status} ${ce.text}`);
+    else { const del = await call('DELETE', `/Entity/${id(ce)}?force_purge=true`); info(`test entity removed again: answer ${del.status}`); }
     // two test entities (stand-ins for two projects)
     const ent = {};
     for (const n of ['A', 'B']) {

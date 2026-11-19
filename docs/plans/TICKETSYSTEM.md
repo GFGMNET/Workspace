@@ -19,9 +19,10 @@ Ticketsystem
 | Tickets | write: add a solution to a ticket, read it | unchecked | same |
 | Follow-ups | read: follow-ups of a ticket | unchecked | same |
 | Follow-ups | write: add a follow-up to a ticket | unchecked | same |
+| Entity | create the entity with the project's name if it does not exist | unchecked | same |
 | Entity | only tickets of the entity with the project's name | unchecked | same, with two test entities |
 
-Checked: 0 · Unchecked: 8 · Failed: 0
+Checked: 0 · Unchecked: 9 · Failed: 0
 
 Check: `docs/plans/checks/glpi-check.js` (needs the secret `GLPI_TOKEN`).
 
@@ -48,6 +49,7 @@ None.
 | 8 | The tab is called "Ticket". |
 | 9 | The screens as in the approved screenshots: [list](img/glpi-list.png), [one ticket](img/glpi-ticket.png). |
 | 10 | New ticket: a "+" button with the help text "New Ticket"; no text line above the list. |
+| 11 | If the entity with the project's name does not exist in GLPI, the app creates it. |
 
 ## 7) Risks
 
