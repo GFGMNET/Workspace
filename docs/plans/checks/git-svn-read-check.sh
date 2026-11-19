@@ -47,7 +47,7 @@ kill $GP 2>/dev/null
 
 
 # ---------- Git over https: same server with a test certificate on 127.0.0.1:8766 ----------
-openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.pem -days 2 -subj "/CN=127.0.0.1" -addext "subjectAltName=IP:127.0.0.1" > /dev/null 2>&1
+MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.pem -days 2 -subj "/CN=127.0.0.1" -addext "subjectAltName=IP:127.0.0.1" > openssl.log 2>&1 || { echo "--- openssl:"; cat openssl.log; }
 ${PYTHON:-python3} "$HERE/version-control-server.py" "$T" 8766 "$(nat "$T")/tls.pem" "$(nat "$T")/tls.key" > gitsrv-tls.log 2>&1 & GTP=$!
 for i in 1 2 3 4 5 6 7 8 9 10; do curl -sk -o /dev/null https://127.0.0.1:8766/ && break; sleep 1; done
 if win; then SB="-c http.sslBackend=openssl"; else SB=""; fi
