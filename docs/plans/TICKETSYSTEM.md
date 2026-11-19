@@ -36,8 +36,7 @@ including editing the text, setting the state of a ticket and the solution.
 
 | id | question |
 |---|---|
-| 1 | Your GLPI asks for an app token as well: also put it into the YAML (as `${secret:…}`)? |
-| 2 | If a category with the project's name is already used in GLPI for other tickets, those tickets show up in the project too — OK? |
+| 1 | If a category with the project's name is already used in GLPI for other tickets, those tickets show up in the project too — OK? |
 
 ## 6) Decisions, only about this feature
 
@@ -55,6 +54,7 @@ including editing the text, setting the state of a ticket and the solution.
 | 10 | New ticket: a "+" button with the help text "New Ticket"; no text line above the list. |
 | 11 | If the category with the project's name does not exist in GLPI, the app creates it. |
 | 12 | What GLPI needs for this is described in the wiki: API client (allowed IP address, app token) and the rights of the account's profile (incl. creating categories). |
+| 13 | The YAML has the user token and the app token, both from the app's secrets. |
 
 ## 7) Risks
 
@@ -70,7 +70,7 @@ including editing the text, setting the state of a ticket and the solution.
 
 ```mermaid
 flowchart TD
-  A[Open project, tab Ticket] --> B[App reads url, user, token from the YAML; token from the app's secrets]
+  A[Open project, tab Ticket] --> B[App reads url, user, user token, app token from the YAML; tokens from the app's secrets]
   B --> C[Log in to GLPI]
   C --> D{Category with the project's name?}
   D -->|missing| E[Create it]
@@ -87,8 +87,8 @@ ticket:
   feature: ticketsystem
   url: https://ticket.example.com
   user: hermes
-  token: ${secret:glpi-token}          # from the app's secrets, never as text
-  # app_token: ${secret:glpi-app-token} # open point 1
+  user_token: ${secret:glpi-user-token} # GLPI user API token, from the app's secrets, never as text
+  app_token: ${secret:glpi-app-token}   # GLPI app token of the API client, from the app's secrets
 ```
 
 ### 8c) How it is done
@@ -96,7 +96,7 @@ ticket:
 | id | desc |
 |---|---|
 | 1 | New feature file `app/starter/features/ticketsystem.yaml`: name "Ticket" (decision 8), layout `tickets`. |
-| 2 | New file `rust/crates/pw-server/src/glpi.rs`, the same GLPI calls as the check: log in, find the category with the project's name or create it (decisions 2, 11), list of its tickets, one ticket, follow-ups, solution; write: create a ticket in the category, edit the text, set the state, add a follow-up, add a solution. The token only from the secrets (decision 7). |
+| 2 | New file `rust/crates/pw-server/src/glpi.rs`, the same GLPI calls as the check: log in, find the category with the project's name or create it (decisions 2, 11), list of its tickets, one ticket, follow-ups, solution; write: create a ticket in the category, edit the text, set the state, add a follow-up, add a solution. User token and app token only from the secrets (decisions 7, 13). |
 | 3 | New addresses in the app server for these (`/api/projects/{p}/f/{f}/tickets/...`), only for 127.0.0.1 like all others. |
 | 4 | New screen `VIEWS.tickets` in `app/public/views.js`, as in the approved screenshots, with the "+" button and its help text (decisions 9, 10). |
 | 5 | Automatic tests `tests/contract/tickets.test.js` against a small fake GLPI (like the GitHub tests), run by `rust.yml` on Windows and Linux. Done when: all green. |
