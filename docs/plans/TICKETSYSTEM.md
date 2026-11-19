@@ -12,19 +12,20 @@ Ticketsystem
 
 | part | desc | state | suggestion |
 |---|---|---|---|
-| Tickets | read: list of the tickets of the category, one ticket | unchecked | check against the GLPI test environment, from GitHub's Windows and Linux machines |
-| Tickets | write: create a ticket in the category | unchecked | same |
-| Tickets | write: edit a ticket's text | unchecked | same |
-| Tickets | write: set the state of a ticket | unchecked | same |
-| Tickets | write: add a solution to a ticket, read it | unchecked | same |
-| Follow-ups | read: follow-ups of a ticket | unchecked | same |
-| Follow-ups | write: add a follow-up to a ticket | unchecked | same |
-| Category | create the category with the project's name if it does not exist | unchecked | same |
-| Category | only tickets of the category with the project's name | unchecked | same, with two test categories |
+| Tickets | read: list of the tickets of the category, one ticket | ✅ checked, Windows + Linux | — |
+| Tickets | write: create a ticket in the category | ✅ checked, Windows + Linux | — |
+| Tickets | write: edit a ticket's text | ✅ checked, Windows + Linux | — |
+| Tickets | write: set the state of a ticket | ✅ checked, Windows + Linux | — |
+| Tickets | write: add a solution to a ticket, read it | ✅ checked, Windows + Linux | — |
+| Follow-ups | read: follow-ups of a ticket | ✅ checked, Windows + Linux | — |
+| Follow-ups | write: add a follow-up to a ticket | ✅ checked, Windows + Linux | — |
+| Category | create the category with the project's name if it does not exist | ✅ checked, Windows + Linux | — |
+| Category | only tickets of the category with the project's name | ✅ checked, Windows + Linux | — |
 
-Checked: 0 · Unchecked: 9 · Failed: 0
+Checked: 9 · Unchecked: 0 · Failed: 0
 
-Check: `docs/plans/checks/glpi-check.js` (needs the secret `GLPI_TOKEN`).
+Check: `docs/plans/checks/glpi-check.js` against the GLPI test environment, run 2026-11-19 from GitHub, Windows + Linux:
+https://github.com/GFGMNET/Workspace/actions/runs/44555846873 (seen there: after a solution GLPI sets the ticket to "solved" by itself).
 
 ## 4) Description
 
