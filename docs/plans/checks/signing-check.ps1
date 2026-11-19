@@ -48,10 +48,10 @@ Copy-Item $Exe "$T\unsigned.exe"
 Res (-not (UpdaterAccepts "$T\unsigned.exe") -or ((Get-AuthenticodeSignature $Exe).Status -ne 'NotSigned')) "updater refuses an unsigned file"
 
 # 4) after installing the certificate on the PC (what the release page would explain)
-Import-Certificate -FilePath "$T\workspace-signing.cer" -CertStoreLocation Cert:\CurrentUser\Root -ErrorAction SilentlyContinue | Out-Null
+Import-Certificate -FilePath "$T\workspace-signing.cer" -CertStoreLocation Cert:\LocalMachine\Root | Out-Null   # LocalMachine: no confirmation window (CurrentUser\Root asks and blocks)
 $s2 = Get-AuthenticodeSignature "$T\Workspace.exe"
 "info  after installing the certificate on the PC: Status=$($s2.Status)"
-Get-ChildItem Cert:\CurrentUser\Root | Where-Object Thumbprint -eq $thumb | Remove-Item -ErrorAction SilentlyContinue
+Get-ChildItem Cert:\LocalMachine\Root | Where-Object Thumbprint -eq $thumb | Remove-Item -ErrorAction SilentlyContinue
 
 "failed: $fails"
 exit $fails

@@ -147,4 +147,5 @@ jobs:
         run: cargo build -p pw-server --release --locked
       - name: Signing plan — own certificate
         shell: pwsh
+        timeout-minutes: 10
         run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe
