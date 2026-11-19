@@ -1,5 +1,7 @@
 # Plan: Git/SVN integration
 
+**Ready 2 Deploy**
+
 ## 1) Name
 
 Git/SVN integration
@@ -17,6 +19,11 @@ Git/SVN integration
 | Git http | read a file | ✅ checked, Windows + Linux | — |
 | Git http | see the history | ✅ checked, Windows + Linux | — |
 | Git http | see the history of one file | ✅ checked, Windows + Linux | — |
+| Git https | log in to the server | ✅ checked, Windows + Linux | — |
+| Git https | see the list of files | ✅ checked, Windows + Linux | — |
+| Git https | read a file | ✅ checked, Windows + Linux | — |
+| Git https | see the history | ✅ checked, Windows + Linux | — |
+| Git https | see the history of one file | ✅ checked, Windows + Linux | — |
 | Git ssh | log in to the server | ✅ checked, Windows + Linux | — |
 | Git ssh | see the list of files | ✅ checked, Windows + Linux | — |
 | Git ssh | read a file | ✅ checked, Windows + Linux | — |
@@ -32,12 +39,17 @@ Git/SVN integration
 | SVN http | read a file | ✅ checked, Windows + Linux | — |
 | SVN http | see the history | ✅ checked, Windows + Linux | — |
 | SVN http | see the history of one file | ✅ checked, Windows + Linux | — |
+| SVN https | log in to the server | ✅ checked, Windows + Linux | — |
+| SVN https | see the list of files | ✅ checked, Windows + Linux | — |
+| SVN https | read a file | ✅ checked, Windows + Linux | — |
+| SVN https | see the history | ✅ checked, Windows + Linux | — |
+| SVN https | see the history of one file | ✅ checked, Windows + Linux | — |
 | Git git:// | log in to the server | ❌ not feasible: git:// has no login, anyone can read | closed, not offered in the YAML |
 
-Checked: 20 · Unchecked: 0 · Failed: 0 · Not feasible (closed): 1
+Checked: 30 · Unchecked: 0 · Failed: 0 · Not feasible (closed): 1
 
 Check: `docs/plans/checks/git-svn-read-check.sh` with own test servers and a login (also: password/key is in no file, wrong
-login is refused), run 2026-11-19 on GitHub, Windows + Linux: https://github.com/GFGMNET/Workspace/actions/runs/44506979999
+login is refused), run 2026-11-19 on GitHub, Windows + Linux: https://github.com/GFGMNET/Workspace/actions/runs/44509960434
 
 ## 4) Description
 
@@ -45,9 +57,7 @@ Read access to the files from the repository, to show them and their history, fo
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | Should https be possible too (Git and SVN)? It is not checked yet. |
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -66,6 +76,7 @@ Read access to the files from the repository, to show them and their history, fo
 |---|---|---|
 | 1 | 1.0.1 can only come after 1.0, and 1.0 for Windows waits for signing. | Build and check 1.0.1 now, release it together with 1.0. |
 | 2 | Git has to download the list of files and the history first; with a very big repository the first time takes long. | Only list + history are downloaded, file contents when a file is opened (checked); afterwards only the changes. You test it with your biggest repository. |
+| 3 | https: the checks used a test certificate given directly. A server with its own (self-made) certificate is not trusted by the PC. | The certificate has to be trusted on the PC (installed in Windows), as for a browser. |
 
 ## 8) Detail workflow
 
@@ -90,7 +101,7 @@ Git:
 version-control:
   feature: version-control
   type: git
-  protocol: http                 # git: http or ssh
+  protocol: https                # git: http, https or ssh
   server: 192.168.1.20
   port: 3000
   path: team/project.git         # which repository on the server
@@ -105,7 +116,7 @@ SVN:
 version-control:
   feature: version-control
   type: svn
-  protocol: svn                  # svn: svn or http
+  protocol: svn                  # svn: svn, http or https
   server: 192.168.1.30
   port: 3690
   path: repos/project/trunk      # the folder that is shown
