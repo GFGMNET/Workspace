@@ -27,12 +27,12 @@ Click on "VS Code" in the top menu → the editor opens inside the app. It repla
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | While VS Code starts (first time 10–40 s), show "VS Code is starting…"? |
-| 2 | Remove the row of buttons above the editor (Reload, Open in new window, Desktop VS Code, Stop)? |
-| 3 | VS Code not installed: show "VS Code is not installed" with the download link? |
-| 4 | Fix the Linux Stop bug (#78) in this version? |
+| id | question |answer
+|---|---|---|
+| 1 | While VS Code starts (first time 10–40 s), show "VS Code is starting…"? | Yes
+| 2 | Remove the row of buttons above the editor (Reload, Open in new window, Desktop VS Code, Stop)? |yes
+| 3 | VS Code not installed: show "VS Code is not installed" with the download link? | yes, Also update the Requirements in the wiki
+| 4 | Fix the Linux Stop bug (#78) in this version? | I dont find this issue on git
 
 ## 6) Decisions, only about this feature
 
