@@ -57,9 +57,9 @@ Read access to the files from the repository, to show them and their history, fo
 
 ## 5) Open points, only about this feature
 
-| id | question |
+| id | question |answer|
 |---|---|
-| 1 | Name of the folder inside the project that holds the Git copy, e.g. `.version-control`? |
+| 1 | Name of the folder inside the project that holds the Git copy, e.g. `.version-control`? |---|
 
 ## 6) Decisions, only about this feature
 
