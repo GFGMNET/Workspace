@@ -64,7 +64,9 @@ Every plan has exactly these parts, in this order:
 7) Risks
 8) Detail workflow
 
-The functions come from the maintainer — never plan from your own guess, ask first. A function that is not checked
+The functions come from the maintainer — never plan from your own guess, ask first. Anything in a plan that is not the maintainer's
+own words or decision (design details, extra checks, extra steps, suggestions) goes into point 5 as a question — never into
+points 4, 6 or 8 as if decided. Before showing a plan, list yourself what in it was not requested. A function that is not checked
 or whose check failed cannot be approved. Checks live in `docs/plans/checks/`. Before work starts, the maintainer
 gets the open points and risks, and nothing begins until they have seen them. While building: if a step cannot be
 done as planned, stop and ask the maintainer — no new design on your own.
