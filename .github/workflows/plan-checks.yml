@@ -151,7 +151,7 @@ jobs:
         run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe
 
   glpi:
-    if: inputs.plan == 'all' || inputs.plan == 'glpi' || inputs.plan == 'glpi-category'
+    if: inputs.plan == 'all' || inputs.plan == 'glpi'
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -163,10 +163,10 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - name: Ticketsystem plan — GLPI read and write, by entity
+      - name: Ticketsystem plan — GLPI read and write, by category
         env:
           GLPI_URL: https://ticket.bbdi42.de
           GLPI_USER: Hermes
           GLPI_TOKEN: ${{ secrets.GLPI_TOKEN }}
           GLPI_APP_TOKEN: ${{ secrets.GLPI_APP_TOKEN }}
-        run: node docs/plans/checks/${{ inputs.plan == 'glpi-category' && 'glpi-category-check.js' || 'glpi-check.js' }}
+        run: node docs/plans/checks/glpi-check.js

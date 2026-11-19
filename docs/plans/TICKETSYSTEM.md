@@ -12,15 +12,15 @@ Ticketsystem
 
 | part | desc | state | suggestion |
 |---|---|---|---|
-| Tickets | read: list of the tickets of the entity, one ticket | unchecked | check against the GLPI test environment, from GitHub's Windows and Linux machines |
-| Tickets | write: create a ticket in the entity | unchecked | same |
+| Tickets | read: list of the tickets of the category, one ticket | unchecked | check against the GLPI test environment, from GitHub's Windows and Linux machines |
+| Tickets | write: create a ticket in the category | unchecked | same |
 | Tickets | write: edit a ticket's text | unchecked | same |
 | Tickets | write: set the state of a ticket | unchecked | same |
 | Tickets | write: add a solution to a ticket, read it | unchecked | same |
 | Follow-ups | read: follow-ups of a ticket | unchecked | same |
 | Follow-ups | write: add a follow-up to a ticket | unchecked | same |
-| Entity | create the entity with the project's name if it does not exist | unchecked | same |
-| Entity | only tickets of the entity with the project's name | unchecked | same, with two test entities |
+| Category | create the category with the project's name if it does not exist | unchecked | same |
+| Category | only tickets of the category with the project's name | unchecked | same, with two test categories |
 
 Checked: 0 · Unchecked: 9 · Failed: 0
 
@@ -28,7 +28,7 @@ Check: `docs/plans/checks/glpi-check.js` (needs the secret `GLPI_TOKEN`).
 
 ## 4) Description
 
-Tickets and comments (GLPI follow-ups) from GLPI, filtered by entity (the entity is the project name). Read and write,
+Tickets and comments (GLPI follow-ups) from GLPI, filtered by category (the category is the project name). Read and write,
 including editing the text, setting the state of a ticket and the solution.
 
 ## 5) Open points, only about this feature
@@ -40,7 +40,7 @@ None.
 | id | decision |
 |---|---|
 | 1 | GLPI 11 only (osTicket dropped). |
-| 2 | Filter by entity; the entity is the project name. |
+| 2 | Filter by category; the category is the project name (changed by the maintainer 2026-11-19 from entity: entities could not be created through the API on the test environment). |
 | 3 | The checks run against the maintainer's GLPI test environment (`ticket.bbdi42.de`). |
 | 4 | Only tickets — no GLPI changes (changed by the maintainer 2026-11-19). |
 | 5 | Comments are GLPI follow-ups. |
@@ -49,8 +49,8 @@ None.
 | 8 | The tab is called "Ticket". |
 | 9 | The screens as in the approved screenshots: [list](img/glpi-list.png), [one ticket](img/glpi-ticket.png). |
 | 10 | New ticket: a "+" button with the help text "New Ticket"; no text line above the list. |
-| 11 | If the entity with the project's name does not exist in GLPI, the app creates it. |
-| 12 | What GLPI needs for this is described in the wiki: API client (allowed IP address, app token) and the rights of the account's profile (incl. creating entities). |
+| 11 | If the category with the project's name does not exist in GLPI, the app creates it. |
+| 12 | What GLPI needs for this is described in the wiki: API client (allowed IP address, app token) and the rights of the account's profile (incl. creating categories). |
 
 ## 7) Risks
 
