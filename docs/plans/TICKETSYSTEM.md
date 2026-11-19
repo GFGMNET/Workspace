@@ -50,6 +50,7 @@ None.
 | 9 | The screens as in the approved screenshots: [list](img/glpi-list.png), [one ticket](img/glpi-ticket.png). |
 | 10 | New ticket: a "+" button with the help text "New Ticket"; no text line above the list. |
 | 11 | If the entity with the project's name does not exist in GLPI, the app creates it. |
+| 12 | What GLPI needs for this is described in the wiki: API client (allowed IP address, app token) and the rights of the account's profile (incl. creating entities). |
 
 ## 7) Risks
 
