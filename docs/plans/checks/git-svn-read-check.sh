@@ -51,7 +51,10 @@ MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" openssl req -x509 -newkey rsa:2048 -n
 ${PYTHON:-python3} "$HERE/version-control-server.py" "$T" 8766 "$(nat "$T")/tls.pem" "$(nat "$T")/tls.key" > gitsrv-tls.log 2>&1 & GTP=$!
 for i in 1 2 3 4 5 6 7 8 9 10; do curl -sk -o /dev/null https://127.0.0.1:8766/ && break; sleep 1; done
 if win; then SB="-c http.sslBackend=openssl"; else SB=""; fi
-gt() { GIT_SSL_CAINFO="$(nat "$T")/tls.pem" gx $SB "$@"; }   # test certificate only; real servers: the PC's normal certificates
+# decided: certificate errors are ignored (self-made server certificates) — first show there is an error to ignore
+gx ls-remote https://127.0.0.1:8766/srv.git > /dev/null 2> git-tls-strict.err
+[ $? != 0 ] && grep -qi "certificate" git-tls-strict.err; res $? "Git https  self-made server certificate gives an error without the switch"
+gt() { gx $SB -c http.sslVerify=false "$@"; }
 gt clone -q --bare --filter=blob:none https://127.0.0.1:8766/srv.git cache-tls.git 2> git-tls.err
 res $? "Git https  log in to the server"
 [ "$(gt -C cache-tls.git ls-tree -r --name-only HEAD | sort | tr '\n' ' ')" = "docs/notes.txt readme.txt " ]; res $? "Git https  see the list of files"
@@ -202,8 +205,10 @@ webcheck() {  # $1 = label, $2 = address, $3.. = extra svn options
 }
 if [ "$SVN_WEB_ONLY" = https ]; then :; elif [ -n "$HU" ]; then webcheck http "$HU"; else skip "SVN http  all functions" "no SVN web server on this machine"; fi
 if [ "$SVN_WEB_ONLY" = http ]; then :; elif [ -n "$HSU" ]; then
-  if [ -n "$SVN_HTTPS_URL" ]; then webcheck https "$HSU" --trust-server-cert-failures=unknown-ca,cn-mismatch   # Windows test server: own test certificate
-  else webcheck https "$HSU" --config-option "servers:global:ssl-authority-files=$(nat "$T")/tls.pem"; fi
+  # decided: certificate errors are ignored — first show there is an error to ignore
+  printf %s "$PW_PASS" | svn info "$HSU" --non-interactive --no-auth-cache --username alice --password-from-stdin > /dev/null 2> svn-tls-strict.err
+  [ $? != 0 ] && grep -qi "certificate" svn-tls-strict.err; res $? "SVN https  self-made server certificate gives an error without the switch"
+  webcheck https "$HSU" --trust-server-cert-failures=unknown-ca,cn-mismatch,expired,not-yet-valid,other
 else skip "SVN https  all functions" "no SVN https server on this machine"; fi
 [ -n "$APACHE" ] && "$APACHE" -f "$T/httpd.conf" -k stop 2>/dev/null
 for f in httpd.err logs/error.log; do [ -s $f ] && { echo "--- $f:"; tail -3 $f; }; done
