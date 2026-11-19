@@ -34,7 +34,10 @@ including editing the text, setting the state of a ticket and the solution.
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | Your GLPI asks for an app token as well: also put it into the YAML (as `${secret:…}`)? |
+| 2 | If a category with the project's name is already used in GLPI for other tickets, those tickets show up in the project too — OK? |
 
 ## 6) Decisions, only about this feature
 
@@ -55,8 +58,48 @@ None.
 
 ## 7) Risks
 
-Written after the checks.
+| id | risk | suggestion |
+|---|---|---|
+| 1 | Without the GLPI setup nothing works (seen in the checks): the API client must allow the address the requests come from, the app token must match, and the profile needs the rights incl. creating categories. | Decision 12: described in the wiki. |
+| 2 | After a solution, GLPI sets the ticket to "solved" by itself (seen in the check). | The tab shows the state GLPI reports. |
+| 3 | The API token of the test environment was written in the chat. | Create a new token in GLPI after the checks and replace the secret `GLPI_TOKEN`. |
 
 ## 8) Detail workflow
 
-Written after the checks and the open points.
+### 8a) Flow diagram
+
+```mermaid
+flowchart TD
+  A[Open project, tab Ticket] --> B[App reads url, user, token from the YAML; token from the app's secrets]
+  B --> C[Log in to GLPI]
+  C --> D{Category with the project's name?}
+  D -->|missing| E[Create it]
+  D -->|there| F[List of the tickets of the category]
+  E --> F
+  F --> G[One ticket: text, follow-ups, solution, state]
+  G --> H[Write: + new ticket, edit text, set state, follow-up, solution]
+```
+
+### 8b) The YAML file
+
+```yaml
+ticket:
+  feature: ticketsystem
+  url: https://ticket.example.com
+  user: hermes
+  token: ${secret:glpi-token}          # from the app's secrets, never as text
+  # app_token: ${secret:glpi-app-token} # open point 1
+```
+
+### 8c) How it is done
+
+| id | desc |
+|---|---|
+| 1 | New feature file `app/starter/features/ticketsystem.yaml`: name "Ticket" (decision 8), layout `tickets`. |
+| 2 | New file `rust/crates/pw-server/src/glpi.rs`, the same GLPI calls as the check: log in, find the category with the project's name or create it (decisions 2, 11), list of its tickets, one ticket, follow-ups, solution; write: create a ticket in the category, edit the text, set the state, add a follow-up, add a solution. The token only from the secrets (decision 7). |
+| 3 | New addresses in the app server for these (`/api/projects/{p}/f/{f}/tickets/...`), only for 127.0.0.1 like all others. |
+| 4 | New screen `VIEWS.tickets` in `app/public/views.js`, as in the approved screenshots, with the "+" button and its help text (decisions 9, 10). |
+| 5 | Automatic tests `tests/contract/tickets.test.js` against a small fake GLPI (like the GitHub tests), run by `rust.yml` on Windows and Linux. Done when: all green. |
+| 6 | Docs: wiki page "Ticket" with the GLPI setup (decision 12), REQUIREMENTS.md (→ wiki "Requirements"), DESIGN.md, release notes `docs/releases/v1.1.0.md`. |
+| 7 | You test it with your GLPI test environment. Done when: list, one ticket, + new ticket, edit, state, follow-up, solution work in the tab. |
+| 8 | Release 1.1 with your OK. |
