@@ -2,10 +2,6 @@
 
 Issue #60 · Status: **not started — waiting for the 2 answers in section 6**
 
-How to read this plan: every step has a list of checks. A step is done only when **every check is ticked**, and each check is a
-yes/no that anyone can try. Whoever builds it (me or another agent) follows the steps in order, does not change the decisions in
-section 2, and stops and asks if a check cannot be passed.
-
 ## 1. Goal — done when
 
 A project can keep versions of its files, without a terminal and without GitHub. 1.0.1 is done when all checks in steps 1–4 are
@@ -22,6 +18,7 @@ ticked and you gave your OK to release.
 | D5 | "Restore" never deletes history: it saves the old state as a **new** version. | Nothing can be lost by a click. |
 | D6 | Logins come from the app's secrets and are handed to git/svn only while a command runs. They are never written into `.git/config`, the server address or any project file. | Security rule in CLAUDE.md. |
 | D7 | Server = shared folder, or a server by IP address + port. | Decided 2026-11-19. |
+| D8 | If something in a step cannot be done, the builder stops and asks you. | No new design without you. |
 
 ## 3. What was checked before writing this plan
 
@@ -42,7 +39,7 @@ ticked and you gave your OK to release.
 
 What gets built: the Versions tab with "changes", "save version", "history", "restore"; turning a project folder into a repository.
 
-Checks:
+Done when:
 - [ ] 1.1 In a project without versions, the tab shows a button "Start versions". After clicking it, the folder is a Git repository.
 - [ ] 1.2 Change a file → the tab lists it as changed. Type a message, click "Save version" → it appears at the top of the history.
 - [ ] 1.3 Pick an older version → "Restore" → the files are as they were **and** the history has one more entry (D5).
@@ -56,7 +53,7 @@ Checks:
 
 What gets built: "get project from server" (clone), "sync" (send and get versions), login from the secrets.
 
-Checks:
+Done when:
 - [ ] 2.1 Shared folder as server: project A sends a version, project B gets it.
 - [ ] 2.2 Server by IP + port with a login from the secrets: works, and the login is in **no** file afterwards (automatic test
   searches the project folder and `.git` for it) (D6).
@@ -70,7 +67,7 @@ Checks:
 
 What gets built: the same tab for SVN projects: checkout, changes, save (commit), history, update, restore.
 
-Checks:
+Done when:
 - [ ] 3.1 SVN can be installed on the GitHub build machines (Linux, Windows). If not: plan B from section 3, written down here.
 - [ ] 3.2 Checks 1.2, 1.3, 1.5, 2.2, 2.3 and 2.4 pass for SVN too (with an SVN test repository in a temp folder).
 - [ ] 3.3 **You** test checkout, save and history with your SVN program (about 1 hour).
@@ -89,7 +86,6 @@ Checks:
 | Two people change the same file | Choose per file, both stay in history (check 2.3). | none |
 | SVN not available on a build machine | Test SVN on the machine where it works; you test the rest (check 3.1). | ~1 hour of yours |
 | 1.0 stays on hold (signing) | 1.0.1 waits too. Nothing of this work is lost. | none |
-| A check cannot be passed | The builder stops and asks you — no new design on its own. | — |
 
 Costs: no money. Your time: about 3 hours of testing plus the release OK.
 
