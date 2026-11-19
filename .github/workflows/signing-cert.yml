@@ -1,6 +1,6 @@
 # Creates the own signing certificate ONCE (docs/plans/SIGNING.md, step 2). Run by hand: Actions → "Create signing certificate".
-# Needs the secret SIGNING_PASSWORD (long random password). Stores in the repository, folder signing/:
-#   workspace-signing.pfx        the private key, encrypted with SIGNING_PASSWORD (useless without it)
+# Stores in the repository, folder signing/ (decided by the maintainer: in the repository, no password):
+#   workspace-signing.pfx        the certificate with its private key (the build signs with it)
 #   workspace-signing.cer        the public part (users can install it so Windows trusts "Workspace")
 #   workspace-signing.thumbprint its fingerprint, built into the app's updater
 # The key is created on GitHub's build machine and is on nobody's PC. Refuses to run if a certificate is already there.
@@ -19,16 +19,12 @@ jobs:
       - uses: actions/checkout@v7
       - name: Create and store the certificate
         shell: pwsh
-        env:
-          PASS: ${{ secrets.SIGNING_PASSWORD }}
         run: |
-          if (-not $env:PASS -or $env:PASS.Length -lt 20) { throw "The secret SIGNING_PASSWORD is missing or shorter than 20 characters" }
           if (Test-Path signing/workspace-signing.pfx) { throw "A certificate is already there - it is not replaced" }
           New-Item -ItemType Directory -Force signing | Out-Null
           $c = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=Workspace' -KeyAlgorithm RSA -KeyLength 3072 `
-                 -HashAlgorithm SHA256 -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(10)
-          Export-PfxCertificate -Cert $c -FilePath signing/workspace-signing.pfx -CryptoAlgorithmOption AES256_SHA256 `
-                 -Password (ConvertTo-SecureString $env:PASS -AsPlainText -Force) | Out-Null
+                 -HashAlgorithm SHA256 -KeyExportPolicy Exportable -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddYears(10)
+          [IO.File]::WriteAllBytes("$PWD/signing/workspace-signing.pfx", $c.Export('Pfx', ''))   # no password
           Export-Certificate -Cert $c -FilePath signing/workspace-signing.cer | Out-Null
           Set-Content -NoNewline -Path signing/workspace-signing.thumbprint -Value $c.Thumbprint
           Remove-Item "Cert:\CurrentUser\My\$($c.Thumbprint)"
@@ -36,5 +32,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add signing
-          git commit -m "Signing certificate: public part, encrypted key, fingerprint (docs/plans/SIGNING.md)"
+          git commit -m "Signing certificate: certificate with key, public part, fingerprint (docs/plans/SIGNING.md)"
           git push
