@@ -102,4 +102,4 @@ ticket:
 | 5 | Automatic tests `tests/contract/tickets.test.js` against a small fake GLPI (like the GitHub tests), run by `rust.yml` on Windows and Linux. Done when: all green. |
 | 6 | Docs: wiki page "Ticket" with the GLPI setup (decision 12), REQUIREMENTS.md (→ wiki "Requirements"), DESIGN.md, release notes `docs/releases/v1.1.0.md`. |
 | 7 | You test it with your GLPI test environment. Done when: list, one ticket, + new ticket, edit, state, follow-up, solution work in the tab. |
-| 8 | Release 1.1 with your OK. |
+| 8 | Release 1.0 with your OK. |
