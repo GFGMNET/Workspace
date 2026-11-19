@@ -29,9 +29,7 @@ Windows and Linux machines.
 
 ## 4) Description
 
-Each project gets a **Versions** tab. You see which files changed, save the current state as a version with a short message,
-look at the history and get an old version back — without a terminal. A project can be shared through a shared folder or
-your own server (IP + port). Git first, then SVN.
+See the files from the repository and the history, for Git and SVN.
 
 ## 5) Open points, only about this feature
 
