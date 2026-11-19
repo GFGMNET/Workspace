@@ -12,21 +12,32 @@ Git/SVN integration
 
 | part | desc | state | suggestion |
 |---|---|---|---|
-| Git | log in to the server | ✅ checked, Windows + Linux | — |
-| Git | see the list of files | ✅ checked, Windows + Linux | — |
-| Git | read a file | ✅ checked, Windows + Linux | — |
-| Git | see the history | ✅ checked, Windows + Linux | — |
-| Git | see the history of one file | ✅ checked, Windows + Linux | — |
-| SVN | log in to the server | ✅ checked, Windows + Linux | — |
-| SVN | see the list of files | ✅ checked, Windows + Linux | — |
-| SVN | read a file | ✅ checked, Windows + Linux | — |
-| SVN | see the history | ✅ checked, Windows + Linux | — |
-| SVN | see the history of one file | ✅ checked, Windows + Linux | — |
+| Git http | log in to the server | ✅ checked, Windows + Linux | — |
+| Git http | see the list of files | ✅ checked, Windows + Linux | — |
+| Git http | read a file | ✅ checked, Windows + Linux | — |
+| Git http | see the history | ✅ checked, Windows + Linux | — |
+| Git http | see the history of one file | ✅ checked, Windows + Linux | — |
+| Git ssh | log in to the server | ✅ checked, Windows + Linux | — |
+| Git ssh | see the list of files | ✅ checked, Windows + Linux | — |
+| Git ssh | read a file | ✅ checked, Windows + Linux | — |
+| Git ssh | see the history | ✅ checked, Windows + Linux | — |
+| Git ssh | see the history of one file | ✅ checked, Windows + Linux | — |
+| SVN svn | log in to the server | ✅ checked, Windows + Linux | — |
+| SVN svn | see the list of files | ✅ checked, Windows + Linux | — |
+| SVN svn | read a file | ✅ checked, Windows + Linux | — |
+| SVN svn | see the history | ✅ checked, Windows + Linux | — |
+| SVN svn | see the history of one file | ✅ checked, Windows + Linux | — |
+| SVN http | log in to the server | ✅ checked, Windows + Linux | — |
+| SVN http | see the list of files | ✅ checked, Windows + Linux | — |
+| SVN http | read a file | ✅ checked, Windows + Linux | — |
+| SVN http | see the history | ✅ checked, Windows + Linux | — |
+| SVN http | see the history of one file | ✅ checked, Windows + Linux | — |
+| Git git:// | log in to the server | ❌ not feasible: git:// has no login, anyone can read | closed, not offered in the YAML |
 
-Checked: 10 · Unchecked: 0 · Failed: 0
+Checked: 20 · Unchecked: 0 · Failed: 0 · Not feasible (closed): 1
 
-Check: `docs/plans/checks/git-svn-read-check.sh`, run 2026-11-19 on GitHub (Windows + Linux), with own test servers and a login:
-https://github.com/GFGMNET/Workspace/actions/runs/44503418842
+Check: `docs/plans/checks/git-svn-read-check.sh` with own test servers and a login (also: password/key is in no file, wrong
+login is refused), run 2026-11-19 on GitHub, Windows + Linux: https://github.com/GFGMNET/Workspace/actions/runs/44506979999
 
 ## 4) Description
 
@@ -36,6 +47,7 @@ Read access to the files from the repository, to show them and their history, fo
 
 | id | question |
 |---|---|
+| 1 | Should https be possible too (Git and SVN)? It is not checked yet. |
 
 ## 6) Decisions, only about this feature
 
@@ -53,7 +65,7 @@ Read access to the files from the repository, to show them and their history, fo
 | id | risk | suggestion |
 |---|---|---|
 | 1 | 1.0.1 can only come after 1.0, and 1.0 for Windows waits for signing. | Build and check 1.0.1 now, release it together with 1.0. |
-| 2 | Git has to download a copy of the repository before it can show files; a big repository takes long and uses disk space. | Measure it in the checks of point 3; download once, afterwards only the changes. |
+| 2 | Git has to download the list of files and the history first; with a very big repository the first time takes long. | Only list + history are downloaded, file contents when a file is opened (checked); afterwards only the changes. You test it with your biggest repository. |
 
 ## 8) Detail workflow
 
@@ -61,12 +73,13 @@ Read access to the files from the repository, to show them and their history, fo
 
 ```mermaid
 flowchart TD
-  A[Open project, tab Version Control] --> B[App reads type, server, port, path, login from YAML]
-  B --> C{type}
-  C -->|git| D[Log in, get the repository]
-  C -->|svn| E[Log in, ask the server]
-  D --> F[Show list of files, a file, history, history of one file]
-  E --> F
+  A[Open project, tab Version Control] --> B[App reads type, protocol, server, port, path, user from the YAML]
+  B --> C[App takes password or key from the secrets]
+  C --> D{type}
+  D -->|git| E[First time: download list + history into the app's own folder; later: only the changes]
+  D -->|svn| F[Ask the server directly]
+  E --> G[Show list of files, a file, history, history of one file]
+  F --> G
 ```
 
 ### 8b) The YAML file
@@ -74,27 +87,44 @@ flowchart TD
 Git:
 
 ```yaml
-versions:
-  feature: versions
+version-control:
+  feature: version-control
   type: git
+  protocol: http                 # git: http or ssh
   server: 192.168.1.20
   port: 3000
-  path: team/project          # which repository on the server
-  login: ${secret:git-login}  # from the app's secrets, never written into a file
+  path: team/project.git         # which repository on the server
+  user: alice
+  password: ${secret:git-pass}   # http: password from the app's secrets
+  # key: ${secret:git-key}       # ssh: private key from the app's secrets
 ```
 
 SVN:
 
 ```yaml
-versions:
-  feature: versions
+version-control:
+  feature: version-control
   type: svn
+  protocol: svn                  # svn: svn or http
   server: 192.168.1.30
   port: 3690
-  path: repos/project/trunk   # which repository, and which folder in it
-  login: ${secret:svn-login}  # from the app's secrets, never written into a file
+  path: repos/project/trunk      # the folder that is shown
+  user: alice
+  password: ${secret:svn-pass}
 ```
 
 ### 8c) How it is done
 
-Written after all checks in point 3 have passed, because the checks decide how it is done.
+| id | desc |
+|---|---|
+| 1 | New feature file `app/starter/features/version-control.yaml`: name "Version Control", own icon, layout `vcs`. |
+| 2 | New file `rust/crates/pw-server/src/vcs.rs`: reads the settings from the YAML, takes password/key with `secret_get`, builds the server address. Only the protocols from 8b are allowed; anything else → error. |
+| 3 | Git commands always run with: hidden program settings off (`core.fsmonitor`, `core.hooksPath`), only the allowed protocol, no saved logins, no questions on screen. Password is handed over only while the command runs (as in the check); ssh key via `ssh-agent`, read from stdin, never written to a file. |
+| 4 | Git: first time `clone --bare --filter=blob:none` into the app's own folder `data/.app/vcs/<project>/` (never served, never in the project folder); later `fetch`. List = `ls-tree`, file = `show`, history = `log`, history of one file = `log -- <file>`. |
+| 5 | SVN: no download. List = `svn list -R`, file = `svn cat`, history = `svn log`, history of one file = `svn log <file>`; always with `--non-interactive --no-auth-cache --password-from-stdin`. |
+| 6 | Four new addresses in the app server: files, one file, history, history of one file (`/api/projects/{p}/f/{f}/vcs/...`), only for 127.0.0.1 like all others. |
+| 7 | New screen `VIEWS.vcs` in `app/public/views.js`: files and folders on the left, the opened file on the right (read only); tab "History" with who, when, message; click on a file → its history. |
+| 8 | Automatic tests `tests/contract/vcs.test.js` with the same test servers as the check (Git http + ssh, SVN svn + http, with login), run by `rust.yml` on Windows and Linux. Done when: all green. |
+| 9 | Docs: DESIGN.md, REQUIREMENTS.md, wiki page "Version Control", release notes `docs/releases/v1.0.1.md`. |
+| 10 | You test it with your own Git and SVN server. Done when: you see files, a file, the history and the history of one file. |
+| 11 | Release 1.0.1 with your OK, after 1.0. |
