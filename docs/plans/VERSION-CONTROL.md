@@ -23,9 +23,12 @@ See the files from the repository and the history, for Git and SVN.
 
 ## 5) Open points, only about this feature
 
-1. Is Git for Windows installed, and which SVN program do you use? (TortoiseSVN works only if "command line client tools" was
-   ticked when installing.)
-2. SVN server login on Windows failed in the check — has to be checked again before this function can be approved.
+| id | question |
+|---|---|
+| 1 | Can Git show the files of a repository on a server (IP + port)? |
+| 2 | Can Git show the history of a repository on a server (IP + port)? |
+| 3 | Can SVN show the files of a repository on a server (IP + port)? |
+| 4 | Why did the SVN server login fail on Windows, and can SVN show the history there? |
 
 ## 6) Decisions, only about this feature
 
