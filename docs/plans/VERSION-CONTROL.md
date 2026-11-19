@@ -12,18 +12,21 @@ Git/SVN integration
 
 | part | desc | state | suggestion |
 |---|---|---|---|
-| Git | log in to the server | unchecked | test Git server with login, on Windows and Linux |
-| Git | see the list of files | unchecked | same test server |
-| Git | read a file | unchecked | same test server |
-| Git | see the history | unchecked | same test server |
-| Git | see the history of one file | unchecked | same test server |
-| SVN | log in to the server | failed (Windows) | find out why it failed on Windows, then run again |
-| SVN | see the list of files | unchecked | test SVN server with login, on Windows and Linux |
-| SVN | read a file | unchecked | same test server |
-| SVN | see the history | unchecked | same test server |
-| SVN | see the history of one file | unchecked | same test server |
+| Git | log in to the server | ✅ checked, Windows + Linux | — |
+| Git | see the list of files | ✅ checked, Windows + Linux | — |
+| Git | read a file | ✅ checked, Windows + Linux | — |
+| Git | see the history | ✅ checked, Windows + Linux | — |
+| Git | see the history of one file | ✅ checked, Windows + Linux | — |
+| SVN | log in to the server | ✅ checked, Windows + Linux | — |
+| SVN | see the list of files | ✅ checked, Windows + Linux | — |
+| SVN | read a file | ✅ checked, Windows + Linux | — |
+| SVN | see the history | ✅ checked, Windows + Linux | — |
+| SVN | see the history of one file | ✅ checked, Windows + Linux | — |
 
-Checked: 0 · Unchecked: 9 · Failed: 1
+Checked: 10 · Unchecked: 0 · Failed: 0
+
+Check: `docs/plans/checks/git-svn-read-check.sh`, run 2026-11-19 on GitHub (Windows + Linux), with own test servers and a login:
+https://github.com/GFGMNET/Workspace/actions/runs/44503418842
 
 ## 4) Description
 
