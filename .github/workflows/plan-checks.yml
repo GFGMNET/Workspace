@@ -60,7 +60,9 @@ jobs:
           if ($cap.State -ne 'Installed') { Add-WindowsCapability -Online -Name $cap.Name | Out-Null }
           Start-Service sshd; Stop-Service sshd
           New-ItemProperty HKLM:\SOFTWARE\OpenSSH -Name DefaultShell -Value 'C:\Program Files\Git\bin\bash.exe' -PropertyType String -Force | Out-Null
-          Add-Content C:\ProgramData\ssh\sshd_config "`nPort 2222`nListenAddress 127.0.0.1`nAcceptEnv GIT_PROTOCOL`nPasswordAuthentication no"
+          $cfg = 'C:\ProgramData\ssh\sshd_config'   # own lines at the top: the default file ends with a Match block
+          Set-Content $cfg (@('Port 2222','ListenAddress 127.0.0.1','AcceptEnv GIT_PROTOCOL','PasswordAuthentication no') + (Get-Content $cfg))
+          & C:\Windows\System32\OpenSSH\sshd.exe -t; Write-Host "config test: $LASTEXITCODE"
           $k = 'C:\ProgramData\ssh\administrators_authorized_keys'
           New-Item -ItemType File -Force $k | Out-Null
           icacls $k /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F' | Out-Null
