@@ -1,6 +1,6 @@
 # Plan: Signing with own certificate
 
-**Ready 2 Deploy** · approved by the maintainer 2026-11-19 · building
+**Ready 2 Deploy** · approved by the maintainer 2026-11-19 · **built** (steps 1–7, tests green: https://github.com/GFGMNET/Workspace/actions/runs/44537356102) · next: your test and the OK for 0.9.1
 
 ## 1) Name
 
