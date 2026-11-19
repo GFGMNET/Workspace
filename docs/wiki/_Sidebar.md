@@ -28,6 +28,7 @@
 - [[Contacts|Feature-Contacts]] · [[Devices|Feature-Devices]]
 - [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[MCP|Feature-MCP]]
 - [[Issues|Feature-Issues]]
+- [[Ticket|Feature-Ticket]]
 
 **Developers**
 

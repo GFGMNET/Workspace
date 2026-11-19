@@ -453,3 +453,10 @@ button.ilabel.on{background:var(--lc);color:#fff}
 .danger-zone b{color:var(--err)}
 
 .icon-btn{padding:7px;line-height:0}
+
+/* Ticket (GLPI) */
+.tstate{background:var(--accent-soft)}.tstate.new{background:#dafbe1;color:#1a7f37}.tstate.pend{background:#fff8c5;color:#9a6700}.tstate.solved{background:var(--line);color:var(--muted)}
+.tsec{padding:12px 14px;border-bottom:1px solid var(--line)}.tsec:last-child{border-bottom:0}
+.tsec h3{margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tfu{border-left:3px solid var(--line);padding:6px 10px;margin:8px 0}.tsol{border-left:3px solid #1f883d;padding:6px 10px}
+.pre-wrap{white-space:pre-wrap}

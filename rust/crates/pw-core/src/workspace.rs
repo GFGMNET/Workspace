@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
-pub const STORES: [&str; 7] = ["markdown", "images", "files", "records", "diagram", "chat", "github"];
+pub const STORES: [&str; 8] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi"];
 pub const FIELD_TYPES: [&str; 13] = ["text", "longtext", "number", "date", "datetime", "select", "bool", "url", "email", "tags", "list", "keyvalue", "link"];
 pub(crate) const META_KEYS: [&str; 10] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location"];
 
@@ -14,13 +14,13 @@ pub fn layouts() -> Value {
     json!({
         "markdown": ["pages", "cards", "list"], "images": ["grid"], "files": ["files", "code"],
         "records": ["table", "list", "cards", "kanban", "calendar", "orgchart", "map"],
-        "diagram": ["diagram"], "chat": ["chat"], "github": ["issues"]
+        "diagram": ["diagram"], "chat": ["chat"], "github": ["issues"], "glpi": ["tickets"]
     })
 }
 fn default_layout(stores: &str) -> &'static str {
     match stores {
         "images" => "grid", "files" => "files", "records" => "table", "diagram" => "diagram",
-        "chat" => "chat", "github" => "issues", _ => "pages",
+        "chat" => "chat", "github" => "issues", "glpi" => "tickets", _ => "pages",
     }
 }
 

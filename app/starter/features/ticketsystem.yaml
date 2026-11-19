@@ -1,0 +1,13 @@
+# Tickets of a GLPI 11 server (plan: docs/plans/TICKETSYSTEM.md). Set it up in each project's project.yaml:
+#   ticket:
+#     feature: ticketsystem
+#     url: https://glpi.example.com
+#     user: hermes
+#     user_token: ${secret:glpi-user-token}   # GLPI user API token, from Settings → Secrets
+#     app_token: ${secret:glpi-app-token}     # app token of GLPI's API client, from Settings → Secrets
+# The project's tickets are the tickets of the GLPI category with the project's name; it is created when missing.
+# What GLPI needs (API client, rights): wiki page "Ticket".
+name: Ticket
+icon: issue
+stores: glpi
+layout: tickets

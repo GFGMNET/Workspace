@@ -656,6 +656,72 @@ VIEWS.chat = async ctx => {
   ta.focus();
 };
 
+// ---------- Ticket (GLPI, docs/plans/TICKETSYSTEM.md) ----------
+// The tickets of the GLPI category with the project's name; as in the approved screens: a list with a "+" (help text
+// "New Ticket") and no text line above it; one ticket with state, description (edit), follow-ups and solution.
+const TICKET_STATE_CLASS = { 1: 'new', 2: '', 3: '', 4: 'pend', 5: 'solved', 6: 'solved' };
+VIEWS.tickets = async ctx => {
+  const base = `/api/projects/${enc(ctx.p.slug)}/f/${enc(ctx.f.key)}/tickets`;
+  const fail = (e, retry) => { ctx.el.innerHTML = `<div class="card" style="max-width:680px"><h2>${icon('warn')} Can't show the tickets</h2><p class="muted">${esc(e.message)}</p><button class="btn" type="button" data-retry>Try again</button></div>`; $('[data-retry]', ctx.el).onclick = retry; };
+  const when = d => d ? esc(String(d).slice(0, 16)) : '';
+  const stateChip = t => `<span class="chip tstate ${TICKET_STATE_CLASS[t.status] || ''}">${esc(t.state)}</span>`;
+  const id = ctx.sub && /^\d+$/.test(ctx.sub) ? Number(ctx.sub) : null;
+  if (id) return ticket(id);
+  return list();
+
+  async function list() {
+    ctx.el.innerHTML = `<div class="empty">Loading tickets…</div>`;
+    let data; try { data = await api(base); } catch (e) { return fail(e, list); }
+    ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><span class="sp"></span>
+        <button class="btn primary" type="button" data-new title="New Ticket" aria-label="New Ticket">${icon('plus', 16)}</button></div>
+      <div class="card list-rows" style="padding:0">${data.tickets.map(t => `<a class="lrow" href="${ctx.href(t.id)}">
+          <span class="mono faint" style="width:70px">#${t.id}</span>
+          <span style="flex:1;min-width:0"><b>${esc(t.name)}</b><span class="faint small" style="display:block">${t.followups} follow-up${t.followups === 1 ? '' : 's'} · opened ${when(t.opened)}${t.status >= 5 ? ' · solution' : ''}</span></span>
+          ${stateChip(t)}<span class="faint small" style="width:130px;text-align:right">${when(t.updated)}</span></a>`).join('') || `<div class="empty">No tickets yet.</div>`}</div>`;
+    $('[data-new]', ctx.el).onclick = () => newTicket();
+  }
+
+  function newTicket() {
+    ctx.el.innerHTML = `<form class="card" style="max-width:760px;display:flex;flex-direction:column;gap:10px" data-form>
+        <h2>New Ticket</h2>
+        <div class="field"><label for="tn">Title</label><input id="tn" name="name" required></div>
+        <div class="field"><label for="tc">Description</label><textarea id="tc" name="content" rows="6"></textarea></div>
+        <div class="row"><button class="btn primary" type="submit">Create</button><a class="btn" href="${ctx.href('')}">Cancel</a></div></form>`;
+    $('[data-form]', ctx.el).onsubmit = async e => {
+      e.preventDefault(); const f = new FormData(e.target);
+      try { const r = await api(base, { body: { name: f.get('name'), content: f.get('content') } }); toast('Ticket created'); location.hash = ctx.href(r.id); }
+      catch (er) { toast(er.message); }
+    };
+  }
+
+  async function ticket(id) {
+    ctx.el.innerHTML = `<div class="empty">Loading ticket #${id}…</div>`;
+    let t; try { t = await api(`${base}/${id}`); } catch (e) { return fail(e, () => ticket(id)); }
+    ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><a class="btn" href="${ctx.href('')}">← All tickets</a>
+        <span class="mono faint">#${t.id}</span><b style="font-size:16px">${esc(t.name)}</b><span class="sp"></span>
+        <label class="row small">State <select data-state>${t.states.map(s => `<option value="${s.id}" ${s.id === t.status ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label></div>
+      <div class="card" style="padding:0">
+        <section class="tsec"><h3>Description</h3><div data-desc><div class="pre-wrap">${esc(t.content) || '<span class="faint">No description.</span>'}</div>
+          <button class="btn sm" type="button" data-edit style="margin-top:8px">Edit text</button></div></section>
+        <section class="tsec"><h3>Follow-ups</h3>${t.followups.map(f => `<div class="tfu"><b>${esc(f.user || '')}</b> <span class="faint small">· ${when(f.date)}</span><div class="pre-wrap">${esc(f.content)}</div></div>`).join('') || '<div class="faint small">No follow-ups yet.</div>'}
+          <textarea data-fu rows="3" placeholder="Write a follow-up…" style="width:100%;margin-top:8px"></textarea>
+          <button class="btn primary sm" type="button" data-addfu style="margin-top:6px">Add follow-up</button></section>
+        <section class="tsec"><h3>Solution</h3>${t.solution ? `<div class="tsol"><b>${esc(t.solution.user || '')}</b> <span class="faint small">· ${when(t.solution.date)}</span><div class="pre-wrap">${esc(t.solution.content)}</div></div>` : '<div class="faint small">No solution yet.</div>'}
+          <textarea data-sol rows="3" placeholder="Write the solution…" style="width:100%;margin-top:8px"></textarea>
+          <button class="btn sm" type="button" data-addsol style="margin-top:6px">Add solution</button></section></div>`;
+    const reload = () => ticket(id);
+    $('[data-state]', ctx.el).onchange = async e => { try { await api(`${base}/${id}`, { method: 'PATCH', body: { status: Number(e.target.value) } }); toast('State changed'); reload(); } catch (er) { toast(er.message); reload(); } };
+    $('[data-edit]', ctx.el).onclick = () => {
+      $('[data-desc]', ctx.el).innerHTML = `<textarea data-text rows="8" style="width:100%">${esc(t.content)}</textarea><div class="row" style="margin-top:6px"><button class="btn primary sm" type="button" data-save>Save</button><button class="btn sm" type="button" data-cancel>Cancel</button></div>`;
+      $('[data-cancel]', ctx.el).onclick = reload;
+      $('[data-save]', ctx.el).onclick = async () => { try { await api(`${base}/${id}`, { method: 'PATCH', body: { content: $('[data-text]', ctx.el).value } }); toast('Saved'); reload(); } catch (er) { toast(er.message); } };
+    };
+    const add = (what, sel) => async () => { const v = $(sel, ctx.el).value.trim(); if (!v) return; try { await api(`${base}/${id}/${what}`, { body: { content: v } }); toast(what === 'solution' ? 'Solution added' : 'Follow-up added'); reload(); } catch (er) { toast(er.message); } };
+    $('[data-addfu]', ctx.el).onclick = add('followups', '[data-fu]');
+    $('[data-addsol]', ctx.el).onclick = add('solution', '[data-sol]');
+  }
+};
+
 // ---------- GitHub issues ----------
 VIEWS.issues = async ctx => {
   const def = ctx.f.def;

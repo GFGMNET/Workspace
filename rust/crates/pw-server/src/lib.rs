@@ -21,6 +21,7 @@ use tokio_stream::StreamExt;
 
 pub mod chat;
 pub mod github;
+pub mod glpi;
 pub mod ide;
 pub mod updater;
 pub mod live;
@@ -108,6 +109,9 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/ide/stop", post(|| async { Json(ide::stop()) }))
         .route("/api/projects/{p}/ide", get(project_ide))
         .route("/api/projects/{p}/f/{f}/github", get(github_issues))
+        .route("/api/projects/{p}/f/{f}/tickets", get(tickets_list).post(tickets_create))
+        .route("/api/projects/{p}/f/{f}/tickets/{id}", get(tickets_one).patch(tickets_update))
+        .route("/api/projects/{p}/f/{f}/tickets/{id}/{what}", post(tickets_add))
         .route("/api/events", get(events))
         .fallback(static_files)
         .layer(DefaultBodyLimit::max(200 * 1024 * 1024))
@@ -173,6 +177,24 @@ async fn project_ide(State(ws): S, Path(p): Path<String>) -> ApiResult {
     let mut st = ide::status(&ws).await;
     st["folder"] = json!(ide::folder_param(&pr.dir));
     Ok(Json(st))
+}
+// ---------- Ticket feature (GLPI, docs/plans/TICKETSYSTEM.md) ----------
+
+async fn tickets_list(State(ws): S, Path((p, f)): Path<(String, String)>) -> ApiResult {
+    let pr = ws.load_project(&p)?; Ok(Json(glpi::list(&ws, &pr, &f).await?))
+}
+async fn tickets_create(State(ws): S, Path((p, f)): Path<(String, String)>, b: Bytes) -> ApiResult {
+    let pr = ws.load_project(&p)?; Ok(Json(glpi::create(&ws, &pr, &f, &body_json(&b)?).await?))
+}
+async fn tickets_one(State(ws): S, Path((p, f, id)): Path<(String, String, i64)>) -> ApiResult {
+    let pr = ws.load_project(&p)?; Ok(Json(glpi::one(&ws, &pr, &f, id).await?))
+}
+async fn tickets_update(State(ws): S, Path((p, f, id)): Path<(String, String, i64)>, b: Bytes) -> ApiResult {
+    let pr = ws.load_project(&p)?; Ok(Json(glpi::update(&ws, &pr, &f, id, &body_json(&b)?).await?))
+}
+async fn tickets_add(State(ws): S, Path((p, f, id, what)): Path<(String, String, i64, String)>, b: Bytes) -> ApiResult {
+    if what != "followups" && what != "solution" { return Err(pw_core::workspace::err(404, "Not found").into()); }
+    let pr = ws.load_project(&p)?; Ok(Json(glpi::add(&ws, &pr, &f, id, &what, &body_json(&b)?).await?))
 }
 async fn github_issues(State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q) -> ApiResult {
     let pr = ws.load_project(&p)?;

@@ -64,7 +64,7 @@ const ICONS = {
   warn: '<path d="M12 3 2 21h20zM12 10v5M12 18h.01"/>',
   stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>', send: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
 };
-const LAYOUT_ICON = { pages: 'book', cards: 'cards', list: 'list', grid: 'image', files: 'folder', table: 'table', kanban: 'kanban', calendar: 'calendar', orgchart: 'users', map: 'map', diagram: 'diagram', chat: 'chat', issues: 'issue', code: 'terminal' };
+const LAYOUT_ICON = { pages: 'book', cards: 'cards', list: 'list', grid: 'image', files: 'folder', table: 'table', kanban: 'kanban', calendar: 'calendar', orgchart: 'users', map: 'map', diagram: 'diagram', chat: 'chat', issues: 'issue', tickets: 'issue', code: 'terminal' };
 function icon(name, size = 16) { return `<svg class="ico" aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ICONS.file}</svg>`; }
 function featureIcon(def, size) { return icon(def && ICONS[def.icon] ? def.icon : LAYOUT_ICON[def && def.layout] || 'file', size); }
 function fillIcons(root = document) { $$('[data-icon]', root).forEach(el => { if (!el.firstChild) el.innerHTML = icon(el.dataset.icon); }); }

@@ -1,6 +1,6 @@
 # Plan: Ticketsystem
 
-**Ready 2 Deploy**
+**Ready 2 Deploy** · building (steps 1–6), automatic tests running
 
 ## 1) Name
 
