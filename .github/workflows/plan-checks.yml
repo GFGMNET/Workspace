@@ -4,12 +4,17 @@ name: Plan checks
 
 on:
   workflow_dispatch:
+    inputs:
+      plan:
+        description: "Which plan to check: all, git-svn or vscode"
+        default: all
 
 permissions:
   contents: read
 
 jobs:
   check:
+    if: inputs.plan == 'all' || inputs.plan == 'git-svn'
     strategy:
       fail-fast: false
       matrix:
@@ -78,3 +83,53 @@ jobs:
         env:
           PYTHON: ${{ runner.os == 'Windows' && 'python' || 'python3' }}
         run: sh docs/plans/checks/git-svn-read-check.sh
+
+  vscode:
+    if: inputs.plan == 'all' || inputs.plan == 'vscode'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      PW_INSTALL: ${{ github.workspace }}
+      CHECK_OUT: ${{ github.workspace }}/check-out
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build the app server (1.0)
+        working-directory: rust
+        run: cargo build -p pw-server --release --locked
+      - name: VS Code (portable, own folder so the check can also hide it)
+        run: |
+          mkdir -p "$RUNNER_TEMP/vscode" check-out
+          if [ "$RUNNER_OS" = Windows ]; then
+            curl -sSL -o "$RUNNER_TEMP/vscode.zip" "https://update.code.visualstudio.com/latest/win32-x64-archive/stable"
+            unzip -q "$RUNNER_TEMP/vscode.zip" -d "$RUNNER_TEMP/vscode"
+            echo "$RUNNER_TEMP/vscode/bin" >> "$GITHUB_PATH"
+          else
+            curl -sSL -o "$RUNNER_TEMP/vscode.tgz" "https://update.code.visualstudio.com/latest/linux-x64/stable"
+            tar -xzf "$RUNNER_TEMP/vscode.tgz" -C "$RUNNER_TEMP/vscode" --strip-components=1
+            echo "$RUNNER_TEMP/vscode/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Browser for the check
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          if [ "$RUNNER_OS" = Linux ]; then npx playwright install --with-deps chromium > /dev/null; else npx playwright install chromium > /dev/null; fi
+      - name: VS Code plan — editor opens inside the app without a button
+        env:
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
+        run: code --version | head -1; node docs/plans/checks/vscode-check.js
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: vscode-check-${{ matrix.os }}
+          path: check-out/
