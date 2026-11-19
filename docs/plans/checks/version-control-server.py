@@ -1,4 +1,4 @@
-# Test server for version-control-check.sh: git over HTTP, login alice / s3cret-XYZ, on 127.0.0.1:8765.
+# Test server for version-control-check.sh: git over HTTP, login alice / s3cret-XYZ, on 127.0.0.1:<port> (default 8765); with cert + key files: https.
 import http.server, subprocess, base64, os, sys
 ROOT=sys.argv[1]
 BACKEND=os.path.join(subprocess.check_output(['git','--exec-path'],text=True).strip(),'git-http-backend')
@@ -17,4 +17,9 @@ class H(http.server.BaseHTTPRequestHandler):
         self.send_response(st); [self.send_header(k,v) for k,v in hs]; self.send_header('Content-Length',str(len(data))); self.end_headers(); self.wfile.write(data)
     do_GET=go; do_POST=go
     def log_message(self,*a): pass
-http.server.HTTPServer(('127.0.0.1',8765),H).serve_forever()
+import ssl
+port=int(sys.argv[2]) if len(sys.argv)>2 else 8765
+srv=http.server.HTTPServer(('127.0.0.1',port),H)
+if len(sys.argv)>4:   # https: certificate and key
+    ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); ctx.load_cert_chain(sys.argv[3],sys.argv[4]); srv.socket=ctx.wrap_socket(srv.socket,server_side=True)
+srv.serve_forever()

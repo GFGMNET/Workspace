@@ -13,7 +13,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-latest]
+        include:
+          - { os: ubuntu-24.04, svnweb: both }
+          - { os: windows-latest, svnweb: http }     # VisualSVN Server runs either http or https,
+          - { os: windows-latest, svnweb: https }    # so Windows runs twice
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -38,7 +41,8 @@ jobs:
         run: |
           $msi = "$env:RUNNER_TEMP\visualsvn.msi"
           Invoke-WebRequest https://www.visualsvn.com/files/VisualSVN-Server-5.4.6-x64.msi -OutFile $msi
-          $p = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /norestart USE_SSL=0 SERVERPORT=8082" -Wait -PassThru
+          $ssl = if ('${{ matrix.svnweb }}' -eq 'https') { 'USE_SSL=1 SSLSERVERPORT=8443' } else { 'USE_SSL=0 SERVERPORT=8082' }
+          $p = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /norestart $ssl" -Wait -PassThru
           Write-Host "msiexec exit: $($p.ExitCode)"
           $mod = Get-ChildItem "C:\Program Files\VisualSVN Server" -Recurse -Filter VisualSVN.psd1 -ErrorAction SilentlyContinue | Select-Object -First 1
           Write-Host "module: $($mod.FullName)"
@@ -47,8 +51,9 @@ jobs:
           New-SvnLocalUser -Name alice -Password (ConvertTo-SecureString 's3cret-XYZ' -AsPlainText -Force) | Out-Null
           Get-Command Add-SvnAccessRule -Syntax | Write-Host
           Add-SvnAccessRule -Repository svnrepo -Path / -AccountName alice -Access ReadWrite | Out-Null
-          $u = "http://localhost:8082/svn/svnrepo/trunk"
-          "SVN_HTTP_URL=$u" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          if ('${{ matrix.svnweb }}' -eq 'https') { $u = "https://localhost:8443/svn/svnrepo/trunk"; "SVN_HTTPS_URL=$u" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV }
+          else { $u = "http://localhost:8082/svn/svnrepo/trunk"; "SVN_HTTP_URL=$u" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV }
+          "SVN_WEB_ONLY=${{ matrix.svnweb }}" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           Write-Host "SVN web server: $u"
       - name: ssh server (Windows, built-in OpenSSH)
         if: runner.os == 'Windows'

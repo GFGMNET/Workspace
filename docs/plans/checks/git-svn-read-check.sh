@@ -45,6 +45,23 @@ PW_PASS=wrong gx ls-remote http://127.0.0.1:8765/srv.git > /dev/null 2>&1
 kill $GP 2>/dev/null
 [ -s git-login.err ] && { echo "--- git messages:"; cat git-login.err; }
 
+
+# ---------- Git over https: same server with a test certificate on 127.0.0.1:8766 ----------
+openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.pem -days 2 -subj "/CN=127.0.0.1" -addext "subjectAltName=IP:127.0.0.1" > /dev/null 2>&1
+${PYTHON:-python3} "$HERE/version-control-server.py" "$T" 8766 "$(nat "$T")/tls.pem" "$(nat "$T")/tls.key" > gitsrv-tls.log 2>&1 & GTP=$!
+sleep 3
+gt() { gx -c http.sslBackend=openssl -c http.sslCAInfo="$(nat "$T")/tls.pem" "$@"; }   # test certificate only; real servers: the PC's normal certificates
+gt clone -q --bare --filter=blob:none https://127.0.0.1:8766/srv.git cache-tls.git 2> git-tls.err
+res $? "Git https  log in to the server"
+[ "$(gt -C cache-tls.git ls-tree -r --name-only HEAD | sort | tr '\n' ' ')" = "docs/notes.txt readme.txt " ]; res $? "Git https  see the list of files"
+[ "$(gt -C cache-tls.git show HEAD:readme.txt 2>>git-tls.err)" = two ]; res $? "Git https  read a file"
+[ "$(gt -C cache-tls.git log --format=%s | tr '\n' '|')" = "second version|first version|" ]; res $? "Git https  see the history"
+[ "$(gt -C cache-tls.git log --format=%s -- docs/notes.txt)" = "first version" ]; res $? "Git https  see the history of one file"
+! grep -rqs "s3cret-XYZ" cache-tls.git; res $? "Git https  password is in no file"
+PW_PASS=wrong gt ls-remote https://127.0.0.1:8766/srv.git > /dev/null 2>&1; [ $? != 0 ]; res $? "Git https  wrong login is refused"
+kill $GTP 2>/dev/null
+for f in git-tls.err gitsrv-tls.log; do [ -s $f ] && { echo "--- $f:"; tail -5 $f; }; done
+
 # ---------- SVN server: svnserve on 127.0.0.1:3690, login alice / s3cret-XYZ ----------
 svnadmin create svnrepo
 printf '[general]\nanon-access = none\nauth-access = write\npassword-db = passwd\n' > svnrepo/conf/svnserve.conf
@@ -132,6 +149,22 @@ LoadModule authz_user_module $M/mod_authz_user.so
 LoadModule auth_basic_module $M/mod_auth_basic.so
 LoadModule dav_module $M/mod_dav.so
 LoadModule dav_svn_module $M/mod_dav_svn.so
+LoadModule ssl_module $M/mod_ssl.so
+LoadModule socache_shmcb_module $M/mod_socache_shmcb.so
+Listen 127.0.0.1:8443
+<VirtualHost 127.0.0.1:8443>
+  SSLEngine on
+  SSLCertificateFile $T/tls.pem
+  SSLCertificateKeyFile $T/tls.key
+  <Location /svn>
+    DAV svn
+    SVNPath $T/svnrepo
+    AuthType Basic
+    AuthName test
+    AuthUserFile $T/htpasswd
+    Require valid-user
+  </Location>
+</VirtualHost>
 <Location /svn>
   DAV svn
   SVNPath $T/svnrepo
@@ -142,28 +175,38 @@ LoadModule dav_svn_module $M/mod_dav_svn.so
 </Location>
 CONF
   "$APACHE" -f "$T/httpd.conf" -k start 2> httpd.err; sleep 2
-  HU=http://127.0.0.1:8081/svn/trunk
+  HU=http://127.0.0.1:8081/svn/trunk; HSU=https://127.0.0.1:8443/svn/trunk
 fi
 TR="--trust-server-cert-failures=unknown-ca,cn-mismatch,expired,not-yet-valid,other"
 sh_() { printf %s "$PW_PASS" | svn "$@" $TR --non-interactive --no-auth-cache --username alice --password-from-stdin; }
-if [ -n "$SVN_HTTP_URL" ]; then   # given server is empty: put the same test content in (2 versions)
-  sh_ import -q "$(nat "$T")/svnsrc" "$HU" -m "first version" 2> svn-http-seed.err
-  sh_ checkout -q "$HU" wc2 2>> svn-http-seed.err && echo two-svn > wc2/readme.txt && sh_ commit -q -m "second version" wc2 2>> svn-http-seed.err
+SEED="${SVN_HTTP_URL:-$SVN_HTTPS_URL}"
+if [ -n "$SEED" ]; then   # given server is empty: put the same test content in (2 versions)
+  sh_ import -q "$(nat "$T")/svnsrc" "$SEED" -m "first version" 2> svn-http-seed.err
+  sh_ checkout -q "$SEED" wc2 2>> svn-http-seed.err && echo two-svn > wc2/readme.txt && sh_ commit -q -m "second version" wc2 2>> svn-http-seed.err
   [ -s svn-http-seed.err ] && { echo "--- svn-http-seed.err:"; cat svn-http-seed.err; }
 fi
-if [ -n "$HU" ]; then
-  sh_ info "$HU" > /dev/null 2> svn-http.err; res $? "SVN http  log in to the server"
-  [ "$(sh_ list -R "$HU" | grep -v '/$' | sort | tr '\n' ' ')" = "docs/notes.txt readme.txt " ]; res $? "SVN http  see the list of files"
-  [ "$(sh_ cat "$HU/readme.txt")" = two-svn ]; res $? "SVN http  read a file"
-  [ "$(sh_ log -q "$HU" | grep -c '^r')" = 2 ]; res $? "SVN http  see the history"
-  [ "$(sh_ log -q "$HU/docs/notes.txt" | grep -c '^r')" = 1 ]; res $? "SVN http  see the history of one file"
-  ! grep -rqs "s3cret-XYZ" "$HOME/.subversion" "$APPDATA/Subversion"; res $? "SVN http  password is in no file"
-  PW_PASS=wrong sh_ info "$HU" > /dev/null 2>&1; [ $? != 0 ]; res $? "SVN http  wrong login is refused"
-  [ -n "$APACHE" ] && "$APACHE" -f "$T/httpd.conf" -k stop 2>/dev/null
-  for f in svn-http.err httpd.err logs/error.log; do [ -s $f ] && { echo "--- $f:"; tail -5 $f; }; done
-else
-  skip "SVN http  all functions" "no SVN web server on this machine"
-fi
+[ -n "$SVN_HTTPS_URL" ] && HSU="$SVN_HTTPS_URL"
+webcheck() {  # $1 = label, $2 = address, $3.. = extra svn options
+  L=$1; WU=$2; shift 2
+  sw() { printf %s "$PW_PASS" | svn "$@" $WOPT --non-interactive --no-auth-cache --username alice --password-from-stdin; }
+  WOPT="$*"
+  sw info "$WU" > /dev/null 2> svn-web.err; res $? "SVN $L  log in to the server"
+  [ "$(sw list -R "$WU" | grep -v '/$' | sort | tr '\n' ' ')" = "docs/notes.txt readme.txt " ]; res $? "SVN $L  see the list of files"
+  [ "$(sw cat "$WU/readme.txt")" = two-svn ]; res $? "SVN $L  read a file"
+  [ "$(sw log -q "$WU" | grep -c '^r')" = 2 ]; res $? "SVN $L  see the history"
+  [ "$(sw log -q "$WU/docs/notes.txt" | grep -c '^r')" = 1 ]; res $? "SVN $L  see the history of one file"
+  ! grep -rqs "s3cret-XYZ" "$HOME/.subversion" "$APPDATA/Subversion"; res $? "SVN $L  password is in no file"
+  PW_PASS=wrong sw info "$WU" > /dev/null 2>&1; [ $? != 0 ]; res $? "SVN $L  wrong login is refused"
+  [ -s svn-web.err ] && { echo "--- svn $L:"; tail -3 svn-web.err; }
+}
+if [ "$SVN_WEB_ONLY" = https ]; then :; elif [ -n "$HU" ]; then webcheck http "$HU"; else skip "SVN http  all functions" "no SVN web server on this machine"; fi
+if [ "$SVN_WEB_ONLY" = http ]; then :; elif [ -n "$HSU" ]; then
+  if [ -n "$SVN_HTTPS_URL" ]; then webcheck https "$HSU" --trust-server-cert-failures=unknown-ca,cn-mismatch   # Windows test server: own test certificate
+  else webcheck https "$HSU" --config-option "servers:global:ssl-authority-files=$(nat "$T")/tls.pem"; fi
+else skip "SVN https  all functions" "no SVN https server on this machine"; fi
+[ -n "$APACHE" ] && "$APACHE" -f "$T/httpd.conf" -k stop 2>/dev/null
+for f in httpd.err logs/error.log; do [ -s $f ] && { echo "--- $f:"; tail -3 $f; }; done
+
 
 echo "failed: $FAILS"
 [ $FAILS = 0 ]
