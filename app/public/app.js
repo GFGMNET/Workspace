@@ -210,39 +210,33 @@ async function renderProject(tab, sub, query) {
   fillIcons(body);
 }
 
-// Full VS Code (browser version) embedded for this project.
+// Full VS Code (browser version) embedded for this project: it starts by itself when the tab is opened and only the
+// editor is shown (docs/plans/VSCODE.md, 1.0.0.5).
+const VSCODE_DOWNLOAD = 'https://code.visualstudio.com/download';
+const ideMissing = log => /not recognized as an internal or external command|: not found|command not found|cannot find|ENOENT/i.test((log || []).join('\n'));
 async function renderIde(body) {
   const p = S.project;
-  const st = await api(`/api/projects/${enc(p.slug)}/ide`);
-  const src = st.url.replace('{host}', location.hostname).replace('{folder}', st.folder); // normally a same-origin /ide/... address (proxied)
-  if (st.running) {
-    body.innerHTML = `<div class="row" style="margin-bottom:10px"><span class="chip ok">VS Code is running</span><span class="faint small">${esc(p.path)}</span><span class="sp"></span>
-        <button class="btn sm ghost" type="button" data-reload>Reload</button>
-        <a class="btn sm" href="${esc(src)}" target="_blank" rel="noopener">Open in new window</a>
-        <button class="btn sm" type="button" data-desk>${icon('terminal', 14)} Desktop VS Code</button>
-        ${st.managed ? `<button class="btn sm ghost danger" type="button" data-stop>Stop</button>` : ''}</div>
-      <iframe class="ide" src="${esc(src)}" title="VS Code — ${esc(p.name)}" allow="clipboard-read; clipboard-write"></iframe>
-      <p class="faint small">VS Code is shown through this app's own address (<span class="mono">${esc(st.base)}/</span>), so the browser doesn't block it. You can also open it in its own window.</p>`;
-    $('[data-desk]', body).onclick = () => openVSCode('p/' + p.slug, '');
-    $('[data-reload]', body).onclick = () => { $('iframe.ide', body).src = src; };
-    const stop = $('[data-stop]', body); if (stop) stop.onclick = async () => { await api('/api/ide/stop', { body: {} }); toast('VS Code stopped'); setTimeout(route, 800); };
+  let st = await api(`/api/projects/${enc(p.slug)}/ide`);
+  const show = s => {
+    const src = s.url.replace('{host}', location.hostname).replace('{folder}', s.folder); // normally a same-origin /ide/... address (proxied)
+    body.innerHTML = `<iframe class="ide ide-full" src="${esc(src)}" title="VS Code — ${esc(p.name)}" allow="clipboard-read; clipboard-write"></iframe>`;
+  };
+  if (st.running) return show(st);
+  body.innerHTML = `<div class="empty" data-ide-wait>${icon('terminal')} VS Code is starting…</div>`;
+  let r;
+  try { r = await api('/api/ide/start', { body: {} }); } catch (er) { r = { running: false, log: [er.message] }; }
+  if (!S.project || S.project.slug !== p.slug || !body.isConnected) return;   // the user left the tab meanwhile
+  if (r.running) { st = await api(`/api/projects/${enc(p.slug)}/ide`); return show(st); }
+  if (ideMissing(r.log)) {
+    body.innerHTML = `<div class="card" style="max-width:640px"><h2>${icon('warn')} VS Code is not installed</h2>
+      <p class="muted">The VS Code tab uses the VS Code installed on this computer.</p>
+      <a class="btn primary" href="${VSCODE_DOWNLOAD}" target="_blank" rel="noopener">Download VS Code</a></div>`;
     return;
   }
-  body.innerHTML = `<div class="card" style="max-width:760px;display:flex;flex-direction:column;gap:12px">
-      <h2>${icon('terminal')} VS Code in the app</h2>
-      <p class="muted" style="margin:0">Runs the full VS Code — extensions, terminal, Git — right here, opened on <span class="mono">${esc(p.path)}</span>. It uses your installed VS Code (<span class="mono">code serve-web</span>); the first start downloads its web part once, so it needs internet that time and can take a minute.</p>
-      <div class="row"><button class="btn primary" type="button" data-start>${st.starting ? 'Starting…' : 'Start VS Code'}</button>
-        <button class="btn" type="button" data-desk>Open desktop VS Code instead</button></div>
-      <pre class="code" data-log ${st.log.length ? '' : 'hidden'}>${esc(st.log.join('\n'))}</pre>
-      <details class="small"><summary style="cursor:pointer">Settings</summary><p class="muted">Command: <span class="mono">${esc(st.command)}</span><br>Change it in <a href="#/files/settings.yaml" class="mono">settings.yaml</a> (e.g. to use code-server or OpenVSCode Server).</p></details></div>`;
-  $('[data-desk]', body).onclick = () => openVSCode('p/' + p.slug, '');
-  $('[data-start]', body).onclick = async e => {
-    const b = e.target; b.disabled = true; b.textContent = 'Starting… (first time can take a minute)';
-    const lg = $('[data-log]', body);
-    const poll = setInterval(async () => { try { const s = await api('/api/ide'); if (s.log.length) { lg.hidden = false; lg.textContent = s.log.join('\n'); } } catch {} }, 1500);
-    try { const r = await api('/api/ide/start', { body: {} }); clearInterval(poll); if (r.running) { toast('VS Code is running'); route(); } else { lg.hidden = false; lg.textContent = (r.log || []).join('\n') || 'VS Code did not start.'; b.disabled = false; b.textContent = 'Try again'; } }
-    catch (er) { clearInterval(poll); toast(er.message); b.disabled = false; b.textContent = 'Start VS Code'; }
-  };
+  body.innerHTML = `<div class="card" style="max-width:760px"><h2>${icon('warn')} VS Code did not start</h2>
+    <pre class="code">${esc((r.log || []).join('\n') || 'No message.')}</pre>
+    <button class="btn" type="button" data-retry>Try again</button></div>`;
+  $('[data-retry]', body).onclick = () => renderIde(body);
 }
 
 async function renderOverview(body) {
