@@ -32,7 +32,10 @@ const id = r => (r.json && (r.json.id || (Array.isArray(r.json) && r.json[0] && 
   res(s.status === 200 && !!session, `log in with the API token (user: ${who || '?'}${process.env.GLPI_USER && who && who.toLowerCase() !== process.env.GLPI_USER.toLowerCase() ? ', expected ' + process.env.GLPI_USER : ''})`);
   if (!session) { info('answer: ' + s.status + ' ' + s.text); process.exit(1); }
   try {
-    await call('POST', '/changeActiveEntities', { entities_id: 0, is_recursive: true });
+    const ca = await call('POST', '/changeActiveEntities', { entities_id: 0, is_recursive: true });
+    info(`switch to Root Entity, recursive: answer ${ca.status} ${ca.text}`);
+    const ca2 = await call('POST', '/changeActiveEntities', { entities_id: '0', is_recursive: '1' });
+    info(`same, written as text: answer ${ca2.status} ${ca2.text}`);
     // which profile the API session uses, and its rights for entities (to explain a missing right)
     const ap = await call('GET', '/getActiveProfile');
     const prof = ap.json && (ap.json.active_profile || ap.json);
