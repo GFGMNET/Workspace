@@ -33,12 +33,12 @@ g -C q log --oneline | grep -q mine && g -C q log --oneline | grep -q theirs && 
 
 # F10-F12 own server by IP + port with a login (git over HTTP behind a password)
 g init -q --bare srv.git; git -C srv.git config http.receivepack true
-${PYTHON:-python3} "$HERE/version-control-server.py" "$T" & P=$!; sleep 1
+${PYTHON:-python3} "$HERE/version-control-server.py" "$T" & P=$!; sleep 3
 # the login is handed over only while the command runs (like the app will do from its secrets)
 export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never PW_USER=alice PW_PASS=s3cret-XYZ
 H='!f() { test "$1" = get && echo username=$PW_USER && echo password=$PW_PASS; }; f'
-g -c credential.helper= -c credential.helper="$H" clone -q http://127.0.0.1:8765/srv.git w 2>/dev/null
-echo a > w/f; g -C w add f; g -C w commit -qm v1; g -C w -c credential.helper= -c credential.helper="$H" push -q origin HEAD:main 2>/dev/null && ok "F10 server by IP+port with login from secrets"
+g -c credential.helper= -c credential.helper="$H" clone -q http://127.0.0.1:8765/srv.git w
+echo a > w/f; g -C w add f; g -C w commit -qm v1; g -C w -c credential.helper= -c credential.helper="$H" push -q origin HEAD:main && ok "F10 server by IP+port with login from secrets"
 ! grep -rq "s3cret-XYZ" "$T/w" "$HOME/.git-credentials" 2>/dev/null && ok "F11 password is in no file of the project"
 PW_PASS=wrong g -C w -c credential.helper= -c credential.helper="$H" push origin HEAD:main 2>&1 | grep -q "Authentication failed" && ok "F12 wrong login gives a clear message"
 kill $P

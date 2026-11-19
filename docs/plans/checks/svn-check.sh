@@ -5,7 +5,7 @@ set -e
 T=$(mktemp -d); cd "$T"
 ok() { echo "ok  $*"; }
 svn --version --quiet
-R="file://$(pwd -W 2>/dev/null || pwd)/repo"
+if command -v cygpath > /dev/null; then R="file:///$(cygpath -m "$T")/repo"; else R="file://$T/repo"; fi
 svnadmin create repo
 svn checkout -q "$R" p && ok "S1 checkout from a shared folder"
 cd p; echo a > f.txt; svn add -q f.txt; svn status | grep -q f.txt && ok "S2 show changed files"
