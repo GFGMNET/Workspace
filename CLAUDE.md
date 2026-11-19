@@ -70,6 +70,7 @@ points 4, 6 or 8 as if decided. Before showing a plan, list yourself what in it 
 or whose check failed cannot be approved. Checks live in `docs/plans/checks/`. Before work starts, the maintainer
 gets the open points and risks, and nothing begins until they have seen them. While building: if a step cannot be
 done as planned, stop and ask the maintainer — no new design on your own.
+A plan that is not **Ready 2 Deploy** when its version is due is skipped: it moves to a later version (decided 2026-11-19).
 
 ## Where the maintainer is needed
 

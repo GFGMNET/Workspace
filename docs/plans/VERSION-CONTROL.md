@@ -7,7 +7,7 @@ Git/SVN integration
 
 ## 2) Planned release version
 
-1.0.1
+1.0.2 (was 1.0.1; moved because the plan was not Ready 2 Deploy — rule of 2026-11-19)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -143,6 +143,6 @@ version-control:
 | 6 | Four new addresses in the app server: files, one file, history, history of one file (`/api/projects/{p}/f/{f}/vcs/...`). |
 | 7 | New screen `VIEWS.vcs` in `app/public/views.js`, as in the approved screenshots (decision 11). |
 | 8 | Automatic tests `tests/contract/vcs.test.js` with the same test servers as the check, run by `rust.yml` on Windows and Linux. Done when: all green. |
-| 9 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki page "Requirements"), wiki page "Version Control", release notes `docs/releases/v1.0.1.md`. |
+| 9 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki page "Requirements"), wiki page "Version Control", release notes `docs/releases/v1.0.2.md`. |
 | 10 | You test it with your own Git and SVN server. Done when: you see files, a file, the history and the history of one file. |
-| 11 | Release 1.0.1 with your OK. |
+| 11 | Release 1.0.2 with your OK. |
