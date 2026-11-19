@@ -33,6 +33,12 @@ const id = r => (r.json && (r.json.id || (Array.isArray(r.json) && r.json[0] && 
   if (!session) { info('answer: ' + s.status + ' ' + s.text); process.exit(1); }
   try {
     await call('POST', '/changeActiveEntities', { entities_id: 0, is_recursive: true });
+    // which profile the API session uses, and its rights for entities (to explain a missing right)
+    const ap = await call('GET', '/getActiveProfile');
+    const prof = ap.json && (ap.json.active_profile || ap.json);
+    const mp = await call('GET', '/getMyProfiles');
+    info(`active profile: ${prof && prof.name} · entity right value: ${prof && prof.entity} · ticket right value: ${prof && prof.ticket}`);
+    info(`profiles of the user: ${((mp.json && mp.json.myprofiles) || []).map(p => `${p.name} (${p.id})`).join(', ')}`);
     // first: the entity of a project does not exist yet -> the app creates it (decision 11)
     const newName = `Workspace-Test-New-${RUN}`;
     const before = await call('GET', `/Entity?searchText[name]=^${encodeURIComponent(newName)}$`);
