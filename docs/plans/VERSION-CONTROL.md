@@ -1,8 +1,8 @@
-# Plan: Versions (Git, SVN)
+# Plan: Git/SVN integration
 
 ## 1) Name
 
-Versions — Git and SVN in the app (issue #60)
+Git/SVN integration
 
 ## 2) Planned release version
 
