@@ -41,6 +41,9 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 - Signing: GitHub account is protected (done). Windows software is only released **signed**. SignPath Foundation declined (2026-11-19);
   1.0 for Windows **waits** for a signing way that fits (`docs/plans/RELEASE-TRUST.md` §6 — options and prices checked; don't offer
   the declined ones again: Microsoft Store, Certum, unsigned, paid ~€230+/year). 0.x stays unsigned. No signing keys on anyone's PC.
+  Before presenting any signing option: first check that a **private person in Germany** can buy/use it (with a source that
+  says so) — if that can't be confirmed, don't present it. Checked and not possible: Azure Trusted Signing (companies only in the EU),
+  Sectigo/Comodo (no individual purchase confirmed).
 - 1.0 is called **Workspace** everywhere (window, tray, `Workspace.exe`, `workspace`, `workspace-server`, zips `workspace-v…`); decided 2026-11-18 (#77).
 - Ticketsystem = GLPI 11 only, by entity, in v1.1 (osTicket dropped). Versions (Git first, then SVN; server by IP + port) in **v1.0.1** (decided 2026-11-19).
   The whole data folder is not versioned.
