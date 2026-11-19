@@ -32,10 +32,9 @@ See the files from the repository and the history, for Git and SVN.
 
 ## 6) Decisions, only about this feature
 
-1. The app uses the installed `git` and `svn` programs, no built-in copy.
-2. "Restore" never deletes history: the old state is saved as a new version.
-3. Logins come from the app's secrets, only while a command runs — never written into a file.
-4. Server = shared folder, or own server by IP + port.
+| id | decision |
+|---|---|
+| 1 | Server and port are set in the YAML file. |
 
 ## 7) Risks
 
