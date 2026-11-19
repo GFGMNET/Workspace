@@ -10,16 +10,18 @@ Git/SVN integration
 
 ## 3) Feasible? Checked per function, with the result
 
-- Git – log in to the server: unchecked
-- Git – see the list of files: unchecked
-- Git – read a file: unchecked
-- Git – see the history: unchecked
-- Git – see the history of one file: unchecked
-- SVN – log in to the server: failed (Windows)
-- SVN – see the list of files: unchecked
-- SVN – read a file: unchecked
-- SVN – see the history: unchecked
-- SVN – see the history of one file: unchecked
+| part | desc | state | suggestion |
+|---|---|---|---|
+| Git | log in to the server | unchecked | test Git server with login, on Windows and Linux |
+| Git | see the list of files | unchecked | same test server |
+| Git | read a file | unchecked | same test server |
+| Git | see the history | unchecked | same test server |
+| Git | see the history of one file | unchecked | same test server |
+| SVN | log in to the server | failed (Windows) | find out why it failed on Windows, then run again |
+| SVN | see the list of files | unchecked | test SVN server with login, on Windows and Linux |
+| SVN | read a file | unchecked | same test server |
+| SVN | see the history | unchecked | same test server |
+| SVN | see the history of one file | unchecked | same test server |
 
 Checked: 0 · Unchecked: 9 · Failed: 1
 
