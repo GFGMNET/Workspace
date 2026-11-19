@@ -38,8 +38,9 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 
 - 0.x stays on Node/Electron until 1.0 replaces it; 1.0 = Rust + Tauri (go after the prototype, 2026-11-16).
 - 1.0 drops the Node.js package (start.bat/start.sh); screens stay as files on disk; no macOS and no arm64 version (dropped 2026-11-18, #56, #64); Windows 11 only — Windows 10 not supported (#73).
-- Signing: GitHub account is protected (done). Windows software is only released **signed**. SignPath Foundation declined (2026-11-19);
-  1.0 for Windows **waits** for a signing way that fits (`docs/plans/RELEASE-TRUST.md` §6 — options and prices checked; don't offer
+- Signing: GitHub account is protected (done). Windows software is only released **signed**. SignPath Foundation declined (2026-11-19).
+  **Decided 2026-11-19: own (self-made) certificate, stored in the repository (key encrypted, password in GitHub secrets) — plan
+  `docs/plans/SIGNING.md`.** Earlier: 1.0 for Windows waited for a signing way that fits (`docs/plans/RELEASE-TRUST.md` §6 — options and prices checked; don't offer
   the declined ones again: Microsoft Store, Certum, unsigned, paid ~€230+/year). 0.x stays unsigned. No signing keys on anyone's PC.
   Before presenting any signing option: first check that a **private person in Germany** can buy/use it (with a source that
   says so) — if that can't be confirmed, don't present it. Checked and not possible: Azure Trusted Signing (companies only in the EU),
