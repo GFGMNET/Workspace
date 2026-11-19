@@ -36,10 +36,8 @@ Read access to the files from the repository, to show them and their history, fo
 
 | id | question |
 |---|---|
-| 1 | Should the app show a message when the server cannot be reached? |
-| 2 | Should the app show a message when Git or SVN is not installed on the PC? |
-| 3 | Which way does the app connect: Git over http, ssh or git; SVN over svn or http? |
-| 4 | SVN: always show the folder `trunk`, or can it be another folder? |
+| 1 | Which way does the app connect: Git over http, ssh or git; SVN over svn or http? |
+| 2 | SVN: always show the folder `trunk`, or can it be another folder? |
 
 ## 6) Decisions, only about this feature
 
