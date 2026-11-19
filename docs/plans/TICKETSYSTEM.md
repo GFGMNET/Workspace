@@ -8,7 +8,7 @@ Ticketsystem
 
 ## 2) Planned release version
 
-1.1 (was 1.0; moved because the plan was not Ready 2 Deploy — rule of 2026-11-19)
+1.0 (back from 1.1: Ready 2 Deploy, maintainer's decision 2026-11-19)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -101,6 +101,6 @@ ticket:
 | 3 | New addresses in the app server for these (`/api/projects/{p}/f/{f}/tickets/...`), only for 127.0.0.1 like all others. |
 | 4 | New screen `VIEWS.tickets` in `app/public/views.js`, as in the approved screenshots, with the "+" button and its help text (decisions 9, 10). |
 | 5 | Automatic tests `tests/contract/tickets.test.js` against a small fake GLPI (like the GitHub tests), run by `rust.yml` on Windows and Linux. Done when: all green. |
-| 6 | Docs: wiki page "Ticket" with the GLPI setup (decision 12), REQUIREMENTS.md (→ wiki "Requirements"), DESIGN.md, release notes `docs/releases/v1.1.0.md`. |
+| 6 | Docs: wiki page "Ticket" with the GLPI setup (decision 12), REQUIREMENTS.md (→ wiki "Requirements"), DESIGN.md, release notes `docs/releases/v1.0.0.md`. |
 | 7 | You test it with your GLPI test environment. Done when: list, one ticket, + new ticket, edit, state, follow-up, solution work in the tab. |
-| 8 | Release 1.1 with your OK. |
+| 8 | Release with 1.0 (26 November, after a week without a new bug). |
