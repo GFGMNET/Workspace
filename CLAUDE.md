@@ -51,7 +51,8 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 
 Every plan answers: goal (and when it is done), steps (who does what), assumptions (checked or only assumed), risks with
 plan B, costs (also of plan B), what depends on others, open questions, status. **Before work starts, the maintainer gets the open
-questions and risks, and nothing begins until they have seen them.** Example: `docs/plans/VERSION-CONTROL.md`.
+questions and risks, and nothing begins until they have seen them.** While building: if a step cannot be done as planned,
+stop and ask the maintainer — no new design on your own. A plan only lists decisions about its own feature. Example: `docs/plans/VERSION-CONTROL.md`.
 
 ## Where the maintainer is needed
 

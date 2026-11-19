@@ -11,14 +11,10 @@ ticked and you gave your OK to release.
 
 | # | Decision | Why |
 |---|---|---|
-| D1 | Only for the Rust version (1.0.1). 0.x does not get it. | 0.x is replaced by 1.0. |
-| D2 | The app uses the installed `git` and `svn` programs, no built-in copy. | Same behaviour as the tools you already know; nothing extra to sign. |
-| D3 | It is a normal feature: `app/starter/features/versions.yaml` with its own tab, switched on per project like the others. | Same as Issues, Chat etc. |
-| D4 | One project folder = one repository. The whole `data/` folder is never one repository. | Decided 2026-11-19. |
-| D5 | "Restore" never deletes history: it saves the old state as a **new** version. | Nothing can be lost by a click. |
-| D6 | Logins come from the app's secrets and are handed to git/svn only while a command runs. They are never written into `.git/config`, the server address or any project file. | Security rule in CLAUDE.md. |
-| D7 | Server = shared folder, or a server by IP address + port. | Decided 2026-11-19. |
-| D8 | If something in a step cannot be done, the builder stops and asks you. | No new design without you. |
+| D1 | The app uses the installed `git` and `svn` programs, no built-in copy. | Same behaviour as the tools you already know; nothing extra to sign. |
+| D2 | "Restore" never deletes history: it saves the old state as a **new** version. | Nothing can be lost by a click. |
+| D3 | Logins come from the app's secrets and are handed to git/svn only while a command runs. They are never written into `.git/config`, the server address or any project file. | Security rule in CLAUDE.md. |
+| D4 | Server = shared folder, or a server by IP address + port. | Decided 2026-11-19. |
 
 ## 3. What was checked before writing this plan
 
@@ -42,7 +38,7 @@ What gets built: the Versions tab with "changes", "save version", "history", "re
 Done when:
 - [ ] 1.1 In a project without versions, the tab shows a button "Start versions". After clicking it, the folder is a Git repository.
 - [ ] 1.2 Change a file → the tab lists it as changed. Type a message, click "Save version" → it appears at the top of the history.
-- [ ] 1.3 Pick an older version → "Restore" → the files are as they were **and** the history has one more entry (D5).
+- [ ] 1.3 Pick an older version → "Restore" → the files are as they were **and** the history has one more entry (D2).
 - [ ] 1.4 Safety: a test folder with the hidden program setting from section 3 → opening the tab runs nothing, and the tab shows a
   warning with the setting's name. The test is automatic (`tests/contract/versions.test.js`).
 - [ ] 1.5 Git not installed → the tab says "Git is not installed" with the download link, nothing crashes.
@@ -56,7 +52,7 @@ What gets built: "get project from server" (clone), "sync" (send and get version
 Done when:
 - [ ] 2.1 Shared folder as server: project A sends a version, project B gets it.
 - [ ] 2.2 Server by IP + port with a login from the secrets: works, and the login is in **no** file afterwards (automatic test
-  searches the project folder and `.git` for it) (D6).
+  searches the project folder and `.git` for it) (D3).
 - [ ] 2.3 Same file changed on both sides → sync stops, shows the file, you choose "keep mine" or "keep theirs" → afterwards both
   versions are still in the history.
 - [ ] 2.4 Server not reachable / wrong login → a clear message, nothing in the folder changed.
