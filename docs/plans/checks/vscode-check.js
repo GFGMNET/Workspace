@@ -44,7 +44,10 @@ const secs = t => Math.round((Date.now() - t) / 1000) + ' s';
   const noCode = (process.env.PATH || '').split(sep).filter(p => !/vs ?code|vscode/i.test(p)).join(sep);
   const s3 = await startServer({ env: { PATH: noCode, Path: noCode } });
   try {
+    const t2 = Date.now();
     const st = await s3.api('POST', '/api/ide/start', { body: {} });
+    console.log(`info  answer after ${secs(t2)}: ${JSON.stringify(st.body)}`);
+    console.log('info  which code: ' + require('child_process').spawnSync(process.platform === 'win32' ? 'where' : 'sh', process.platform === 'win32' ? ['code'] : ['-c', 'command -v code; echo exit=$?'], { env: { ...process.env, PATH: noCode, Path: noCode }, encoding: 'utf8' }).stdout.trim());
     const log = (st.body.log || []).join(' | ');
     res(st.body.running === false && log.length > 0, `VS Code not installed → not started, message right away: "${log.slice(0, 200)}"`);
     await new Promise(r => setTimeout(r, 2000));
