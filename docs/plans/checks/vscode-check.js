@@ -8,6 +8,12 @@ const { startServer } = require('../../../tests/contract/helpers.js');
 const { chromium } = require('playwright');
 
 let fails = 0;
+// stops a VS Code that is still running on the test port (see "after Stop" above)
+function killLeftover() {
+  const cp = require('child_process');
+  if (process.platform === 'win32') cp.spawnSync('taskkill', ['/IM', 'code.exe', '/T', '/F']);
+  else { cp.spawnSync('sh', ['-c', 'pkill -f serve-web; pkill -f "code-server\\|server-main"; sleep 2']); }
+}
 const res = (ok, msg) => { console.log((ok ? 'ok    ' : 'FAIL  ') + msg); if (!ok) fails++; };
 const secs = t => Math.round((Date.now() - t) / 1000) + ' s';
 
@@ -32,14 +38,22 @@ const secs = t => Math.round((Date.now() - t) / 1000) + ' s';
       res(!!file, 'the editor is opened on the project folder (project.yaml visible)');
       await page.screenshot({ path: path.join(process.env.CHECK_OUT || '.', `vscode-${process.platform}.png`) });
     }
-    const t1 = Date.now();
     await s.api('POST', '/api/ide/stop', { body: {} });
+    await new Promise(r => setTimeout(r, 3000));
+    const after = (await s.api('GET', '/api/ide')).body;
+    console.log(`info  after "Stop" VS Code is ${after.running ? 'STILL RUNNING' : 'stopped'}`);
+    killLeftover();
+    const t1 = Date.now();
     const st2 = await s.api('POST', '/api/ide/start', { body: {} });
-    res(st2.body && st2.body.running === true, `second start (web part already downloaded): ${secs(t1)}`);
+    const p2 = await browser.newPage(); await p2.goto(`http://127.0.0.1:${s.port}/#/p/home-lab/_ide`);
+    const f2 = await (await p2.waitForSelector('iframe.ide', { timeout: 30000 })).contentFrame();
+    const wb2 = await f2.waitForSelector('.monaco-workbench', { timeout: 180000 }).catch(() => null);
+    res(st2.body.running === true && !!wb2, `second start, editor shown (web part already downloaded): ${secs(t1)}`);
     await s.api('POST', '/api/ide/stop', { body: {} });
   } finally { await browser.close(); await s.stop(); }
 
   // 2) VS Code not installed: what the user gets
+  killLeftover();
   const sep = process.platform === 'win32' ? ';' : ':';
   const noCode = (process.env.PATH || '').split(sep).filter(p => !/vs ?code|vscode/i.test(p)).join(sep);
   const s3 = await startServer({ env: { PATH: noCode, Path: noCode } });
