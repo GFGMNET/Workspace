@@ -6,7 +6,7 @@ Ticketsystem
 
 ## 2) Planned release version
 
-1.1
+1.0
 
 ## 3) Feasible? Checked per function, with the result
 
