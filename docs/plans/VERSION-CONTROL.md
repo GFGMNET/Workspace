@@ -38,12 +38,10 @@ See the files from the repository and the history, for Git and SVN.
 
 ## 7) Risks
 
-| Risk | Plan B |
-|---|---|
-| A copied project folder hides settings that start a program | The app switches them off for every command and warns (checked ✅). |
-| Two people change the same file | You choose mine or theirs per file; both stay in the history (checked ✅). |
-| SVN login on Windows does not work | Find the cause; if SVN cannot do it, SVN on Windows only with a shared folder. |
-| 1.0 waits for signing | 1.0.1 waits too; the work is not lost. |
+| id | risk | suggestion |
+|---|---|---|
+| 1 | 1.0.1 can only come after 1.0, and 1.0 for Windows waits for signing. | Build and check 1.0.1 now, release it together with 1.0. |
+| 2 | Git cannot show files of a server repository without first downloading a copy; a big repository takes long and uses disk space. | Download only the list of files and the history, not the file contents (to be checked with open points 1 and 2). |
 
 ## 8) Detail workflow
 
