@@ -42,10 +42,16 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   1.0 for Windows **waits** for a signing way that fits (`docs/plans/RELEASE-TRUST.md` §6 — options and prices checked; don't offer
   the declined ones again: Microsoft Store, Certum, unsigned, paid ~€230+/year). 0.x stays unsigned. No signing keys on anyone's PC.
 - 1.0 is called **Workspace** everywhere (window, tray, `Workspace.exe`, `workspace`, `workspace-server`, zips `workspace-v…`); decided 2026-11-18 (#77).
-- Ticketsystem = GLPI 11 only, by entity, in v1.1 (osTicket dropped). Versions (Git first, then SVN; server by IP + port) in v1.2.
+- Ticketsystem = GLPI 11 only, by entity, in v1.1 (osTicket dropped). Versions (Git first, then SVN; server by IP + port) in **v1.0.1** (decided 2026-11-19).
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
+
+## How plans are written (decided 2026-11-19)
+
+Every plan answers: goal (and when it is done), steps (who does what), assumptions (checked or only assumed), risks with
+plan B, costs (also of plan B), what depends on others, open questions, status. **Before work starts, the maintainer gets the open
+questions and risks, and nothing begins until they have seen them.** Example: `docs/plans/VERSION-CONTROL.md`.
 
 ## Where the maintainer is needed
 

@@ -64,7 +64,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W14 | Project templates: save a project (with or without content), start new projects from it | ✅ | #39 |
 | W15 | Everything due in all projects on the home page; reminders, tray icon, start with Windows (desktop app) | ✅ | #40 |
 | W16 | Backup of the data folder | ❌ not built: documented in the wiki (*Backup*) | |
-| W18 | Versions: Git or SVN per project, local, on a share or an own server (set by IP address and port), no GitHub needed (plan: [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md)) | 📋 v1.2 (Rust) | #60 |
+| W18 | Versions: Git or SVN per project, local, on a share or an own server (set by IP address and port), no GitHub needed (plan: [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md)) | 📋 v1.0.1 (Rust) | #60 |
 | W19 | Project header: tabs that don't fit go into *More*; *Manage* is a gear icon (folder path, Claude CLI command, VS Code inside) | ✅ | #68, #69 |
 | W17 | Import / export | ❌ not built: files are copied in and out, documented in the wiki (*Import and Export*) | |
 
