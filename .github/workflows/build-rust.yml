@@ -1,5 +1,5 @@
 # Builds version 1.0 (Rust + Tauri) for Windows 11 x64 and Linux x64 (no arm64: #64) and publishes it as a
-# GitHub **pre-release** v<version> (version from rust/Cargo.toml). Installed 0.x apps only look at the
+# GitHub **pre-release** v<version> (version from rust/Cargo.toml), or with `final` a full release (1.0.0+, maintainer's OK). Installed 0.x apps only look at the
 # latest full release, so nobody gets a pre-release by accident. Run by hand: Actions → "Build 1.0 (Rust)".
 # Every package gets a build attestation (gh attestation verify <zip> -R GFGMNET/Workspace) and is listed
 # with its SHA-256 in SHA256SUMS, which the 1.0 updater checks on Linux (docs/plans/RELEASE-TRUST.md). The Windows programs are
@@ -12,6 +12,10 @@ on:
       version:
         description: "Version to publish, e.g. 0.9.0.5 for a beta (empty: the version in rust/Cargo.toml)"
         required: false
+      final:
+        description: "Full release (only 1.0.0 and later, with the maintainer's OK): installed 0.6.3 apps are offered it"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -169,4 +173,8 @@ jobs:
           fp=$(cat signing/workspace-signing.thumbprint)
           { [ -f "$notes" ] && cat "$notes"; printf '\n\n---\n**Windows:** signed with the project'"'"'s own certificate "Workspace" (fingerprint `%s`). Windows warns until you install it once: [how to trust the certificate](https://github.com/GFGMNET/Workspace/wiki/Signing-certificate) · file `workspace-signing.cer` below.\n' "$fp"; } > /tmp/notes.md
           n=(--notes-file /tmp/notes.md)
-          gh release create "v$v" dist/*.zip dist/workspace-signing.cer dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Workspace v$v (1.0 beta, Rust)" "${n[@]}"
+          if [ "${{ inputs.final }}" = true ]; then
+            gh release create "v$v" dist/*.zip dist/workspace-signing.cer dist/SHA256SUMS --latest --target "$GITHUB_SHA" --title "Workspace v$v" "${n[@]}"
+          else
+            gh release create "v$v" dist/*.zip dist/workspace-signing.cer dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Workspace v$v (1.0 beta, Rust)" "${n[@]}"
+          fi
