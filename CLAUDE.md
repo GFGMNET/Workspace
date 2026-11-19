@@ -47,17 +47,23 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
 
-## How plans are written (decided 2026-11-19)
+## How plans are written (decided 2026-11-19, by the maintainer)
 
-Order: 1) the maintainer describes the functions they want to see — never plan from your own guess, ask first;
-2) check each function: feasible (how it was checked), not feasible, or can't be checked here (then say how to check it);
-3) a function that is not checked or whose check failed cannot be approved. Checks live in `docs/plans/checks/`.
+Every plan has exactly these parts, in this order:
 
+1) Name:
+2) Planned release version:
+3) Feasible? Checked per function, with the result (simple list)
+4) Description
+5) Open points, only about this feature
+6) Decisions, only about this feature
+7) Risks
+8) Detail workflow
 
-Every plan answers: goal (and when it is done), steps (who does what), assumptions (checked or only assumed), risks with
-plan B, costs (also of plan B), what depends on others, open questions, status. **Before work starts, the maintainer gets the open
-questions and risks, and nothing begins until they have seen them.** While building: if a step cannot be done as planned,
-stop and ask the maintainer — no new design on your own. A plan only lists decisions about its own feature. Example: `docs/plans/VERSION-CONTROL.md`.
+The functions come from the maintainer — never plan from your own guess, ask first. A function that is not checked
+or whose check failed cannot be approved. Checks live in `docs/plans/checks/`. Before work starts, the maintainer
+gets the open points and risks, and nothing begins until they have seen them. While building: if a step cannot be
+done as planned, stop and ask the maintainer — no new design on your own.
 
 ## Where the maintainer is needed
 
