@@ -38,6 +38,10 @@ const id = r => (r.json && (r.json.id || (Array.isArray(r.json) && r.json[0] && 
     const prof = ap.json && (ap.json.active_profile || ap.json);
     const mp = await call('GET', '/getMyProfiles');
     info(`active profile: ${prof && prof.name} · entity right value: ${prof && prof.entity} · ticket right value: ${prof && prof.ticket}`);
+    const ae = await call('GET', '/getActiveEntities');
+    const me = await call('GET', '/getMyEntities?is_recursive=true');
+    info(`active entities: ${JSON.stringify(ae.json && ae.json.active_entity)}`.slice(0, 300));
+    info(`my entities: ${JSON.stringify(me.json && me.json.myentities)}`.slice(0, 300));
     info(`profiles of the user: ${((mp.json && mp.json.myprofiles) || []).map(p => `${p.name} (${p.id})`).join(', ')}`);
     // first: the entity of a project does not exist yet -> the app creates it (decision 11)
     const newName = `Workspace-Test-New-${RUN}`;
