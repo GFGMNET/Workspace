@@ -29,6 +29,9 @@ See the files from the repository and the history, for Git and SVN.
 | 2 | Can Git show the history of a repository on a server (IP + port)? |
 | 3 | Can SVN show the files of a repository on a server (IP + port)? |
 | 4 | Why did the SVN server login fail on Windows, and can SVN show the history there? |
+| 5 | Which protocol: Git (http, ssh or git), SVN (svn or http)? |
+| 6 | Is `path` the right way to say which repository? |
+| 7 | SVN: always `trunk`, or can it be another folder? |
 
 ## 6) Decisions, only about this feature
 
@@ -45,13 +48,57 @@ See the files from the repository and the history, for Git and SVN.
 
 ## 8) Detail workflow
 
-**Step 1 — Git on your PC (me).** Tab with changes, save, history, restore.
-Done when: the functions above work in the app; automatic tests pass on Windows + Linux; you tested it with a copy of a project.
+### 8a) Flow diagram
 
-**Step 2 — Git with others (me).** Shared folder, own server, login from secrets, mine/theirs.
-Done when: the functions work in the app; tests pass on Windows + Linux; you tested it with a shared folder.
+```mermaid
+flowchart TD
+  A[Open project, Versions tab] --> B[App reads server, port, type from YAML]
+  B --> C{type}
+  C -->|git| D[Download only file list + history, into the app's own folder]
+  C -->|svn| E[Ask the server directly for file list + history]
+  D --> F[Show files and history]
+  E --> F
+  B -->|server not reachable| G[Message: server not reachable]
+  C -->|git/svn not installed| H[Message: program missing]
+```
 
-**Step 3 — SVN (me).** The same functions for SVN.
-Done when: the functions work in the app; tests pass on Windows + Linux; you tested it with your SVN program.
+### 8b) The YAML file
 
-**Step 4 — Release (you).** Docs updated, your OK, released together with or after 1.0.
+In the project, the same way as the GitHub issues today.
+
+Git:
+
+```yaml
+versions:
+  feature: versions
+  type: git
+  server: 192.168.1.20
+  port: 3000
+  path: team/project        # which repository on the server
+```
+
+SVN:
+
+```yaml
+versions:
+  feature: versions
+  type: svn
+  server: 192.168.1.30
+  port: 3690
+  path: repos/project/trunk # which repository, and which folder in it
+```
+
+### 8c) How it is done
+
+| id | desc |
+|---|---|
+| 1 | Check open points 1–7 on Windows and Linux. |
+| 2 | Add the feature file `versions.yaml`. |
+| 3 | The app reads server, port, type and path from the project's YAML. |
+| 4 | Git: download only the file list and history into the app's own folder, never into the project folder. |
+| 5 | SVN: get the file list and history directly from the server. |
+| 6 | The tab shows the files and the history. |
+| 7 | Messages for: server not reachable, git/svn not installed. |
+| 8 | Automatic tests on Windows and Linux. |
+| 9 | You test it. |
+| 10 | Docs updated, released together with 1.0. |
