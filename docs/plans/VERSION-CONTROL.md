@@ -45,6 +45,7 @@ Read access to the files from the repository, to show them and their history, fo
 | 1 | Server and port are set in the YAML file. |
 | 2 | Git and SVN use a login. |
 | 3 | The tab is called "Version Control". |
+| 4 | The test servers for the checks (Git and SVN, with login) are set up by Claude on GitHub's Windows and Linux machines. |
 
 ## 7) Risks
 

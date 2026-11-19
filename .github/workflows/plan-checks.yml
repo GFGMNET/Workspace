@@ -24,10 +24,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then choco install -y --no-progress sliksvn > /dev/null; echo "C:/Program Files/SlikSvn/bin" >> "$GITHUB_PATH"
           else sudo apt-get update -qq && sudo apt-get install -y -qq subversion > /dev/null; fi
-      - name: Versions plan — Git
+      - name: Git/SVN integration plan — read access with login
         env:
           PYTHON: python
-        run: sh docs/plans/checks/version-control-check.sh
-      - name: Versions plan — SVN
-        if: always()
-        run: sh docs/plans/checks/svn-check.sh
+        run: sh docs/plans/checks/git-svn-read-check.sh
