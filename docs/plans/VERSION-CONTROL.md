@@ -6,7 +6,7 @@ Git/SVN integration
 
 ## 2) Planned release version
 
-1.0.1 (comes after 1.0)
+1.0.1
 
 ## 3) Feasible? Checked per function, with the result
 
