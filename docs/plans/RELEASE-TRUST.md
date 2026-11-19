@@ -1,6 +1,6 @@
 # Plan: trusted releases
 
-Status: **decided 2026-11-16** (one *Approve* click per release is fine) · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
+Status: **on hold (2026-11-19)** — SignPath Foundation declined the application ("not trustworthy" yet, i.e. too new / too little known). 1.0 for Windows waits until a signing way fits; see section 6. Earlier: decided 2026-11-16 (one *Approve* click per release is fine) · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
 
 History: a first attempt (a signing key on the maintainer's PC, scripts to sign every release) was removed on 2026-11-16: too many steps. A paid certificate was the second idea; this plan replaces it with something **free, without keys or files to look after, and one click per release at most**.
 
@@ -73,3 +73,27 @@ What the project has to do once: a short **Code signing policy** section in the 
 ## 6. Decision (2026-11-16)
 
 Approved: part 1 now (by the maintainer; **done 2026-11-16**), parts 2 and 3 with version 1.0 (SignPath Foundation, one *Approve* click per release; updater checks on Windows and Linux). 0.x stays unsigned.
+
+## 6. What happened, and what it costs (checked 2026-11-19)
+
+**Missing in this plan until now (our mistake):** SignPath can say no — they mainly look at how known a project is. A new one-person
+project is often declined. And for a **private person in the EU**, every other trusted way costs money or depends on Microsoft.
+
+| Way | Cost per year | Automatic | Status / why not |
+|---|---|---|---|
+| SignPath Foundation | free | yes | declined 2026-11-19; asking again was not wanted |
+| OSSign (Sweden, free for open source) | free | yes | best fit, but **applications are suspended** |
+| SSL.com (certificate for a person + cloud signing, official GitHub step) | about €270–290 (129 $ + 180 $) | yes | too expensive |
+| Sectigo certificate + own Google cloud key | about €230 (≈ 220 $ + 30 $) | yes | too expensive, hard setup |
+| Certum "Open Source Developer" | €49 | only by hand (automatic login tools are unreliable) | not wanted |
+| Microsoft Store (signs for free) | free | yes | binds the project to Microsoft; not wanted |
+| Microsoft Artifact Signing | about €110 | yes | in the EU only for companies/organisations |
+| Unsigned | free | — | not wanted: antivirus programs block unsigned software |
+
+**Decision of the maintainer:** Windows software is only released signed. So **1.0 for Windows waits** until one of these changes:
+OSSign opens applications again, a free offer for private persons appears, or the maintainer chooses a paid way.
+0.x keeps running unchanged. Prices: [SSL.com IV](https://ssl.com/products/software-integrity/code-signing/iv/),
+[SSL.com eSigner](https://ssl.com/guide/esigner-pricing-for-code-signing/), [Sectigo individual](https://signmycode.com/sectigo-individual-code-signing),
+[Certum](https://shop.certum.eu/open-source-code-signing-on-simplysign.html), [Microsoft: signing options](https://learn.microsoft.com/windows/apps/package-and-deploy/code-signing-options),
+[OSSign](https://ossign.org/).
+
