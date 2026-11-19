@@ -1,5 +1,7 @@
 # Plan: Git/SVN integration
 
+**Ready 2 Deploy**
+
 
 ## 1) Name
 
@@ -57,9 +59,7 @@ Read access to the files from the repository, to show them and their history, fo
 
 ## 5) Open points, only about this feature
 
-| id | question |answer|
-|---|---|
-| 1 | Name of the folder inside the project that holds the Git copy, e.g. `.version-control`? |---|
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -77,6 +77,7 @@ Read access to the files from the repository, to show them and their history, fo
 | 10 | Git settings that can start programs are switched off for every command. |
 | 11 | The screen as in the approved screenshots: [files](img/vc-files.png), [history](img/vc-history.png). |
 | 12 | https: certificate errors are ignored. |
+| 13 | The name of the folder in the project doesn't matter (it stays in the project folder): `.version-control`. |
 
 ## 7) Risks
 
@@ -138,7 +139,7 @@ version-control:
 | 1 | New feature file `app/starter/features/version-control.yaml`: name "Version Control", layout `vcs`. |
 | 2 | New file `rust/crates/pw-server/src/vcs.rs`: reads the settings from the YAML (decisions 1, 4, 5), takes password/key from the secrets (decision 7). Allowed protocols: git http/https/ssh, svn svn/http/https; anything else → error. |
 | 3 | Git commands always with: `core.fsmonitor` and `core.hooksPath` off (decision 10), no saved logins, no questions on screen; password only while the command runs; ssh key via `ssh-agent` from stdin, never in a file; https with `http.sslVerify=false` (decision 12). |
-| 4 | Git: first time `clone --bare --filter=blob:none` into the project folder (decisions 8, 9; folder name: open point 1); later `fetch`. List = `ls-tree`, file = `show`, history = `log`, history of one file = `log -- <file>`. |
+| 4 | Git: first time `clone --bare --filter=blob:none` into the project folder, folder `.version-control` (decisions 8, 9, 13); later `fetch`. List = `ls-tree`, file = `show`, history = `log`, history of one file = `log -- <file>`. |
 | 5 | SVN: `svn list -R`, `svn cat`, `svn log`, `svn log <file>`; always `--non-interactive --no-auth-cache --password-from-stdin`; https with `--trust-server-cert-failures=…` (decision 12). |
 | 6 | Four new addresses in the app server: files, one file, history, history of one file (`/api/projects/{p}/f/{f}/vcs/...`). |
 | 7 | New screen `VIEWS.vcs` in `app/public/views.js`, as in the approved screenshots (decision 11). |
