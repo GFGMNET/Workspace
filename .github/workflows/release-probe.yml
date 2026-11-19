@@ -1,0 +1,33 @@
+# Diagnosis (temporary): can this repository's workflows create a pre-release? Creates a throwaway pre-release and deletes it.
+name: Release probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  plain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t="probe-plain-${{ github.run_id }}"; echo x > a.txt
+          GH_DEBUG=api gh release create "$t" a.txt --prerelease --target "$GITHUB_SHA" --title probe --notes probe 2>&1 | grep -E "^(\* Request to|< HTTP|\{\"message)" | head -20 || true
+          gh release delete "$t" --yes --cleanup-tag || true
+  like-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v7
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t="probe-build-${{ github.run_id }}"; echo x > a.txt
+          GH_DEBUG=api gh release create "$t" a.txt --prerelease --target "$GITHUB_SHA" --title probe --notes probe 2>&1 | grep -E "^(\* Request to|< HTTP|\{\"message)" | head -20 || true
+          gh release delete "$t" --yes --cleanup-tag || true
