@@ -1,5 +1,7 @@
 # Plan: Ticketsystem
 
+**Ready 2 Deploy**
+
 ## 1) Name
 
 Ticketsystem
@@ -34,9 +36,7 @@ including editing the text, setting the state of a ticket and the solution.
 
 ## 5) Open points, only about this feature
 
-| id | question |answer|
-|---|---| --- |
-| 1 | If a category with the project's name is already used in GLPI for other tickets, those tickets show up in the project too — OK? | ok |
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -55,6 +55,7 @@ including editing the text, setting the state of a ticket and the solution.
 | 11 | If the category with the project's name does not exist in GLPI, the app creates it. |
 | 12 | What GLPI needs for this is described in the wiki: API client (allowed IP address, app token) and the rights of the account's profile (incl. creating categories). |
 | 13 | The YAML has the user token and the app token, both from the app's secrets. |
+| 14 | If a category with the project's name is already used in GLPI for other tickets, those tickets show up in the project too — OK. |
 
 ## 7) Risks
 
