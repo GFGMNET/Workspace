@@ -49,8 +49,9 @@ kill $GP 2>/dev/null
 # ---------- Git over https: same server with a test certificate on 127.0.0.1:8766 ----------
 openssl req -x509 -newkey rsa:2048 -nodes -keyout tls.key -out tls.pem -days 2 -subj "/CN=127.0.0.1" -addext "subjectAltName=IP:127.0.0.1" > /dev/null 2>&1
 ${PYTHON:-python3} "$HERE/version-control-server.py" "$T" 8766 "$(nat "$T")/tls.pem" "$(nat "$T")/tls.key" > gitsrv-tls.log 2>&1 & GTP=$!
-sleep 3
-gt() { gx -c http.sslBackend=openssl -c http.sslCAInfo="$(nat "$T")/tls.pem" "$@"; }   # test certificate only; real servers: the PC's normal certificates
+for i in 1 2 3 4 5 6 7 8 9 10; do curl -sk -o /dev/null https://127.0.0.1:8766/ && break; sleep 1; done
+if win; then SB="-c http.sslBackend=openssl"; else SB=""; fi
+gt() { GIT_SSL_CAINFO="$(nat "$T")/tls.pem" gx $SB "$@"; }   # test certificate only; real servers: the PC's normal certificates
 gt clone -q --bare --filter=blob:none https://127.0.0.1:8766/srv.git cache-tls.git 2> git-tls.err
 res $? "Git https  log in to the server"
 [ "$(gt -C cache-tls.git ls-tree -r --name-only HEAD | sort | tr '\n' ' ')" = "docs/notes.txt readme.txt " ]; res $? "Git https  see the list of files"
