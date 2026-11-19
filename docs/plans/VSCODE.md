@@ -1,5 +1,7 @@
 # Plan: VS Code
 
+**Ready 2 Deploy**
+
 
 ## 1) Name
 
@@ -27,24 +29,22 @@ Click on "VS Code" in the top menu → the editor opens inside the app. It repla
 
 ## 5) Open points, only about this feature
 
-| id | question |answer
-|---|---|---|
-| 1 | While VS Code starts (first time 10–40 s), show "VS Code is starting…"? | Yes
-| 2 | Remove the row of buttons above the editor (Reload, Open in new window, Desktop VS Code, Stop)? |yes
-| 3 | VS Code not installed: show "VS Code is not installed" with the download link? | yes, Also update the Requirements in the wiki
-| 4 | Fix the Linux Stop bug (#78) in this version? | I dont find this issue on git
+None.
 
 ## 6) Decisions, only about this feature
 
-None.
+| id | decision |
+|---|---|
+| 1 | While VS Code starts, the tab shows "VS Code is starting…". |
+| 2 | The row of buttons above the editor (Reload, Open in new window, Desktop VS Code, Stop) is removed. |
+| 3 | VS Code not installed: "VS Code is not installed" with the download link; the requirements in the wiki are updated. |
+| 4 | Issue #78 is closed because of the new integration; starting and stopping is tested again on Windows and Linux. |
 
 ## 7) Risks
 
 | id | risk | suggestion |
 |---|---|---|
-| 1 | The first start downloads VS Code's web part once (needs internet). Measured: editor visible after 10–40 s the first time, 3–6 s later. | Open point 1. |
-| 2 | VS Code is not installed: it does not start, and a technical message is shown ("'code' is not recognized…" / "code: not found"). | Open point 3. |
-| 3 | On Linux, "Stop" does not stop VS Code (issue #78); started automatically, it would keep running. | Open point 4. |
+| 1 | The first start downloads VS Code's web part once (needs internet). Measured: editor visible after 10–40 s the first time, 3–6 s later. | Decision 1. |
 
 ## 8) Detail workflow
 
@@ -52,8 +52,11 @@ None.
 
 ```mermaid
 flowchart TD
-  A[Click VS Code in the top menu] --> B[VS Code starts by itself]
-  B --> C[The editor is shown inside the app]
+  A[Click VS Code in the top menu] --> B{VS Code running?}
+  B -->|yes| E[Show the editor inside the app]
+  B -->|no| C[Start VS Code by itself, tab shows: VS Code is starting…]
+  C -->|started| E
+  C -->|not installed| D[VS Code is not installed + download link]
 ```
 
 ### 8b) The YAML file
@@ -62,4 +65,12 @@ No change.
 
 ### 8c) How it is done
 
-Written after the open points are answered.
+| id | desc |
+|---|---|
+| 1 | `app/public/app.js`, `renderIde`: when VS Code is not running, start it right away (`POST /api/ide/start`), no button; meanwhile "VS Code is starting…" (decision 1). |
+| 2 | When it runs: only the editor; the row of buttons and the hint text are removed (decision 2). |
+| 3 | VS Code not installed: "VS Code is not installed" with the download link (decision 3). |
+| 4 | Automatic test: `docs/plans/checks/vscode-check.js` runs in `rust.yml` on Windows and Linux, including starting and stopping again with the new integration (decision 4). Done when: all green. |
+| 5 | Docs: REQUIREMENTS.md (→ wiki page "Requirements", decision 3), DESIGN.md, wiki page "VS Code and Explorer", release notes `docs/releases/v1.0.0.5.md`. |
+| 6 | You test it: click "VS Code" → the editor opens without a button. |
+| 7 | Release 1.0.0.5 with your OK. |
