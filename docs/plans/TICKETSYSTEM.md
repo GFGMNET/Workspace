@@ -34,9 +34,9 @@ including editing the text, setting the state of a ticket and the solution.
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | If a category with the project's name is already used in GLPI for other tickets, those tickets show up in the project too — OK? |
+| id | question |answer|
+|---|---| --- |
+| 1 | If a category with the project's name is already used in GLPI for other tickets, those tickets show up in the project too — OK? | ok |
 
 ## 6) Decisions, only about this feature
 
