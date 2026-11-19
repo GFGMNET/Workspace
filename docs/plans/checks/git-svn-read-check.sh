@@ -48,12 +48,13 @@ kill $GP 2>/dev/null
 svnadmin create svnrepo
 printf '[general]\nanon-access = none\nauth-access = write\npassword-db = passwd\n' > svnrepo/conf/svnserve.conf
 printf '[users]\nalice = s3cret-XYZ\n' > svnrepo/conf/passwd
-svn import -q "$(pwd)/src" "file:///$(nat "$T" | sed 's#^/##')/svnrepo/trunk" -m "first version" --non-interactive 2> svn-import.err
+git -C src archive HEAD~1 > first.tar; mkdir svnsrc; tar -xf first.tar -C svnsrc
+svn import -q "$(nat "$T")/svnsrc" "file:///$(nat "$T" | sed 's#^/##')/svnrepo/trunk" -m "first version" --non-interactive 2> svn-import.err
 svn checkout -q "file:///$(nat "$T" | sed 's#^/##')/svnrepo/trunk" wc && echo two-svn > wc/readme.txt && svn commit -q -m "second version" wc
 svnserve -d --foreground --listen-host 127.0.0.1 --listen-port 3690 -r "$(nat "$T")" > svnserve.log 2>&1 & SP=$!
 sleep 3
 U=svn://127.0.0.1:3690/svnrepo/trunk
-sv() { echo "$PW_PASS" | svn "$@" --non-interactive --no-auth-cache --username alice --password-from-stdin; }
+sv() { printf %s "$PW_PASS" | svn "$@" --non-interactive --no-auth-cache --username alice --password-from-stdin; }
 
 sv info "$U" > /dev/null 2> svn-login.err
 res $? "SVN  log in to the server"
