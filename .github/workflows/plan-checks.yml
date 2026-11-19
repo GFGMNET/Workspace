@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode or signing"
+        description: "Which plan to check: all, git-svn, vscode, signing or glpi"
         default: all
 
 permissions:
@@ -149,3 +149,24 @@ jobs:
         shell: pwsh
         timeout-minutes: 10
         run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe
+
+  glpi:
+    if: inputs.plan == 'all' || inputs.plan == 'glpi'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Ticketsystem plan — GLPI read and write, by entity
+        env:
+          GLPI_URL: https://ticket.bbdi42.de
+          GLPI_USER: Hermes
+          GLPI_TOKEN: ${{ secrets.GLPI_TOKEN }}
+          GLPI_APP_TOKEN: ${{ secrets.GLPI_APP_TOKEN }}
+        run: node docs/plans/checks/glpi-check.js
