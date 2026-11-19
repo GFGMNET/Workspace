@@ -55,14 +55,14 @@ Read access to the files from the repository, to show them and their history, fo
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | Login: stored in the app's secrets (in the YAML `user:` and `password:` / `key:` with `${secret:…}`)? |
-| 2 | Git: download only the list of files and the history first, and a file's content only when the file is opened? |
-| 3 | Where the downloaded Git data is kept: in the app's own folder (`data/.app/vcs/`), not in the project folder? |
-| 4 | Security: switch off the Git settings that can start programs, for every command? |
-| 5 | Screen: files and folders on the left, the opened file on the right, a history view, click a file → its history? |
-| 6 | https with a server that has a self-made certificate: the certificate has to be installed on the PC — OK? |
+| id | question |answer
+|---|---|---|
+| 1 | Login: stored in the app's secrets (in the YAML `user:` and `password:` / `key:` with `${secret:…}`)? | yes | 
+| 2 | Git: download only the list of files and the history first, and a file's content only when the file is opened? | yes | 
+| 3 | Where the downloaded Git data is kept: in the app's own folder (`data/.app/vcs/`), not in the project folder? | You mean the Git Repro?|
+| 4 | Security: switch off the Git settings that can start programs, for every command? | Show an example |
+| 5 | Screen: files and folders on the left, the opened file on the right, a history view, click a file → its history? | Show Screen | 
+| 6 | https with a server that has a self-made certificate: the certificate has to be installed on the PC — OK? | yes ok ignore cert error|
 
 ## 6) Decisions, only about this feature
 
