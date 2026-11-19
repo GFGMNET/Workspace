@@ -94,6 +94,6 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D20 | Security: weekly check of Electron and bundled libraries, automatic security releases, CodeQL, Dependabot, SECURITY.md | ✅ | |
 | D21 | Version 1.0: core in Rust with Tauri, no bundled browser engine (fewer CVEs) — plan: [MIGRATION-RUST.md](MIGRATION-RUST.md) | 🚧 beta (0.9.0.x) — phases 0–3 done, phase 4 testing | #41, #49–#55 |
 | D23 | Platforms of 1.0: Windows 11 x64 and Linux x64 (no Windows 10, no arm64, no macOS) | ✅ decided 2026-11-18 | #73, #64, #56 |
-| D22 | Trusted releases: account protection, free code signing (SignPath Foundation) with 1.0, updater checks (plan: [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md)) | 🚧 account protection ✅, updater checks ✅ (signature on Windows, checksum on Linux), build attestations ✅; SignPath signing next (0.9.1) | #49, #31 |
+| D22 | Trusted releases: account protection, signing with the project's own certificate (plan: [plans/SIGNING.md](plans/SIGNING.md); history: [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md)), updater checks | 🚧 account protection ✅, build attestations ✅, own certificate: plan approved 2026-11-19, built; first signed release 0.9.1 | #49, #31 |
 
 ## Open questions

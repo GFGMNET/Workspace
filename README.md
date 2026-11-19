@@ -10,7 +10,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 
 - Runs on **Windows 11 (x64)** and **Linux (x64)**. Not supported: Windows 10, ARM (e.g. Raspberry Pi), macOS.
 - Try the beta: [pre-releases](https://github.com/GFGMNET/Workspace/releases) (`workspace-v0.9…`), steps in the wiki: [Beta of 1.0](https://github.com/GFGMNET/Workspace/wiki/Beta-1.0). Work on a **copy** of your data folder.
-- Status and plan: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md). The Windows program is signed: free code signing by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org) — [Code signing policy](CODE-SIGNING-POLICY.md). Installed 0.x apps are offered 1.0 when it is released.
+- Status and plan: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md). The Windows program is signed with the project's own certificate — [how to trust it](https://github.com/GFGMNET/Workspace/wiki/Signing-certificate), [Code signing policy](CODE-SIGNING-POLICY.md). Installed 0.x apps are offered 1.0 when it is released.
 
 ## Start (current version 0.x)
 

@@ -2,7 +2,8 @@
 # GitHub **pre-release** v<version> (version from rust/Cargo.toml). Installed 0.x apps only look at the
 # latest full release, so nobody gets a pre-release by accident. Run by hand: Actions → "Build 1.0 (Rust)".
 # Every package gets a build attestation (gh attestation verify <zip> -R GFGMNET/Workspace) and is listed
-# with its SHA-256 in SHA256SUMS, which the 1.0 updater checks on Linux (docs/plans/RELEASE-TRUST.md).
+# with its SHA-256 in SHA256SUMS, which the 1.0 updater checks on Linux (docs/plans/RELEASE-TRUST.md). The Windows programs are
+# signed with the project's own certificate (signing/, docs/plans/SIGNING.md); the updater only accepts that signature.
 name: Build 1.0 (Rust)
 
 on:
@@ -116,6 +117,18 @@ jobs:
           Push-Location rust; cargo test -p pw-core -p pw-server --release; if ($LASTEXITCODE) { exit 1 }; Pop-Location
           node --test tests/yaml-corpus/yaml.test.js; if ($LASTEXITCODE) { exit 1 }
           node tests/contract/run.js; if ($LASTEXITCODE) { exit 1 }
+      - name: Sign with the project's own certificate (docs/plans/SIGNING.md)
+        run: |
+          if (-not (Test-Path signing/workspace-signing.pfx)) { throw "signing/workspace-signing.pfx is missing - no unsigned Windows release" }
+          $signtool = (Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter signtool.exe | Where-Object FullName -match 'x64' | Select-Object -Last 1).FullName
+          $want = (Get-Content -Raw signing/workspace-signing.thumbprint).Trim()
+          foreach ($f in 'rust/target/release/workspace.exe', 'rust/target/release/workspace-server.exe') {
+            & $signtool sign /f signing/workspace-signing.pfx /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $f | Out-Null
+            if ($LASTEXITCODE) { throw "Signing $f failed" }
+            $sig = Get-AuthenticodeSignature $f
+            if ($sig.SignerCertificate.Thumbprint -ne $want -or $sig.Status -eq 'HashMismatch') { throw "Wrong signature on $f ($($sig.Status))" }
+            Write-Host "signed: $f"
+          }
       - name: Package
         run: |
           $v = "${{ needs.version.outputs.v }}"
@@ -149,9 +162,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           v=${{ needs.version.outputs.v }}
-          cd dist && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS && cd ..
+          cp signing/workspace-signing.cer dist/
+          cd dist && sha256sum *.zip workspace-signing.cer > SHA256SUMS && cat SHA256SUMS && cd ..
           notes="docs/releases/v$v.md"
-          # every release page links the code signing policy (SignPath Foundation rule)
-          { [ -f "$notes" ] && cat "$notes"; printf '\n\n---\n[Code signing policy](https://github.com/GFGMNET/Workspace/blob/main/CODE-SIGNING-POLICY.md) · free code signing by SignPath.io, certificate by SignPath Foundation\n'; } > /tmp/notes.md
+          # every release page says how the Windows program is signed and how to trust the certificate
+          fp=$(cat signing/workspace-signing.thumbprint)
+          { [ -f "$notes" ] && cat "$notes"; printf '\n\n---\n**Windows:** signed with the project'"'"'s own certificate "Workspace" (fingerprint `%s`). Windows warns until you install it once: [how to trust the certificate](https://github.com/GFGMNET/Workspace/wiki/Signing-certificate) · file `workspace-signing.cer` below.\n' "$fp"; } > /tmp/notes.md
           n=(--notes-file /tmp/notes.md)
-          gh release create "v$v" dist/*.zip dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Workspace v$v (1.0 beta, Rust)" "${n[@]}"
+          gh release create "v$v" dist/*.zip dist/workspace-signing.cer dist/SHA256SUMS --prerelease --target "$GITHUB_SHA" --title "Workspace v$v (1.0 beta, Rust)" "${n[@]}"

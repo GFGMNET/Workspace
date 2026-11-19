@@ -160,6 +160,12 @@ ok('updates: each installation picks its own download', () => {
   assert.strictEqual(up.pickAsset(assets, 'linux', 'x64', false).name, 'project-workspace-v1.0.0.zip');
   assert.strictEqual(up.pickAsset(assets, 'darwin', 'arm64', true), null);
 });
+ok('updates: 1.0 must carry our own signature', () => {
+  const up = require('../lib/updater'); const me = up.SIGNER;
+  up.signatureOk(`UnknownError|${me}|Workspace`); up.signatureOk(`Valid|${me.toLowerCase()}|Workspace`);
+  for (const bad of [`HashMismatch|${me}|Workspace`, 'NotSigned||Workspace', `UnknownError|${'0'.repeat(40)}|Workspace`, `Valid|${me}|Other`])
+    assert.throws(() => up.signatureOk(bad), bad);
+});
 ok('VS Code redirects stay under /ide', () => {
   const ide = require('../lib/ide'); const s = { base: '/ide' };
   assert.strictEqual(ide.rewriteLocation('http://127.0.0.1:8740/?folder=/x', s), '/ide/?folder=/x');

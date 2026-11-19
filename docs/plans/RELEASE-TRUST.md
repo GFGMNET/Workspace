@@ -1,6 +1,6 @@
 # Plan: trusted releases
 
-Status: **on hold (2026-11-19)** — SignPath Foundation declined the application ("not trustworthy" yet, i.e. too new / too little known). 1.0 for Windows waits until a signing way fits; see section 6. Earlier: decided 2026-11-16 (one *Approve* click per release is fine) · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
+Status: **replaced (2026-11-19)** by [SIGNING.md](SIGNING.md): own certificate. Earlier status: **on hold (2026-11-19)** — SignPath Foundation declined the application ("not trustworthy" yet, i.e. too new / too little known). 1.0 for Windows waits until a signing way fits; see section 6. Earlier: decided 2026-11-16 (one *Approve* click per release is fine) · Issues #49 (updates), #31 (Windows warning) · [REQUIREMENTS.md](../REQUIREMENTS.md) D22
 
 History: a first attempt (a signing key on the maintainer's PC, scripts to sign every release) was removed on 2026-11-16: too many steps. A paid certificate was the second idea; this plan replaces it with something **free, without keys or files to look after, and one click per release at most**.
 

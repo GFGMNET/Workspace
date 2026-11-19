@@ -1,6 +1,6 @@
 //! Updates (app/lib/updater.js): once a week the app asks GitHub for the latest release; if it is
 //! newer, the screen offers "Update now / Later / Skip". Updating downloads the package for this
-//! platform, checks it (Windows: signature by SignPath Foundation; Linux: SHA-256 from the release's
+//! platform, checks it (Windows: signature with the project's own certificate; Linux: SHA-256 from the release's
 //! checksum list), keeps a backup of the current program, and swaps the files after the app has quit,
 //! then starts it again. data/ is never touched. See docs/plans/RELEASE-TRUST.md.
 use crate::github::{http, settings};
@@ -124,22 +124,32 @@ fn find_root(dir: &Path, depth: usize) -> Option<PathBuf> {
     if depth > 2 { return None; }
     fs::read_dir(dir).ok()?.flatten().filter(|e| e.path().is_dir()).find_map(|e| find_root(&e.path(), depth + 1))
 }
-/// Windows: the new program must be signed by SignPath Foundation for Workspace (Windows checks the signature).
+/// Fingerprint of the project's own signing certificate (signing/, created once by .github/workflows/signing-cert.yml).
+const SIGNER: &str = include_str!("../../../../signing/workspace-signing.thumbprint");
+/// Windows: the new program must be signed with exactly the project's own certificate, unchanged, and be Workspace.
+/// The certificate is self-made, so Windows says "not trusted" (UnknownError/NotTrusted) unless it is installed on the PC —
+/// that is fine here; what counts is that it is our certificate and the file was not changed (docs/plans/SIGNING.md).
 fn check_signature(exe: &Path) -> Result<(), String> {
     if !cfg!(windows) { return Ok(()); }
     let script = "$s = Get-AuthenticodeSignature -LiteralPath $env:PW_CHECK_FILE; \
         $v = (Get-Item -LiteralPath $env:PW_CHECK_FILE).VersionInfo.ProductName; \
-        Write-Output (\"{0}|{1}|{2}\" -f $s.Status, $s.SignerCertificate.Subject, $v)";
+        Write-Output (\"{0}|{1}|{2}\" -f $s.Status, $s.SignerCertificate.Thumbprint, $v)";
     let mut c = std::process::Command::new("powershell.exe");
     c.args(["-NoProfile", "-NonInteractive", "-Command", script]).env("PW_CHECK_FILE", exe);
     #[cfg(windows)]
     { use std::os::windows::process::CommandExt; c.creation_flags(0x0800_0000); }
     let out = c.output().map_err(|e| format!("The signature could not be checked: {e}"))?;
     let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    signature_ok(&text)
+}
+/// "Status|Thumbprint|ProductName" from PowerShell → accepted or why not.
+fn signature_ok(text: &str) -> Result<(), String> {
     let mut p = text.splitn(3, '|');
-    let (status, subject, product) = (p.next().unwrap_or(""), p.next().unwrap_or(""), p.next().unwrap_or(""));
-    if status != "Valid" { return Err(format!("The new program is not signed (signature: {})", if status.is_empty() { "none" } else { status })); }
-    if !subject.contains("SignPath Foundation") { return Err("The new program is signed by someone else".into()); }
+    let (status, thumb, product) = (p.next().unwrap_or(""), p.next().unwrap_or(""), p.next().unwrap_or(""));
+    if !matches!(status, "Valid" | "UnknownError" | "NotTrusted") {
+        return Err(format!("The new program is not signed or was changed (signature: {})", if status.is_empty() { "none" } else { status }));
+    }
+    if !thumb.trim().eq_ignore_ascii_case(SIGNER.trim()) { return Err("The new program is signed by someone else".into()); }
     if product.trim() != "Workspace" { return Err("The new program is not Workspace".into()); }
     Ok(())
 }
@@ -228,5 +238,19 @@ pub fn run_swap(ws: &Workspace, src: &Path) {
         let q = |p: &Path| format!("'{}'", p.to_string_lossy().replace('\'', "'\\''"));
         let script = format!("while kill -0 {pid} 2>/dev/null; do sleep 0.5; done; cp -a {}/. {}/ && rm -rf {}; PW_RESTARTED=1 {} >/dev/null 2>&1 &", q(src), q(&install), q(&unpacked), q(&exe));
         let _ = std::process::Command::new("/bin/sh").args(["-c", &script]).stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).spawn();
+    }
+}
+
+#[cfg(test)]
+mod signature_tests {
+    #[test]
+    fn signature_check() {
+        let me = super::SIGNER.trim();
+        assert!(super::signature_ok(&format!("UnknownError|{me}|Workspace")).is_ok());
+        assert!(super::signature_ok(&format!("Valid|{}|Workspace", me.to_lowercase())).is_ok());
+        assert!(super::signature_ok(&format!("HashMismatch|{me}|Workspace")).is_err());
+        assert!(super::signature_ok("NotSigned||Workspace").is_err());
+        assert!(super::signature_ok("UnknownError|0000000000000000000000000000000000000000|Workspace").is_err());
+        assert!(super::signature_ok(&format!("Valid|{me}|Other")).is_err());
     }
 }

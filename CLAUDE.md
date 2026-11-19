@@ -39,7 +39,7 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 - 0.x stays on Node/Electron until 1.0 replaces it; 1.0 = Rust + Tauri (go after the prototype, 2026-11-16).
 - 1.0 drops the Node.js package (start.bat/start.sh); screens stay as files on disk; no macOS and no arm64 version (dropped 2026-11-18, #56, #64); Windows 11 only — Windows 10 not supported (#73).
 - Signing: GitHub account is protected (done). Windows software is only released **signed**. SignPath Foundation declined (2026-11-19).
-  **Decided 2026-11-19: own (self-made) certificate, stored in the repository (key encrypted, password in GitHub secrets) — plan
+  **Decided 2026-11-19: own (self-made) certificate, stored in the repository (no password) — plan
   `docs/plans/SIGNING.md`.** Earlier: 1.0 for Windows waited for a signing way that fits (`docs/plans/RELEASE-TRUST.md` §6 — options and prices checked; don't offer
   the declined ones again: Microsoft Store, Certum, unsigned, paid ~€230+/year). 0.x stays unsigned. No signing keys on anyone's PC.
   Before presenting any signing option: first check that a **private person in Germany** can buy/use it (with a source that
@@ -72,7 +72,7 @@ done as planned, stop and ask the maintainer — no new design on your own.
 ## Where the maintainer is needed
 
 Decided 2026-11-16: **build everything first** (phases 2 and 3 without stopping), then the maintainer tests the beta once
-(chat with the real Claude CLI, VS Code tab, tray, everything), **SignPath last** (just before 1.0), then the OK to release 1.0.
+(chat with the real Claude CLI, VS Code tab, tray, everything), **signing last** (just before 1.0; own certificate, `docs/plans/SIGNING.md`), then the OK to release 1.0.
 Version numbers: 0.9.0 = Rust beta (pre-release, unsigned), more betas as 0.9.0.N (e.g. 0.9.0.5, set with the input of build-rust.yml), 0.9.1 = signed, 1.0.0 = final.
 Decided 2026-11-17: in 1.0 the window's X quits the app (no hiding to the tray).
 Everything else: keep going and report progress briefly.

@@ -100,6 +100,9 @@ jobs:
           PW_SERVER_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe {port}
           PW_MCP_CMD: ${{ github.workspace }}\rust\target\release\workspace-server.exe mcp
         run: node tests/contract/run.js
+      - name: Signing with the own certificate (test certificate; docs/plans/SIGNING.md)
+        timeout-minutes: 10
+        run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe
       - name: Package
         run: |
           $d = "dist/Workspace-proto"

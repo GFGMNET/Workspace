@@ -108,16 +108,22 @@ function findRoot10(dir, depth = 0) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) if (e.isDirectory()) { const r = findRoot10(path.join(dir, e.name), depth + 1); if (r) return r; }
   return null;
 }
-// Windows: 1.0 must be signed by SignPath Foundation, product name "Workspace" (like the 1.0 updater checks).
+// Windows: 1.0 must be signed with exactly the project's own certificate (docs/plans/SIGNING.md), unchanged, product
+// name "Workspace" (like the 1.0 updater checks). Self-made certificate: Windows says UnknownError/NotTrusted unless it
+// is installed on the PC — fine here; what counts is our fingerprint and an unchanged file.
+const SIGNER = 'A592EBC3DE538532B0B50B3EBA825F40144B6B72';
+function signatureOk(out) {
+  const [status, thumb, product] = String(out).split('|');
+  if (!['Valid', 'UnknownError', 'NotTrusted'].includes(status)) throw new Error(`The new program is not signed or was changed (signature: ${status || 'none'})`);
+  if ((thumb || '').trim().toUpperCase() !== SIGNER.toUpperCase()) throw new Error('The new program is signed by someone else');
+  if ((product || '').trim() !== 'Workspace') throw new Error('The new program is not Workspace');
+}
 function checkSignature(file) {
-  const ps = "$s = Get-AuthenticodeSignature -LiteralPath $env:PW_CHECK_FILE; $v = (Get-Item -LiteralPath $env:PW_CHECK_FILE).VersionInfo.ProductName; Write-Output ('{0}|{1}|{2}' -f $s.Status, $s.SignerCertificate.Subject, $v)";
+  const ps = "$s = Get-AuthenticodeSignature -LiteralPath $env:PW_CHECK_FILE; $v = (Get-Item -LiteralPath $env:PW_CHECK_FILE).VersionInfo.ProductName; Write-Output ('{0}|{1}|{2}' -f $s.Status, $s.SignerCertificate.Thumbprint, $v)";
   let out = '';
   try { out = require('child_process').execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', ps], { env: { ...process.env, PW_CHECK_FILE: file }, windowsHide: true, encoding: 'utf8' }).trim(); }
   catch (e) { throw new Error('The signature could not be checked: ' + e.message); }
-  const [status, subject, product] = out.split('|');
-  if (status !== 'Valid') throw new Error(`The new program is not signed (signature: ${status || 'none'})`);
-  if (!/SignPath Foundation/.test(subject || '')) throw new Error('The new program is signed by someone else');
-  if ((product || '').trim() !== 'Workspace') throw new Error('The new program is not Workspace');
+  signatureOk(out);
 }
 // Linux: the download must match the SHA-256 in the release's SHA256SUMS.
 async function checkSum(buf, latest) {
@@ -262,4 +268,4 @@ async function apply() {
   }
 }
 
-module.exports = { check, skip, later, apply, view, newer, unzip, pickAsset, runSwap, runHandover, findRoot10 };
+module.exports = { signatureOk, SIGNER, check, skip, later, apply, view, newer, unzip, pickAsset, runSwap, runHandover, findRoot10 };

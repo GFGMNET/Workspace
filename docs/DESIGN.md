@@ -532,7 +532,7 @@ The detailed plan (inventory, crates, phases with exit criteria, tests, risks, d
 GitHub issues, MCP server) and the YAML corpus (33/33) on Linux and Windows. Phase 4: betas **0.9.0.x** (pre-releases, unsigned,
 built by `.github/workflows/build-rust.yml`, Windows x64 + Linux x64) are being tested by the maintainer. 1.0 is built for **Windows 11 x64 and Linux x64** only:
 no Windows 10 (#73), no arm64 (#64), no macOS (#56) — decided 2026-11-18.
-Then SignPath (0.9.1) and 1.0.0. The code is in `rust/`; the plan and status: [MIGRATION-RUST.md](MIGRATION-RUST.md).
+Then signing with the own certificate (0.9.1, [plans/SIGNING.md](plans/SIGNING.md)) and 1.0.0. The code is in `rust/`; the plan and status: [MIGRATION-RUST.md](MIGRATION-RUST.md).
 
 **Name:** from 1.0 the app is called **Workspace** everywhere (window, tray, notifications, `Workspace.exe`, `workspace` on Linux,
 downloads `workspace-vX.Y.Z-…zip`); decided 2026-11-18 (#77). The MCP server keeps the name `project-workspace` (`workspace` is reserved
@@ -580,12 +580,14 @@ app/public    unchanged screens, served by pw-server
 - rustls instead of OpenSSL, minimal crate features ✅. `cargo-deny` checks vulnerabilities, licences and sources on every change
   and every Monday (`.github/workflows/rust-security.yml`, `rust/deny.toml`; a weekly finding opens an issue) ✅; `rust/Cargo.lock` is
   committed and builds use `--locked` ✅ (#72). Weekly check like 7g, for crates.
-- **Trusted releases:** see [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md); whatever is chosen there carries over to 1.0.
+- **Trusted releases:** Windows programs are signed with the project's own certificate ([plans/SIGNING.md](plans/SIGNING.md)):
+  `signing/` holds the certificate with its key (no password), the public part and the fingerprint; `build-rust.yml` signs with it; the updater (`updater.rs` `check_signature`, 0.x `updater.js`) accepts only that fingerprint and an
+  unchanged file. Windows reports "not trusted" until the certificate is installed (wiki: Signing certificate).
 - The security check of 7g then watches crates and the bundled JS libraries; there is no browser engine of our own to patch.
 
 **Moving from 0.x** (#74, built, in the next 0.x release 0.6.3). The 0.x desktop app's updater recognises the 1.0 package
-(`Workspace.exe`/`workspace`, `workspace-server`, `app/public`, no `package.json`), checks it like 1.0 does (Windows: signature of
-SignPath Foundation, product name *Workspace*; Linux: SHA-256 from `SHA256SUMS`), switches off its own "start with the computer"
+(`Workspace.exe`/`workspace`, `workspace-server`, `app/public`, no `package.json`), checks it like 1.0 does (Windows: signature with the
+project's own certificate (fingerprint built in), unchanged file, product name *Workspace*; Linux: SHA-256 from `SHA256SUMS`), switches off its own "start with the computer"
 entry (1.0 makes its own from the same `data/.desktop.json`), and after it has quit a small script moves the old program files
 into `.update/backup-<version>-…`, moves 1.0 in and starts it. `data/`, `.update/` and `.git/` stay where they are. The Node.js
 package (start.bat/start.sh) isn't offered 1.0: download it by hand.

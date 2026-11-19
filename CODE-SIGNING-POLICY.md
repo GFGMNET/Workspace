@@ -1,23 +1,24 @@
 # Code signing policy
 
-Free code signing for Windows is provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+The Windows programs are signed with the project's **own certificate** "Workspace" (self-made, not bought). It is stored in
+[`signing/`](signing/) in this repository (decided by the maintainer). How to trust it: [wiki: Signing certificate](https://github.com/GFGMNET/Workspace/wiki/Signing-certificate).
 
 ## What is signed
 
 From version 0.9.1 (the version 1.0 line, *Workspace*): `Workspace.exe` and `workspace-server.exe` in the Windows package
 `workspace-vX.Y.Z-windows-x64.zip` on the [Releases page](https://github.com/GFGMNET/Workspace/releases).
 They are built by GitHub Actions (`.github/workflows/build-rust.yml`) from the source code in this repository, and nothing else
-is signed. Every release is approved by hand before it is signed. Versions 0.x are not signed.
+is signed. A release is only started by the maintainer. Versions 0.x are not signed.
 
 ## Team
 
 | Role | Members |
 |---|---|
 | Committers and reviewers (may change the source code; review changes from others) | [GFGMNET](https://github.com/GFGMNET) |
-| Approvers (approve each signing request) | [GFGMNET](https://github.com/GFGMNET) |
+| Release (starts the signed build) | [GFGMNET](https://github.com/GFGMNET) |
 
 Changes from other people come in as pull requests and are reviewed before they are merged.
-All team members use multi-factor authentication for GitHub and SignPath.
+All team members use multi-factor authentication for GitHub.
 
 ## Privacy
 

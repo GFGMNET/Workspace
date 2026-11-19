@@ -10,6 +10,7 @@
 - [[Desktop App|Desktop-App]]
 - [[Secrets]]
 - [[Security]]
+- [[Signing certificate|Signing-certificate]]
 - [[Data and Updates|Data-and-Updates]]
 - [[Beta of 1.0|Beta-1.0]]
 - [[Backup]]

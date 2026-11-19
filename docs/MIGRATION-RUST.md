@@ -108,9 +108,9 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | 4 | Beta next to 0.x | 0.9.0 tested 2026-11-17 → fixes #65–#69 → 0.9.0.5 tested → fixes #70, #71 → 0.9.0.6 ✅ test OK (2026-11-18) · **Windows 1.0 on hold: no signing yet** (RELEASE-TRUST.md §6) |
 | 5 | Release 1.0 | |
 
-**Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), SignPath signing last, just before 1.0.
+**Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), signing last, just before 1.0 (since 2026-11-19: own certificate, [plans/SIGNING.md](plans/SIGNING.md)).
 
-**Version numbers:** **0.9.0** = the Rust beta (unsigned, a GitHub pre-release: installed 0.6 apps don't pick it up), **0.9.1** = the same, signed via SignPath, **1.0.0** = the final release that 0.6 apps are offered.
+**Version numbers:** **0.9.0** = the Rust beta (unsigned, a GitHub pre-release: installed 0.6 apps don't pick it up), **0.9.1** = the same, signed with the own certificate, **1.0.0** = the final release that 0.6 apps are offered.
 
 **About the effort figures:** the days below are working days of a human developer. Claude does the coding; what takes time are the build-and-check round-trips on GitHub (5–10 minutes each, crates can't be downloaded in Claude's work environment). Realistically phase 2 is a few working sessions (one to three days), depending mostly on the YAML details.
 
@@ -118,7 +118,7 @@ Each phase ends with a check before the next starts. Estimates are working days 
 
 ### Phase S: trusted releases
 
-Decided 2026-11-16, details in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) (#49, #31): free code signing by SignPath Foundation for the 1.0 Windows program (one *Approve* click per release), updater checks the signature (Windows) and checksum + GitHub build attestation (Linux). Work items: apply at SignPath before phase 4; signing in the Windows build of phase 4; updater checks in phase 3; *Code signing policy* section in README and wiki.
+**Changed 2026-11-19:** SignPath declined; the Windows program is signed with the project's own certificate ([plans/SIGNING.md](plans/SIGNING.md)). Originally decided 2026-11-16, details in [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) (#49, #31): free code signing by SignPath Foundation for the 1.0 Windows program (one *Approve* click per release), updater checks the signature (Windows) and checksum + GitHub build attestation (Linux). Work items: apply at SignPath before phase 4; signing in the Windows build of phase 4; updater checks in phase 3; *Code signing policy* section in README and wiki.
 
 ### Phase 0: the safety net (3–4 days)
 
@@ -189,7 +189,7 @@ Steps, in this order (after each step: how many contract tests and YAML cases pa
 answers (`workspace-server mcp`). How it was done:
 - chat: `pw-server::chat`; the permission helper is the program itself (`permission-mcp`), no Node.js needed;
 - VS Code: `pw-server::ide` (hyper client; WebSockets as raw bytes with the token cookie, then joined);
-- updater: `pw-server::updater` — Windows: the new `Workspace.exe` must be signed by *SignPath Foundation* with product
+- updater: `pw-server::updater` — Windows: the new `Workspace.exe` must be signed with the project's own certificate (fingerprint from `signing/`) with product
   name *Workspace* (checked with PowerShell's `Get-AuthenticodeSignature`); Linux: SHA-256 from `SHA256SUMS` of the
   release; a backup of the program in `.update/`, the files are swapped after the app has quit, then it starts again;
 - secrets: the key is protected with **Windows DPAPI** (`protected: dpapi`) or the **Linux keyring** (`protected: keyring`,
