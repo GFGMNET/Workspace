@@ -1,0 +1,33 @@
+# Runs the feasibility checks of the plans in docs/plans/checks/ on Windows 11-like and Linux machines.
+# Started by hand (Actions → "Plan checks") or by Claude before a plan is given for approval.
+name: Plan checks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install SVN
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then choco install -y --no-progress sliksvn > /dev/null; echo "C:/Program Files/SlikSvn/bin" >> "$GITHUB_PATH"
+          else sudo apt-get update -qq && sudo apt-get install -y -qq subversion > /dev/null; fi
+      - name: Versions plan — Git
+        env:
+          PYTHON: python
+        run: sh docs/plans/checks/version-control-check.sh
+      - name: Versions plan — SVN
+        if: always()
+        run: sh docs/plans/checks/svn-check.sh
