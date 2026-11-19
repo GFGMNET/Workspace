@@ -10,22 +10,12 @@ Git/SVN integration
 
 ## 3) Feasible? Checked per function, with the result
 
-Checked on 2026-11-19 with `docs/plans/checks/version-control-check.sh` (Git) and `svn-check.sh` (SVN), on GitHub's
-Windows and Linux machines.
+- Git – see the files: unchecked
+- Git – see the history: unchecked
+- SVN – see the files: unchecked
+- SVN – see the history: failed
 
-| Function | Git | SVN |
-|---|---|---|
-| Start versions in a project | ✅ Win + Linux | ✅ Win + Linux (checkout) |
-| Show changed files | ✅ Win + Linux | ✅ Win + Linux |
-| Save a version with a message | ✅ Win + Linux | ✅ Win + Linux |
-| History | ✅ Win + Linux | ✅ Win + Linux |
-| Restore an old version (history kept) | ✅ Win + Linux | ✅ Win + Linux |
-| Share via a shared folder | ✅ Win + Linux | ✅ Win + Linux |
-| Same file changed by two people: found, keep mine or theirs | ✅ Win + Linux | ✅ Win + Linux |
-| Own server by IP + port, login from the app's secrets | ✅ Win + Linux | ✅ Linux · ❌ **Windows failed** — cause not known yet (maybe my test) |
-| Password is in no file | ✅ Win + Linux | ✅ Linux · ❌ Windows not reached |
-| Wrong login gives a clear message | ✅ Win + Linux | ✅ Linux · ❌ Windows not reached |
-| Protection: a copied folder cannot start a program | ✅ Win + Linux | — (SVN has no such setting in the folder) |
+Checked: 0 · Unchecked: 3 · Failed: 1
 
 ## 4) Description
 
