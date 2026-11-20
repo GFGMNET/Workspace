@@ -23,7 +23,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 | **1.1** | 13 Dec 2026 | MCP for **Blender** and **Unity** ([Blender](docs/plans/BLENDER.md), [Unity](docs/plans/UNITY.md)) |
 | **1.2** | 20 Dec 2026 | MCP for **Unreal Engine** 5.8+ ([plan](docs/plans/UNREAL.md)) |
 | **1.2.5** | 27 Dec 2026 | MCP for **Godot** 4.7+ and **OpenSCAD** ([Godot](docs/plans/GODOT.md), [OpenSCAD](docs/plans/OPENSCAD.md)) |
-| **1.2.6** | 3 Jan 2027 | MCP for **FreeCAD** ([plan](docs/plans/FREECAD.md)) · **Dashboard** per project — plan still open ([plan](docs/plans/DASHBOARD.md)) |
+| **1.2.6** | 3 Jan 2027 | MCP for **FreeCAD** ([plan](docs/plans/FREECAD.md)) · **Dashboard** on the Overview: blocks with numbers and lists ([plan](docs/plans/DASHBOARD.md)) |
 
 MCPs are switched on per project; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program. A plan that is not ready when its date comes moves to a later version.
 
