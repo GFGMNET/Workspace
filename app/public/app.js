@@ -154,7 +154,12 @@ function renderTabs() {
   tabs.push(tab('_files', `${icon('folder', 15)} Explorer`), tab('_ide', `${icon('terminal', 15)} VS Code`));
   // project.yaml lives in the gear (Manage) menu (#87); it shows as a tab only while it is open
   if (currentTab === '_yaml') tabs.push(tab('_yaml', `<span class="mono" style="font-size:12.5px">project.yaml</span>`));
-  const add = `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature title="Add a feature" aria-label="Add a feature">${icon('plus', 14)}</button>`;
+  // tabs the user switched off for this project (hide_tabs: in project.yaml, #89); the open tab always stays
+  const hiddenKeys = hiddenTabs(p);
+  const allTabs = tabs.slice();
+  for (let i = tabs.length - 1; i >= 0; i--) if (hiddenKeys.includes(tabKeyName(tabs[i].key)) && tabs[i].key !== currentTab) tabs.splice(i, 1);
+  const add = `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature title="Add a feature" aria-label="Add a feature">${icon('plus', 14)}</button>`
+    + `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-choose-tabs title="Choose which tabs this project shows" aria-label="Choose tabs">${icon('eye', 14)} Tabs${hiddenKeys.length ? ` <span class="n">${hiddenKeys.length} hidden</span>` : ''}</button>`;
   // everything that doesn't fit goes into "More" (the open tab always stays visible)
   const paint = hidden => {
     const shown = tabs.filter(t => !hidden.includes(t)), moreActive = hidden.some(t => t.key === currentTab);
@@ -167,12 +172,52 @@ function renderTabs() {
     hidden.unshift(tabs[i]); paint(hidden);
   }
   $('[data-add-feature]', el).onclick = addFeatureDialog;
+  $('[data-choose-tabs]', el).onclick = e => chooseTabs(e.currentTarget, allTabs.filter(t => t.key !== '_yaml'));
   const more = $('[data-more]', el);
   if (more) {
     const box = more.parentElement;
     const close = e => { if (!box.contains(e.target)) { box.classList.remove('open'); more.setAttribute('aria-expanded', 'false'); document.removeEventListener('click', close); } };
     more.onclick = () => { const o = box.classList.toggle('open'); more.setAttribute('aria-expanded', String(o)); if (o) setTimeout(() => document.addEventListener('click', close)); };
   }
+}
+// ---------- choose the tabs per project (#89) ----------
+// Saved as  hide_tabs: [key, …]  in project.yaml (feature keys, plus overview, explorer, vscode).
+const TAB_NAME = { _overview: 'overview', _files: 'explorer', _ide: 'vscode' };
+const tabKeyName = k => TAB_NAME[k] || k;
+function hiddenTabs(p) { const h = p.meta.hide_tabs; return (Array.isArray(h) ? h : h ? [h] : []).map(x => String(x).toLowerCase()); }
+function setHideTabs(yaml, keys) {
+  // remove an existing top-level hide_tabs: (one line, or followed by "- item" lines), then add the new one at the end
+  const lines = yaml.replace(/\r\n/g, '\n').split('\n'); const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^hide_tabs\s*:/i.test(lines[i])) { while (i + 1 < lines.length && /^\s+(-|#)|^\s*-\s/.test(lines[i + 1])) i++; continue; }
+    out.push(lines[i]);
+  }
+  while (out.length && out[out.length - 1].trim() === '') out.pop();
+  if (keys.length) out.push(`hide_tabs: [${keys.map(k => /^[\w.-]+$/.test(k) ? k : JSON.stringify(k)).join(', ')}]`);
+  return out.join('\n') + '\n';
+}
+function chooseTabs(btn, tabs) {
+  const p = S.project; const hidden = hiddenTabs(p);
+  document.querySelectorAll('.tabpick').forEach(x => x.remove());
+  const box = document.createElement('div'); box.className = 'tabpick card'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Tabs in this project');
+  box.innerHTML = `<b>Tabs in this project</b><div class="faint small" style="margin:2px 0 8px">Untick what you don't want to see. Saved for this project.</div>
+    ${tabs.map(t => `<label class="row small" style="gap:8px;padding:3px 0"><input type="checkbox" style="width:auto" value="${esc(tabKeyName(t.key))}" ${hidden.includes(tabKeyName(t.key)) ? '' : 'checked'}> <span>${t.html.replace(/<span class="n">[^<]*<\/span>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}</span></label>`).join('')}
+    <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm primary" type="button" data-tsave>Save</button><button class="btn sm" type="button" data-tall>Show all</button><button class="btn sm ghost" type="button" data-tclose>Close</button></div>`;
+  document.body.appendChild(box);
+  const r = btn.getBoundingClientRect(); box.style.left = Math.max(8, Math.min(r.right - box.offsetWidth, innerWidth - box.offsetWidth - 8)) + 'px'; box.style.top = (r.bottom + scrollY + 6) + 'px';
+  const close = () => { box.remove(); document.removeEventListener('mousedown', outside); };
+  const outside = e => { if (!box.contains(e.target) && e.target !== btn) close(); };
+  setTimeout(() => document.addEventListener('mousedown', outside));
+  const save = async keys => {
+    const cur = await api(`/api/projects/${enc(p.slug)}`);
+    S.project = await api(`/api/projects/${enc(p.slug)}/yaml`, { method: 'PUT', body: { yaml: setHideTabs(cur.yaml || '', keys) } });
+    close(); await App.refreshProjects(); renderTabs(); toast(keys.length ? `${keys.length} tab${keys.length > 1 ? 's' : ''} hidden` : 'All tabs shown');
+  };
+  $('[data-tsave]', box).onclick = () => save($$('input', box).filter(i => !i.checked).map(i => i.value));
+  $('[data-tall]', box).onclick = () => save([]);
+  $('[data-tclose]', box).onclick = close;
+  box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  const first = $('input', box); if (first) first.focus();
 }
 let tabsResize; window.addEventListener('resize', () => { clearTimeout(tabsResize); tabsResize = setTimeout(renderTabs, 150); });
 async function renderProject(tab, sub, query) {

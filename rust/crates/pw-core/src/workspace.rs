@@ -8,7 +8,7 @@ use std::time::UNIX_EPOCH;
 
 pub const STORES: [&str; 8] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi"];
 pub const FIELD_TYPES: [&str; 13] = ["text", "longtext", "number", "date", "datetime", "select", "bool", "url", "email", "tags", "list", "keyvalue", "link"];
-pub(crate) const META_KEYS: [&str; 10] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location"];
+pub(crate) const META_KEYS: [&str; 11] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location", "hide_tabs"];
 
 pub fn layouts() -> Value {
     json!({

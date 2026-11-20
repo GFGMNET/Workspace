@@ -31,7 +31,7 @@ const LAYOUTS = {
   github: ['issues'],
 };
 const FIELD_TYPES = ['text', 'longtext', 'number', 'date', 'datetime', 'select', 'bool', 'url', 'email', 'tags', 'list', 'keyvalue', 'link'];
-const META_KEYS = new Set(['name', 'description', 'icon', 'color', 'tags', 'status', 'owner', 'created', 'overview', 'location']);
+const META_KEYS = new Set(['name', 'description', 'icon', 'color', 'tags', 'status', 'owner', 'created', 'overview', 'location', 'hide_tabs']);
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i;
 
 // ---------- helpers ----------

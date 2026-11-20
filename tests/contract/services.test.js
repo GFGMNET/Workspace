@@ -65,6 +65,16 @@ test('GitHub issues: feature github_issue; "Repo:" in any case and the address f
   }
 });
 
+test('hide_tabs: is a project setting, not a feature (#89)', async () => {
+  const pr = await s.api('POST', '/api/projects', { body: { name: 'Hide tabs' } });
+  const y = await s.api('PUT', `/api/projects/${pr.body.slug}/yaml`, { body: { yaml: 'name: Hide tabs\nwiki:\n  feature: wiki\nhide_tabs: [overview, wiki]\n' } });
+  assert.equal(y.status, 200, y.text);
+  const p = (await s.api('GET', `/api/projects/${pr.body.slug}`)).body;
+  assert.deepEqual(p.meta.hide_tabs, ['overview', 'wiki']);
+  assert.ok(!p.features.some(f => f.key === 'hide_tabs'), 'not a feature');
+  assert.ok(p.features.some(f => f.key === 'wiki'), 'the hidden feature is still in the project');
+});
+
 test('updates: the check finds a newer release; later and skip are remembered', async () => {
   const c = await s.api('POST', '/api/update/check', { body: {} });
   assert.equal(c.status, 200);
