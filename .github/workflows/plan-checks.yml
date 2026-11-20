@@ -151,7 +151,7 @@ jobs:
         run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe
 
   glpi:
-    if: inputs.plan == 'all' || inputs.plan == 'glpi'
+    if: inputs.plan == 'all' || inputs.plan == 'glpi' || inputs.plan == 'glpi-probe'
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -169,4 +169,4 @@ jobs:
           GLPI_USER: Hermes
           GLPI_TOKEN: ${{ secrets.GLPI_TOKEN }}
           GLPI_APP_TOKEN: ${{ secrets.GLPI_APP_TOKEN }}
-        run: node docs/plans/checks/glpi-check.js
+        run: node docs/plans/checks/${{ inputs.plan == 'glpi-probe' && 'glpi-dot-probe.js' || 'glpi-check.js' }}
