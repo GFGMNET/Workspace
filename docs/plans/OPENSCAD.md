@@ -1,6 +1,6 @@
 # Plan: OpenSCAD
 
-**Ready 2 Deploy**
+**Not Ready 2 Deploy** — open point 1 (found 2026-11-20)
 
 
 
@@ -29,7 +29,9 @@ OpenSCAD, ready for 3D printing" (the example sentence is Claude's). The app its
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | `mcp:` in `project.yaml` is already used today by the feature "MCP" (the list of MCP connections, e.g. in the example project *test-2*). Switching on the program with `mcp:` (decision 4) would clash with it. Which key should switch it on instead? Suggestion: a new key, e.g. `programs:`, which the app treats as a setting of the project, not as a feature. The same answer applies to all MCP plans. |
 
 ## 6) Decisions, only about this feature
 
@@ -53,6 +55,7 @@ None.
 | 1 | Not checked (decision 5): whether it works is only seen when it is used. | The wiki article says what is needed and how to connect (decision 3). |
 | 2 | openscad-mcp is a community project (no official OpenSCAD MCP exists); it can change or stop. | Decision 2 ("if possible"): if it stops working, a new plan. |
 | 3 | If OpenSCAD is not found on the PC, the OpenSCAD tools answer with an error. | The wiki article says how to set `OPENSCAD_PATH`. |
+| 4 | `mcp:` is already the key of the existing feature "MCP"; using it would mix the program list with the connections and show it as a tab. | Open point 1. |
 
 ## 8) Detail workflow
 

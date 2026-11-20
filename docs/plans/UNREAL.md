@@ -1,6 +1,6 @@
 # Plan: Unreal
 
-**Ready 2 Deploy**
+**Not Ready 2 Deploy** — open point 1 (found 2026-11-20)
 
 
 
@@ -28,7 +28,9 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | `mcp:` in `project.yaml` is already used today by the feature "MCP" (the list of MCP connections, e.g. in the example project *test-2*). Switching on the program with `mcp:` (decision 4) would clash with it. Which key should switch it on instead? Suggestion: a new key, e.g. `programs:`, which the app treats as a setting of the project, not as a feature. The same answer applies to all MCP plans. |
 
 ## 6) Decisions, only about this feature
 
@@ -53,6 +55,7 @@ None.
 | 2 | Epic marks Unreal MCP as **experimental**: it can change between Unreal versions. | Decision 8: 5.8 or newer; the wiki article names the version it was written for. |
 | 3 | Unreal MCP has no login; it only accepts connections from the same PC. | Keep it on the same PC (default). |
 | 4 | Unreal has to be open with the plugin on; otherwise the Unreal tools answer with an error. | The wiki article. |
+| 5 | `mcp:` is already the key of the existing feature "MCP"; using it would mix the program list with the connections and show it as a tab. | Open point 1. |
 
 ## 8) Detail workflow
 

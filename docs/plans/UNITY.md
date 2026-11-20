@@ -1,6 +1,6 @@
 # Plan: Unity
 
-**Ready 2 Deploy**
+**Not Ready 2 Deploy** — open point 1 (found 2026-11-20)
 
 
 
@@ -28,7 +28,9 @@ Unity through MCP. The app itself doesn't need to show feedback. (Same as the Bl
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | `mcp:` in `project.yaml` is already used today by the feature "MCP" (the list of MCP connections, e.g. in the example project *test-2*). Switching on the program with `mcp:` (decision 4) would clash with it. Which key should switch it on instead? Suggestion: a new key, e.g. `programs:`, which the app treats as a setting of the project, not as a feature. The same answer applies to all MCP plans. |
 
 ## 6) Decisions, only about this feature
 
@@ -52,6 +54,7 @@ None.
 | 2 | MCP for Unity lets Claude change scenes, scripts and assets of the Unity project. | The chat's permission questions stay on. |
 | 3 | MCP for Unity is someone else's project (not Unity Technologies); it can change or stop. | Decision 2 ("if possible"): if it stops working, a new plan. |
 | 4 | Unity has to be open with the MCP for Unity server started, plus Python 3.10+ and `uv`; otherwise the Unity tools answer with an error. | The wiki article. |
+| 5 | `mcp:` is already the key of the existing feature "MCP"; using it would mix the program list with the connections and show it as a tab. | Open point 1. |
 
 ## 8) Detail workflow
 

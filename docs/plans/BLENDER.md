@@ -1,6 +1,6 @@
 # Plan: Blender
 
-**Ready 2 Deploy**
+**Not Ready 2 Deploy** — open point 1 (found 2026-11-20)
 
 
 
@@ -28,7 +28,9 @@ Poly", and the Claude CLI does it in Blender through MCP. The app itself doesn't
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | `mcp:` in `project.yaml` is already used today by the feature "MCP" (the list of MCP connections, e.g. in the example project *test-2*). Switching on the program with `mcp:` (decision 4) would clash with it. Which key should switch it on instead? Suggestion: a new key, e.g. `programs:`, which the app treats as a setting of the project, not as a feature. The same answer applies to all MCP plans. |
 
 ## 6) Decisions, only about this feature
 
@@ -52,6 +54,7 @@ None.
 | 2 | Blender MCP lets Claude run Python code inside Blender; that code can do anything Blender can do on the PC. | The chat's permission questions stay on (Claude asks before a tool is used, unless allowed). |
 | 3 | Blender MCP is someone else's project; it can change or stop. | Decision 2 ("if possible"): if it stops working, a new plan. |
 | 4 | Blender has to be open with the add-on connected, and `uv` installed; otherwise the Blender tools answer with an error in the chat. | The wiki article. |
+| 5 | `mcp:` is already the key of the existing feature "MCP"; using it would mix the program list with the connections and show it as a tab. | Open point 1. |
 
 ## 8) Detail workflow
 

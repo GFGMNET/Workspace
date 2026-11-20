@@ -1,6 +1,6 @@
 # Plan: FreeCAD
 
-**Ready 2 Deploy**
+**Not Ready 2 Deploy** — open point 1 (found 2026-11-20)
 
 
 
@@ -29,7 +29,9 @@ through MCP. The app itself doesn't need to show feedback.
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | `mcp:` in `project.yaml` is already used today by the feature "MCP" (the list of MCP connections, e.g. in the example project *test-2*). Switching on the program with `mcp:` (decision 4) would clash with it. Which key should switch it on instead? Suggestion: a new key, e.g. `programs:`, which the app treats as a setting of the project, not as a feature. The same answer applies to all MCP plans. |
 
 ## 6) Decisions, only about this feature
 
@@ -55,6 +57,7 @@ None.
 | 3 | Robust MCP recommends FreeCAD 1.1.4+ because older versions have known problems when opening untrusted files; freecad.org lists 1.1.3 as current. | Only open your own files until 1.1.4 is out; the wiki article names the version. |
 | 4 | It can run Python inside FreeCAD and change the FreeCAD files. | The chat's permission questions stay on. |
 | 5 | More to set up than the other MCPs: Python 3.11+, the workbench, a one-time pairing (`freecad-mcp --pair-bridge`), "Start MCP Bridge" in FreeCAD. | The wiki article, step by step. |
+| 6 | `mcp:` is already the key of the existing feature "MCP"; using it would mix the program list with the connections and show it as a tab. | Open point 1. |
 
 ## 8) Detail workflow
 

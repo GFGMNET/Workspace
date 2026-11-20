@@ -25,7 +25,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 | **1.2.5** | 27 Dec 2026 | MCP for **Godot** 4.7+ and **OpenSCAD** ([Godot](docs/plans/GODOT.md), [OpenSCAD](docs/plans/OPENSCAD.md)) |
 | **1.2.6** | 3 Jan 2027 | MCP for **FreeCAD** ([plan](docs/plans/FREECAD.md)) · **Dashboard** per project — plan still open ([plan](docs/plans/DASHBOARD.md)) |
 
-MCPs are switched on per project with `mcp:` in `project.yaml`; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program. A plan that is not ready when its date comes moves to a later version.
+MCPs are switched on per project; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program. A plan that is not ready when its date comes moves to a later version.
 
 ## Start (current version 0.x)
 
