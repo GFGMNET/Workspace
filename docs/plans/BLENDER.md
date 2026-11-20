@@ -1,5 +1,7 @@
 # Plan: Blender
 
+**Ready 2 Deploy**
+
 
 ## 1) Name
 
@@ -25,9 +27,7 @@ Poly", and the Claude CLI does it in Blender through MCP. The app itself doesn't
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | Switching on in the app: in the project settings (gear) a section "MCP" with a checkbox per program, as in the [proposal](img/mcp-settings.png)? Ticking it writes `mcp: [blender]` into `project.yaml`. |
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -38,6 +38,7 @@ Poly", and the Claude CLI does it in Blender through MCP. The app itself doesn't
 | 3 | No test phase for the MCP; instead a wiki article: what is needed and how to connect Blender and the app. |
 | 4 | Switched on per project in `project.yaml`: `mcp:` with `blender` in it. |
 | 5 | For MCPs only: no checks in point 3 and no test phase; an MCP plan can be Ready 2 Deploy without checks (2026-11-20). |
+| 6 | Switching on in the app: project settings (gear) → section "MCP" with a checkbox per program, as in the [approved screen](img/mcp-settings.png); ticking writes `mcp:` in `project.yaml`. |
 
 ## 7) Risks
 
@@ -71,7 +72,8 @@ mcp:
 
 | id | desc |
 |---|---|
-| 1 | The app reads `mcp:` from `project.yaml` (a list of names). Switching on in the app: open point 1. |
+| 1 | The app reads `mcp:` from `project.yaml` (a list of names). |
+| 1b | Project settings (gear): section "MCP" with a checkbox per known program (Blender; Unity and Unreal shown as planned) — ticking adds or removes the name in `mcp:` (decision 6). |
 | 2 | Known MCPs in the app: `blender` → command `uvx blender-mcp` (decision 2). Unknown names are ignored with a note in the chat. |
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
 | 4 | Wiki article "MCP: Blender" (decision 3): what is needed (Blender, the Blender MCP add-on `addon.py`, `uv`), how to connect (install the add-on, Blender sidebar → BlenderMCP → "Connect to Claude", `mcp: [blender]` in `project.yaml`), what to write in the chat. |
