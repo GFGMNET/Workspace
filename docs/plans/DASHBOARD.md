@@ -28,13 +28,13 @@ dashboard; new and existing projects start empty. Discussion screen: [dashboard-
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | Saved in `project.yaml` under `dashboard:` (one entry per block: what, show as, filter, how many, place, size) — OK? |
-| 2 | The tab is called "Overview" today — stay "Overview" or become "Dashboard"? |
-| 3 | Today `overview: false` hides the tab completely — should that stay possible? |
-| 4 | Size: a grid 4 blocks wide; a block 1–4 wide and 1–3 high — OK? |
-| 5 | Failed check "Project": today every list in `project.yaml` becomes a feature. Suggestion: the app treats `dashboard:` as a setting of the project, not as a feature (like `name:` or `overview:`). Then the check runs again. OK? |
+| id | question |answer|
+|---|---|---|
+| 1 | Saved in `project.yaml` under `dashboard:` (one entry per block: what, show as, filter, how many, place, size) — OK? |yes|
+| 2 | The tab is called "Overview" today — stay "Overview" or become "Dashboard"? |yes |
+| 3 | Today `overview: false` hides the tab completely — should that stay possible? | yes |
+| 4 | Size: a grid 4 blocks wide; a block 1–4 wide and 1–3 high — OK? | yes this is ol
+| 5 | Failed check "Project": today every list in `project.yaml` becomes a feature. Suggestion: the app treats `dashboard:` as a setting of the project, not as a feature (like `name:` or `overview:`). Then the check runs again. OK? | yes |
 
 ## 6) Decisions, only about this feature
 
