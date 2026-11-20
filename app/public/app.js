@@ -30,11 +30,37 @@ function renderSidebar() {
   const cur = S.project && location.hash.startsWith('#/p/') ? S.project.slug : null;
   $('#plist').innerHTML = S.projects.map(p => `<a class="pitem ${p.slug === cur ? 'active' : ''}" href="#/p/${enc(p.slug)}" title="${esc(p.name)}" ${p.slug === cur ? 'aria-current="page"' : ''}>${avatar(p.name, p.icon, p.color, p.slug)}<span class="nm">${esc(p.name)}</span>${p.error ? ' <span class="warn" title="project.yaml has an error">⚠</span>' : ''}</a>`).join('')
     || '<div class="small" style="color:var(--side-ink2);padding:6px 8px">No projects yet.</div>';
+  // "menu on top": the projects are in a drop-down (#90)
+  const curP = cur && S.projects.find(p => p.slug === cur);
+  $('#pdbtn').innerHTML = curP ? `${avatar(curP.name, curP.icon, curP.color, curP.slug)}<span class="nm">${esc(curP.name)}</span><span class="dd">▾</span>` : `${icon('folder', 16)}<span class="nm">Projects</span><span class="dd">▾</span>`;
+  $('#pdmenu').innerHTML = `<div class="plabel">Projects</div>${$('#plist').innerHTML}<button class="side-new" type="button" data-pd-new>+ New project</button>`;
+  $('[data-pd-new]', $('#pdmenu')).onclick = () => { closeProjectMenu(); newProjectDialog(); };
   $('#featCount').textContent = S.features.length || '';
   $('#navFeatures').classList.toggle('active', location.hash.startsWith('#/features'));
   $('#navFiles').classList.toggle('active', location.hash.startsWith('#/files'));
 }
 $('[data-action="new-project"]').onclick = () => newProjectDialog();
+function closeProjectMenu() { $('#pdrop').classList.remove('open'); $('#pdbtn').setAttribute('aria-expanded', 'false'); }
+$('#pdbtn').onclick = () => { const o = $('#pdrop').classList.toggle('open'); $('#pdbtn').setAttribute('aria-expanded', String(o)); };
+document.addEventListener('mousedown', e => { if (!e.target.closest('#pdrop')) closeProjectMenu(); });
+$('#pdmenu').addEventListener('click', e => { if (e.target.closest('a')) closeProjectMenu(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProjectMenu(); });
+
+// ---------- two layouts: menu on the left (classic) or menu on top with the features on the left (#90) ----------
+const isTop = () => document.documentElement.classList.contains('layout-top') && innerWidth > 900;
+function setLayout(l) {
+  document.documentElement.classList.toggle('layout-top', l === 'top');
+  try { localStorage.setItem('pw-layout', l); } catch {}
+  $$('[data-layout-set]').forEach(b => b.classList.toggle('on', b.dataset.layoutSet === l));
+  if (S.project && $('#ptabs')) renderTabs();
+}
+$$('[data-layout-set]').forEach(b => b.onclick = () => setLayout(b.dataset.layoutSet));
+$$('[data-layout-set]').forEach(b => b.classList.toggle('on', b.dataset.layoutSet === (document.documentElement.classList.contains('layout-top') ? 'top' : 'left')));
+function setFeaturesCollapsed(on) {
+  document.documentElement.classList.toggle('ftabs-collapsed', on);
+  try { localStorage.setItem('pw-ftabs', on ? 'collapsed' : 'open'); } catch {}
+  const b = $('[data-fcoll]'); if (b) { b.setAttribute('aria-expanded', String(!on)); b.title = (on ? 'Show the feature names' : 'Collapse the features') + ' (Ctrl+B)'; }
+}
 
 // ---------- collapsible sidebar (remembered per browser) ----------
 function setCollapsed(on) {
@@ -46,7 +72,7 @@ function setCollapsed(on) {
 const isCollapsed = () => document.documentElement.classList.contains('side-collapsed');
 $('[data-action="collapse"]').onclick = () => setCollapsed(!isCollapsed());
 $('[data-action="search"]').onclick = () => { setCollapsed(false); setTimeout(() => $('#q').focus(), 200); };
-addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.target.closest('textarea,input')) { e.preventDefault(); setCollapsed(!isCollapsed()); } });
+addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.target.closest('textarea,input')) { e.preventDefault(); if (isTop()) setFeaturesCollapsed(!document.documentElement.classList.contains('ftabs-collapsed')); else setCollapsed(!isCollapsed()); } });
 setCollapsed(isCollapsed());
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => go('#/search/' + enc(e.target.value)), 250); });
 
@@ -167,7 +193,8 @@ function renderTabs() {
   };
   const hidden = [];
   paint(hidden);
-  for (let i = tabs.length - 1; i >= 0 && el.scrollWidth > el.clientWidth + 1; i--) {
+  if (isTop()) $$('a.tab, button.tab', el).forEach(a => { if (!a.title) a.title = a.textContent.replace(/\s+/g, ' ').trim(); });
+  for (let i = tabs.length - 1; i >= 0 && !isTop() && el.scrollWidth > el.clientWidth + 1; i--) {
     if (tabs[i].key === currentTab) continue;
     hidden.unshift(tabs[i]); paint(hidden);
   }
@@ -231,9 +258,12 @@ async function renderProject(tab, sub, query) {
       <button class="btn ghost icon-btn" type="button" data-manage title="Manage project: project.yaml, rename, features, template, archive, delete" aria-label="Manage project">${icon('gear', 18)}</button></div>
     ${p.error ? `<div class="err" style="margin-top:12px" role="alert">project.yaml has an error: ${esc(p.error)}. <a href="${projectHref('_yaml')}">Open project.yaml</a> (also in the gear menu).</div>` : ''}
     ${!p.error && p.warning ? `<div class="note" style="margin-top:12px;background:var(--warn-bg)" role="status">${icon('warn', 14)} project.yaml: ${esc(p.warning)} <a href="${projectHref('_yaml')}">Open project.yaml</a></div>` : ''}
-    <nav class="tabs" id="ptabs" role="tablist" aria-label="Features of ${esc(p.name)}"></nav>
-    <div id="fnote"></div><section id="fbody"></section></div>`;
+    <div class="pbody"><div class="pside"><nav class="tabs" id="ptabs" role="tablist" aria-label="Features of ${esc(p.name)}"></nav>
+      <button type="button" class="fcoll" data-fcoll aria-expanded="true"><span class="ar" aria-hidden="true">«</span><span class="txt">Collapse</span></button></div>
+    <div class="pmain"><div id="fnote"></div><section id="fbody"></section></div></div></div>`;
   $('[data-manage]').onclick = () => manageProject(p);
+  $('[data-fcoll]').onclick = () => setFeaturesCollapsed(!document.documentElement.classList.contains('ftabs-collapsed'));
+  setFeaturesCollapsed(document.documentElement.classList.contains('ftabs-collapsed'));
   renderTabs();
   const body = $('#fbody');
   if (tab === '_yaml') return renderProjectYaml(body);

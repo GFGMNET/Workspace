@@ -29,3 +29,26 @@ jobs:
         run: node tests/contract/run.js
       - name: YAML corpus
         run: node --test tests/yaml-corpus/yaml.test.js
+
+  # The screens in the browser engines the app uses (Windows: Chromium-based WebView2, Linux: WebKitGTK):
+  # the two layouts, menu left / menu on top (#90).
+  ui:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Browsers (Chromium + WebKit)
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          if [ "$RUNNER_OS" = Linux ]; then npx playwright install --with-deps chromium webkit > /dev/null; else npx playwright install chromium webkit > /dev/null; fi
+      - name: Layouts
+        run: node tests/ui/layout.test.js

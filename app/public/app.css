@@ -470,3 +470,45 @@ button.ilabel.on{background:var(--lc);color:#fff}
 
 .tabpick{position:absolute;z-index:60;width:280px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
 .tabs>.tab.add .n{font-size:11px}
+
+/* ---------- layout "menu on top": projects in a drop-down, the features of a project on the left (#90) ---------- */
+.pdrop{display:none;position:relative}
+.pdbtn{display:flex;align-items:center;gap:10px;background:var(--side2);border:0;color:var(--side-ink);border-radius:8px;padding:5px 12px 5px 6px;cursor:pointer;min-width:220px;max-width:320px}
+.pdbtn .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .pdbtn .dd{margin-left:auto;color:var(--side-ink2)}
+.pdmenu{display:none;position:absolute;top:calc(100% + 6px);left:0;width:300px;max-height:70vh;overflow:auto;background:var(--side);border:1px solid var(--side2);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:8px;z-index:70}
+.pdrop.open .pdmenu{display:block}
+.pdmenu .pitem{display:flex} .pdmenu .side-new{width:100%;margin-top:6px} .pdmenu .plabel{padding:4px 8px 6px}
+.layoutsw{margin-top:-4px}
+.pside,.pmain{display:contents}
+.fcoll{display:none}
+@media (min-width:901px){
+:root.layout-top .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
+:root.layout-top .side{grid-row:1;grid-column:1;flex-direction:row;align-items:center;gap:12px;padding:8px 14px;position:relative;z-index:40;min-width:0}
+:root.layout-top #updbar{grid-row:2;grid-column:1}
+:root.layout-top .main{grid-row:3;grid-column:1}
+:root.layout-top .brand{justify-content:flex-start;padding:0;flex:none}
+:root.layout-top .brand>span:last-child{display:block} :root.layout-top .brand small{display:none}
+:root.layout-top .side .search{display:flex;width:180px;flex:none}
+:root.layout-top .side>.plabel,:root.layout-top .plist,:root.layout-top .side>.side-new,:root.layout-top .side-collapse,:root.layout-top .only-collapsed{display:none!important}
+:root.layout-top .pdrop{display:block;flex:none}
+:root.layout-top .side-foot{flex-direction:row;align-items:center;border-top:0;border-left:1px solid var(--side2);padding:0 0 0 10px;gap:4px;margin-left:auto;min-width:0}
+:root.layout-top .side-foot .side-link{width:auto;padding:7px 8px;white-space:nowrap;justify-content:flex-start}
+:root.layout-top .side .txt{display:inline} :root.layout-top .side-link .n{display:inline;margin-left:4px}
+:root.layout-top .side-ver .txt{display:none} :root.layout-top .side-ver{width:auto}
+:root.layout-top .side-foot .theme{display:flex;margin:0;flex:none} :root.layout-top .side-foot .theme button{white-space:nowrap;padding:4px 8px}
+:root.layout-top .pbody{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;margin-top:14px;align-items:start}
+:root.layout-top .pside{display:flex;flex-direction:column;position:sticky;top:12px;min-width:0}
+:root.layout-top .pmain{display:block;min-width:0}
+:root.layout-top #ptabs{flex-direction:column;align-items:stretch;border-bottom:0;border-right:1px solid var(--line);padding-right:10px;margin:0}
+:root.layout-top #ptabs .tab{border-radius:8px;border-bottom:0;margin:0;padding:8px 10px;justify-content:flex-start}
+:root.layout-top #ptabs .tab.active{background:var(--accent-soft);color:var(--ink)}
+:root.layout-top #ptabs .tab.add{border-radius:8px!important}
+:root.layout-top .fcoll{display:flex;align-items:center;gap:8px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;padding:9px 10px;margin:8px 10px 0 0;font-size:13px}
+:root.layout-top .fcoll:hover{color:var(--ink)}
+:root.layout-top.ftabs-collapsed .pbody{grid-template-columns:52px minmax(0,1fr)}
+:root.layout-top.ftabs-collapsed #ptabs .tab{justify-content:center;padding:9px 0;font-size:0;gap:0}
+:root.layout-top.ftabs-collapsed #ptabs .tab .n{display:none}
+:root.layout-top.ftabs-collapsed .fcoll{justify-content:center;padding:9px 0} :root.layout-top.ftabs-collapsed .fcoll .txt{display:none}
+:root.layout-top.ftabs-collapsed .fcoll .ar{display:inline-block;transform:rotate(180deg)}
+}
+@media (min-width:901px) and (max-width:1440px){:root.layout-top .side-foot .side-link .txt{display:none}}

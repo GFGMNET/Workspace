@@ -16,6 +16,15 @@ Starting it a second time just brings the window to the front.
 
 **The X closes the app.** To keep reminders while you work elsewhere, minimise the window instead.
 
+## Two layouts
+
+Choose in the menu with **Menu left** / **Menu top** (next to *Light / Dark / Auto*). The app remembers it on this PC.
+
+- **Menu left** (the classic one): projects and links on the left, the features of a project as tabs along the top. **Collapse** (or Ctrl+B) shrinks the menu to icons.
+- **Menu top**: the menu is a bar at the top, the projects are in a **drop-down** there, and the features of a project are a list on the left. **« Collapse** at the bottom of that list (or Ctrl+B) shrinks it to icons; **»** opens it again.
+
+In both, **Tabs** (the eye) chooses which features a project shows, and the gear (⚙) next to the project name holds `project.yaml`.
+
 ## Tray, reminders and start with Windows
 
 Click the **tray icon** (next to the clock):

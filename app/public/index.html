@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Workspace</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232f5bea'/><path d='M8 9h7v14H8zM17 9h7v6h-7zM17 17h7v6h-7z' fill='white'/></svg>">
-<script>try{var t=localStorage.getItem('pw-theme');if(t&&t!=='system')document.documentElement.dataset.theme=t;if(localStorage.getItem('pw-side')==='collapsed')document.documentElement.classList.add('side-collapsed');}catch(e){}</script>
+<script>try{var t=localStorage.getItem('pw-theme');if(t&&t!=='system')document.documentElement.dataset.theme=t;if(localStorage.getItem('pw-side')==='collapsed')document.documentElement.classList.add('side-collapsed');if(localStorage.getItem('pw-layout')==='top')document.documentElement.classList.add('layout-top');if(localStorage.getItem('pw-ftabs')==='collapsed')document.documentElement.classList.add('ftabs-collapsed');}catch(e){}</script>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -18,6 +18,7 @@
     <label class="search"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="Search all projects" autocomplete="off" aria-label="Search all projects"></label>
     <button class="side-icon only-collapsed" type="button" data-action="search" title="Search all projects" aria-label="Search all projects"><span data-icon="search"></span></button>
+    <div class="pdrop" id="pdrop"><button type="button" class="pdbtn" id="pdbtn" aria-haspopup="menu" aria-expanded="false" title="Projects"></button><div class="pdmenu" id="pdmenu" role="menu"></div></div>
     <div class="plabel">Projects</div>
     <div class="plist" id="plist"></div>
     <button class="side-new" type="button" data-action="new-project" title="New project"><span aria-hidden="true">+</span><span class="txt"> New project</span></button>
@@ -30,6 +31,10 @@
         <button type="button" data-theme-set="light" title="Light">Light</button>
         <button type="button" data-theme-set="dark" title="Dark">Dark</button>
         <button type="button" data-theme-set="system" title="Follow Windows">Auto</button>
+      </div>
+      <div class="theme layoutsw" role="group" aria-label="Menu position">
+        <button type="button" data-layout-set="left" title="Menu on the left">Menu left</button>
+        <button type="button" data-layout-set="top" title="Menu on top, features on the left">Menu top</button>
       </div>
       <button class="side-link side-ver" type="button" data-action="updates" title="Version and updates"><span data-icon="upload"></span><span class="txt">v<span id="ver"></span> · Updates</span><span class="n" id="updDot" hidden>●</span></button>
       <button class="side-link side-collapse" type="button" data-action="collapse" aria-expanded="true" title="Collapse sidebar (Ctrl+B)"><span data-icon="chevl"></span><span class="txt">Collapse</span></button>

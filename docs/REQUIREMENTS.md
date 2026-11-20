@@ -42,6 +42,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B16 | GitHub issues of a repository as a feature (`github_issue`, github.com only; repo in any case or as an address) | ✅ | #28, #83, #84 |
 | B17 | Ticket: GLPI 11 tickets of a project — category = project name (created when missing); read, create, edit text, state, follow-ups, solution (osTicket dropped) (plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md)) | ✅ built and tested (2026-11-20); release with 1.0 | #59 |
 | B18 | Choose per project which tabs are shown (`hide_tabs:` in project.yaml); project.yaml opened from the gear menu | ✅ in 1.0 | #87, #89 |
+| B19 | Two layouts to switch between: menu left, or menu on top with the projects in a drop-down and the features on the left (collapsible) | ✅ in 1.0 | #90 |
 
 ## Working with projects
 
