@@ -48,20 +48,23 @@ impl Glpi {
     }
     async fn close(&self) { let _ = self.req(reqwest::Method::GET, "/killSession", None, None).await; }
 
-    /// The id of the category with this name; created when missing (decision 11).
-    async fn category(&self, name: &str) -> Result<i64, HttpError> {
-        let q = format!("/ITILCategory?searchText[name]={}&range=0-200", enc(&format!("^{}$", regex_escape(name))));
+    /// The ids of the categories with exactly this name (oldest first); one is created when there is none (decision 11).
+    /// GLPI's search is not a regex: `^name$` means "starts and ends with", other characters (dots…) are taken as they are.
+    async fn categories(&self, name: &str) -> Result<Vec<i64>, HttpError> {
+        let q = format!("/ITILCategory?searchText[name]={}&range=0-999", enc(&format!("^{name}$")));
         let found = self.req(reqwest::Method::GET, &q, None, None).await.unwrap_or(Value::Null);
-        if let Some(id) = found.as_array().and_then(|a| a.iter().find(|c| c["name"].as_str() == Some(name))).and_then(|c| c["id"].as_i64()) { return Ok(id); }
+        let mut ids: Vec<i64> = found.as_array().map(|a| a.iter().filter(|c| c["name"].as_str() == Some(name)).filter_map(|c| c["id"].as_i64()).collect()).unwrap_or_default();
+        ids.sort();
+        if !ids.is_empty() { return Ok(ids); }
         let c = self.req(reqwest::Method::POST, "/ITILCategory", Some(json!({ "input": { "name": name, "is_recursive": 1 } })), None).await
             .map_err(|e| err(e.status, format!("{} (creating the category \"{name}\")", e.message)))?;
-        c["id"].as_i64().ok_or_else(|| err(502, "GLPI did not create the category"))
+        Ok(vec![c["id"].as_i64().ok_or_else(|| err(502, "GLPI did not create the category"))?])
     }
     async fn ticket_raw(&self, id: i64) -> Result<Value, HttpError> { self.req(reqwest::Method::GET, &format!("/Ticket/{id}"), None, None).await }
     /// A ticket of this project's category, or 404 (tickets of other categories can't be opened from the project).
-    async fn own_ticket(&self, cat: i64, id: i64) -> Result<Value, HttpError> {
+    async fn own_ticket(&self, cats: &[i64], id: i64) -> Result<Value, HttpError> {
         let t = self.ticket_raw(id).await?;
-        if t["itilcategories_id"].as_i64() != Some(cat) { return Err(err(404, format!("Ticket #{id} does not belong to this project"))); }
+        if !t["itilcategories_id"].as_i64().is_some_and(|c| cats.contains(&c)) { return Err(err(404, format!("Ticket #{id} does not belong to this project"))); }
         Ok(t)
     }
     async fn followups(&self, id: i64) -> Vec<Value> {
@@ -73,7 +76,6 @@ impl Glpi {
 fn enc(s: &str) -> String {
     s.bytes().map(|b| if b.is_ascii_alphanumeric() || b"-_.~".contains(&b) { (b as char).to_string() } else { format!("%{b:02X}") }).collect()
 }
-fn regex_escape(s: &str) -> String { s.chars().map(|c| if "\\^$.|?*+()[]{}".contains(c) { format!("\\{c}") } else { c.to_string() }).collect() }
 fn text(v: &Value) -> String { v.as_str().map(html_to_text).unwrap_or_default() }
 /// GLPI stores rich text as (escaped) HTML; the app shows plain text.
 pub fn html_to_text(s: &str) -> String {
@@ -93,8 +95,9 @@ pub async fn list(ws: &Workspace, p: &Project, key: &str) -> Result<Value, HttpE
     let def = def_of(p, key)?;
     let g = Glpi::open(ws, &def).await?;
     let out = async {
-        let cat = g.category(&p.name).await?;
-        let q = format!("/search/Ticket?criteria[0][field]=7&criteria[0][searchtype]=equals&criteria[0][value]={cat}&forcedisplay[0]=2&forcedisplay[1]=1&forcedisplay[2]=12&forcedisplay[3]=15&forcedisplay[4]=19&sort=19&order=DESC&range=0-199");
+        let cats = g.categories(&p.name).await?;
+        let crit: String = cats.iter().enumerate().map(|(i, c)| format!("{}criteria[{i}][field]=7&criteria[{i}][searchtype]=equals&criteria[{i}][value]={c}&", if i > 0 { format!("criteria[{i}][link]=OR&") } else { String::new() })).collect();
+        let q = format!("/search/Ticket?{crit}forcedisplay[0]=2&forcedisplay[1]=1&forcedisplay[2]=12&forcedisplay[3]=15&forcedisplay[4]=19&sort=19&order=DESC&range=0-199");
         let r = g.req(reqwest::Method::GET, &q, None, None).await?;
         let rows = r["data"].as_array().cloned().unwrap_or_default();
         let ids: Vec<i64> = rows.iter().filter_map(|x| x["2"].as_i64().or_else(|| x["2"].as_str().and_then(|s| s.parse().ok()))).collect();
@@ -114,8 +117,8 @@ pub async fn one(ws: &Workspace, p: &Project, key: &str, id: i64) -> Result<Valu
     let def = def_of(p, key)?;
     let g = Glpi::open(ws, &def).await?;
     let out = async {
-        let cat = g.category(&p.name).await?;
-        let t = g.own_ticket(cat, id).await?;
+        let cats = g.categories(&p.name).await?;
+        let t = g.own_ticket(&cats, id).await?;
         let f = g.followups(id).await;
         let sol = g.req(reqwest::Method::GET, &format!("/Ticket/{id}/ITILSolution?expand_dropdowns=true"), None, None).await.ok().and_then(|v| v.as_array().cloned()).unwrap_or_default();
         let st = t["status"].as_i64().unwrap_or(0);
@@ -136,7 +139,7 @@ pub async fn create(ws: &Workspace, p: &Project, key: &str, b: &Value) -> Result
     let def = def_of(p, key)?;
     let g = Glpi::open(ws, &def).await?;
     let out = async {
-        let cat = g.category(&p.name).await?;
+        let cat = g.categories(&p.name).await?[0];   // the oldest one
         let r = g.req(reqwest::Method::POST, "/Ticket", Some(json!({ "input": { "name": name, "content": b["content"].as_str().unwrap_or(""), "itilcategories_id": cat } })), None).await?;
         Ok::<Value, HttpError>(json!({ "id": r["id"] }))
     }.await;
@@ -154,8 +157,8 @@ pub async fn update(ws: &Workspace, p: &Project, key: &str, id: i64, b: &Value) 
     let def = def_of(p, key)?;
     let g = Glpi::open(ws, &def).await?;
     let out = async {
-        let cat = g.category(&p.name).await?;
-        g.own_ticket(cat, id).await?;
+        let cats = g.categories(&p.name).await?;
+        g.own_ticket(&cats, id).await?;
         g.req(reqwest::Method::PUT, &format!("/Ticket/{id}"), Some(json!({ "input": Value::Object(input) })), None).await?;
         Ok::<Value, HttpError>(json!({ "ok": true }))
     }.await;
@@ -171,8 +174,8 @@ pub async fn add(ws: &Workspace, p: &Project, key: &str, id: i64, what: &str, b:
     let def = def_of(p, key)?;
     let g = Glpi::open(ws, &def).await?;
     let out = async {
-        let cat = g.category(&p.name).await?;
-        g.own_ticket(cat, id).await?;
+        let cats = g.categories(&p.name).await?;
+        g.own_ticket(&cats, id).await?;
         let r = g.req(reqwest::Method::POST, &format!("/{itemtype}"), Some(json!({ "input": { "itemtype": "Ticket", "items_id": id, "content": content } })), None).await?;
         Ok::<Value, HttpError>(json!({ "id": r["id"] }))
     }.await;
@@ -194,6 +197,4 @@ mod tests {
         assert_eq!(super::html_to_text("&lt;p&gt;Hello&lt;br&gt;World&lt;/p&gt;"), "Hello\nWorld");
         assert_eq!(super::html_to_text("plain &amp; simple"), "plain & simple");
     }
-    #[test]
-    fn regex_names_are_escaped() { assert_eq!(super::regex_escape("A.B (x)"), "A\\.B \\(x\\)"); }
 }

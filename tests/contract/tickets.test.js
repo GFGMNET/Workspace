@@ -25,13 +25,15 @@ function fakeGlpi() {
       if (!db.sessions.has(req.headers['session-token'])) return send(res, 401, ['ERROR_SESSION_TOKEN_INVALID', 'session']);
       if (p === '/killSession') { db.sessions.delete(req.headers['session-token']); return send(res, 200, true); }
       if (p === '/ITILCategory' && req.method === 'GET') {
-        const want = (u.searchParams.get('searchText[name]') || '').replace(/^\^|\$$/g, '').replace(/\\(.)/g, '$1');
-        return send(res, 200, db.cats.filter(c => c.name === want));
+        // like GLPI's text search: not a regex; ^ = starts with, $ = ends with, otherwise "contains"; no case
+        let q = u.searchParams.get('searchText[name]') || ''; const st = q.startsWith('^'), en = q.endsWith('$');
+        q = q.replace(/^\^/, '').replace(/\$$/, '').toLowerCase();
+        return send(res, 200, db.cats.filter(c => { const n = c.name.toLowerCase(); return st && en ? n === q : st ? n.startsWith(q) : en ? n.endsWith(q) : n.includes(q); }));
       }
       if (p === '/ITILCategory' && req.method === 'POST') { const c = { id: db.next++, name: b.input.name }; db.cats.push(c); return send(res, 201, { id: c.id }); }
       if (p === '/search/Ticket') {
-        const cat = Number(u.searchParams.get('criteria[0][value]'));
-        return send(res, 200, { data: Object.values(db.tickets).filter(t => t.itilcategories_id === cat).map(t => ({ 2: t.id, 1: t.name, 12: t.status, 15: t.date, 19: t.date_mod })) });
+        const cats = []; for (let i = 0; u.searchParams.has(`criteria[${i}][value]`); i++) cats.push(Number(u.searchParams.get(`criteria[${i}][value]`)));
+        return send(res, 200, { data: Object.values(db.tickets).filter(t => cats.includes(t.itilcategories_id)).map(t => ({ 2: t.id, 1: t.name, 12: t.status, 15: t.date, 19: t.date_mod })) });
       }
       if (p === '/Ticket' && req.method === 'POST') {
         const t = { id: db.next++, status: 1, date: '2026-11-19 12:00:00', date_mod: '2026-11-19 12:00:00', ...b.input }; db.tickets[t.id] = t; return send(res, 201, { id: t.id });
@@ -56,15 +58,16 @@ function fakeGlpi() {
   }).then(h => Object.assign(h, { db }));
 }
 
-async function setup() {
+async function setup(projectName = 'Customer X', glpiReady) {
   const glpi = await fakeGlpi();
+  if (glpiReady) glpiReady(glpi.db);
   const s = await startServer();
   await s.api('PUT', '/api/secrets/glpi-user-token', { body: { value: USER_TOKEN } });
   await s.api('PUT', '/api/secrets/glpi-app-token', { body: { value: APP_TOKEN } });
   await s.api('PUT', '/api/features/ticketsystem', { body: { yaml: 'name: Ticket\nstores: glpi\nlayout: tickets\n' } });
-  const pr = await s.api('POST', '/api/projects', { body: { name: 'Customer X' } });
+  const pr = await s.api('POST', '/api/projects', { body: { name: projectName } });
   const slug = pr.body.slug;
-  const yaml = `name: Customer X\nticket:\n  feature: ticketsystem\n  url: ${glpi.url}\n  user: hermes\n  user_token: \${secret:glpi-user-token}\n  app_token: \${secret:glpi-app-token}\n`;
+  const yaml = `name: ${JSON.stringify(projectName)}\nticket:\n  feature: ticketsystem\n  url: ${glpi.url}\n  user: hermes\n  user_token: \${secret:glpi-user-token}\n  app_token: \${secret:glpi-app-token}\n`;
   const y = await s.api('PUT', `/api/projects/${slug}/yaml`, { body: { yaml } });
   assert.equal(y.status, 200, y.text);
   return { s, glpi, base: `/api/projects/${slug}/f/ticket/tickets` };
@@ -111,6 +114,27 @@ test('tickets: a ticket of another category cannot be opened or changed from the
     assert.equal((await s.api('PATCH', `${base}/50`, { body: { status: 6 } })).status, 404);
     assert.equal((await s.api('POST', `${base}/50/followups`, { body: { content: 'x' } })).status, 404);
     assert.equal(glpi.db.tickets[50].status, 1, 'unchanged');
+  } finally { await s.stop(); await glpi.close(); }
+});
+
+test('tickets: project names with dots, spaces, brackets, & and umlauts; existing duplicate categories (#79)', { skip: !RUST && 'Rust server only' }, async () => {
+  const name = 'Kunde 9.11  (A) & Ü';
+  const { s, glpi, base } = await setup(name, db => {
+    db.cats.push({ id: 7, name }, { id: 8, name }, { id: 9, name: 'Kunde 9.11  (A) & Ü extra' });   // like on the test server: made twice before the fix
+    db.tickets[60] = { id: 60, name: 'In the second one', content: '', status: 2, itilcategories_id: 8, date: '2026-11-19 09:00:00', date_mod: '2026-11-19 09:00:00' };
+    db.tickets[61] = { id: 61, name: 'In a different category', content: '', status: 2, itilcategories_id: 9, date: '2026-11-19 09:00:00', date_mod: '2026-11-19 09:00:00' };
+  });
+  try {
+    const before = glpi.db.cats.length;
+    const l1 = await s.api('GET', base);
+    assert.equal(l1.status, 200, l1.text);
+    assert.deepEqual(l1.body.tickets.map(t => t.id), [60], 'tickets of all categories with exactly this name, not of a longer name');
+    const c = await s.api('POST', base, { body: { name: 'New one' } });
+    assert.equal(glpi.db.tickets[c.body.id].itilcategories_id, 7, 'new tickets go into the oldest category');
+    await s.api('GET', base); await s.api('GET', `${base}/60`);
+    assert.equal(glpi.db.cats.length, before, 'no category is created again');
+    const l2 = await s.api('GET', base);
+    assert.deepEqual(l2.body.tickets.map(t => t.id).sort(), [60, c.body.id].sort(), 'the new ticket is listed');
   } finally { await s.stop(); await glpi.close(); }
 });
 
