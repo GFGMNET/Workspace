@@ -39,6 +39,7 @@ None.
 | 4 | Switched on per project in `project.yaml`: `mcp:` with `blender` in it. |
 | 5 | For MCPs only: no checks in point 3 and no test phase; an MCP plan can be Ready 2 Deploy without checks (2026-11-20). |
 | 6 | Switching on in the app: project settings (gear) → section "MCP" with a checkbox per program, as in the [approved screen](img/mcp-settings.png); ticking writes `mcp:` in `project.yaml`. |
+| 7 | No own beta for an MCP: it goes out with the release of its version (2026-11-20). |
 
 ## 7) Risks
 
@@ -78,4 +79,4 @@ mcp:
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
 | 4 | Wiki article "MCP: Blender" (decision 3): what is needed (Blender, the Blender MCP add-on `addon.py`, `uv`), how to connect (install the add-on, Blender sidebar → BlenderMCP → "Connect to Claude", `mcp: [blender]` in `project.yaml`), what to write in the chat. |
 | 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.1.0.md`. |
-| 6 | Release 1.1 with your OK. |
+| 6 | No own beta (decision 7): goes out with the release 1.1, with your OK. |

@@ -72,7 +72,8 @@ gets the open points and risks, and nothing begins until they have seen them. Wh
 done as planned, stop and ask the maintainer — no new design on your own.
 A plan that is not **Ready 2 Deploy** when its version is due is skipped: it moves to a later version (decided 2026-11-19).
 MCPs (decided 2026-11-20): named after the program they use (Blender, Unity, Unreal); use the existing solution if possible;
-no checks and no test phase — instead a wiki article with what is needed and how to connect; switched on per project with `mcp:` in `project.yaml`.
+no checks and no test phase — instead a wiki article with what is needed and how to connect; switched on per project with `mcp:` in `project.yaml`;
+no own beta for an MCP — it goes out with the release of its version.
 
 ## Where the maintainer is needed
 
