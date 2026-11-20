@@ -1,6 +1,5 @@
 # Plan: Blender
 
-**Ready 2 Deploy**
 
 ## 1) Name
 
@@ -26,7 +25,9 @@ Poly", and the Claude CLI does it in Blender through MCP. The app itself doesn't
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | Switching on in the app: in the project settings (gear) a section "MCP" with a checkbox per program, as in the [proposal](img/mcp-settings.png)? Ticking it writes `mcp: [blender]` into `project.yaml`. |
 
 ## 6) Decisions, only about this feature
 
@@ -70,7 +71,7 @@ mcp:
 
 | id | desc |
 |---|---|
-| 1 | The app reads `mcp:` from `project.yaml` (a list of names). |
+| 1 | The app reads `mcp:` from `project.yaml` (a list of names). Switching on in the app: open point 1. |
 | 2 | Known MCPs in the app: `blender` → command `uvx blender-mcp` (decision 2). Unknown names are ignored with a note in the chat. |
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
 | 4 | Wiki article "MCP: Blender" (decision 3): what is needed (Blender, the Blender MCP add-on `addon.py`, `uv`), how to connect (install the add-on, Blender sidebar → BlenderMCP → "Connect to Claude", `mcp: [blender]` in `project.yaml`), what to write in the chat. |
