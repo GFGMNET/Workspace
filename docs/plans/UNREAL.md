@@ -1,5 +1,7 @@
 # Plan: Unreal
 
+**Ready 2 Deploy**
+
 
 
 ## 1) Name
@@ -26,9 +28,7 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | How the result gets into the project (decision 9): the app tells Claude in every chat with this MCP to keep the Unreal project in the folder `unreal/` of the project — OK, and is that folder name OK? |
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -43,6 +43,7 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 | 7 | No own beta for an MCP: it goes out with the release of its version (2026-11-20). |
 | 8 | Requirement: Unreal Engine 5.8 or newer (the maintainer uses 5.8). |
 | 9 | Every result of the MCP is saved in the Workspace project (its folder) — for all MCPs (2026-11-20). |
+| 10 | How: the app tells Claude in every chat with this MCP to keep the Unreal project in the folder `unreal/` of the project (approved 2026-11-20). |
 
 ## 7) Risks
 
@@ -80,6 +81,7 @@ mcp:
 | 1b | Project settings (gear): section "MCP" with a checkbox per known program (Blender, Unity, Unreal) — ticking adds or removes the name in `mcp:` (decision 6). |
 | 2 | Known MCPs in the app: `unreal` → Unreal MCP at `http://127.0.0.1:8000/mcp` (its default, it starts with the editor) (decision 2). Unknown names are ignored with a note in the chat. |
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
+| 3b | Same place: a note for Claude in the chat — keep the Unreal project in the folder `unreal/` of the project (decision 10); the app creates the folder. |
 | 4 | **Required** — wiki article "MCP: Unreal" (decision 3); Unreal is only released with it: what is needed (Unreal Engine 5.8 or newer with the Unreal MCP plugin, decision 8), how to connect (Edit → Plugins → Unreal MCP on, tick Unreal in the project settings), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
 | 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.2.0.md`. |
 | 6 | No own beta (decision 7): goes out with the release 1.2, with your OK. |

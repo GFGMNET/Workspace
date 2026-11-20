@@ -1,5 +1,7 @@
 # Plan: OpenSCAD
 
+**Ready 2 Deploy**
+
 
 
 ## 1) Name
@@ -27,9 +29,7 @@ OpenSCAD, ready for 3D printing" (the example sentence is Claude's). The app its
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | How the result gets into the project (decision 9): the app tells Claude in every chat with this MCP to keep the `.scad` models and STL files in the folder `openscad/` of the project — OK, and is that folder name OK? |
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -44,6 +44,7 @@ OpenSCAD, ready for 3D printing" (the example sentence is Claude's). The app its
 | 7 | No own beta for an MCP: it goes out with the release of its version (2026-11-20). |
 | 8 | Requirement: OpenSCAD 2021.01 or newer, and `uv`. |
 | 9 | Every result of the MCP is saved in the Workspace project (its folder) — for all MCPs (2026-11-20). |
+| 10 | How: the app tells Claude in every chat with this MCP to keep the `.scad` models and STL files in the folder `openscad/` of the project (approved 2026-11-20). |
 
 ## 7) Risks
 
@@ -80,6 +81,7 @@ mcp:
 | 1b | Project settings (gear): section "MCP" with a checkbox per known program (Blender, Unity, Unreal, Godot, OpenSCAD) — ticking adds or removes the name in `mcp:` (decision 6). |
 | 2 | Known MCPs in the app: `openscad` → command `uvx openscad-mcp` (decision 2). Unknown names are ignored with a note in the chat. |
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config`. |
+| 3b | Same place: a note for Claude in the chat — keep the `.scad` models and STL files in the folder `openscad/` of the project (decision 10); the app creates the folder. |
 | 4 | **Required** — wiki article "MCP: OpenSCAD" (decision 3); OpenSCAD is only released with it: what is needed (OpenSCAD 2021.01 or newer, `uv`), how to connect (tick OpenSCAD in the project settings; `OPENSCAD_PATH` if OpenSCAD is not found), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
 | 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.2.5.md`. |
 | 6 | No own beta (decision 7): goes out with the release 1.2.5, with your OK. |
