@@ -40,7 +40,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B14 | Tables, lists, cards for records; files | ✅ v0.1 | |
 | B15 | Scripts: create scripts inside a project with a code editor | ✅ | #23 |
 | B16 | GitHub issues of a repository as a feature | ✅ | #28 |
-| B17 | Ticket: GLPI 11 tickets of a project — category = project name (created when missing); read, create, edit text, state, follow-ups, solution (osTicket dropped) (plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md)) | 🚧 built for 1.0; your test before 2026-11-26 | #59 |
+| B17 | Ticket: GLPI 11 tickets of a project — category = project name (created when missing); read, create, edit text, state, follow-ups, solution (osTicket dropped) (plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md)) | ✅ built and tested (2026-11-20); release with 1.0 | #59 |
 
 ## Working with projects
 

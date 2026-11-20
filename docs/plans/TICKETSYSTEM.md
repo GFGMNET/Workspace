@@ -1,6 +1,6 @@
 # Plan: Ticketsystem
 
-**Ready 2 Deploy** · **built** (steps 1–6, tests green on Windows + Linux: https://github.com/GFGMNET/Workspace/actions/runs/44574025545) · next: your test (step 7) with the beta 0.9.1.1 · release with 1.0 (2026-11-26)
+**Ready 2 Deploy** · **built** (steps 1–6, tests green on Windows + Linux: https://github.com/GFGMNET/Workspace/actions/runs/44574025545) · **tested OK by the maintainer 2026-11-20 with 0.9.1.2** (step 7, incl. the fix for #79) · release with 1.0 (2026-11-27)
 
 ## 1) Name
 
