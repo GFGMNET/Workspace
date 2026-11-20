@@ -460,3 +460,10 @@ button.ilabel.on{background:var(--lc);color:#fff}
 .tsec h3{margin:0 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .tfu{border-left:3px solid var(--line);padding:6px 10px;margin:8px 0}.tsol{border-left:3px solid #1f883d;padding:6px 10px}
 .pre-wrap{white-space:pre-wrap}
+
+/* feature info: only a small ⓘ in the corner, the note opens on click */
+.finfo{float:right;position:relative;z-index:5;margin:0 0 0 8px}
+.finfo>summary{list-style:none;cursor:pointer;color:var(--muted);padding:2px;border-radius:6px;line-height:0}
+.finfo>summary::-webkit-details-marker{display:none}
+.finfo>summary:hover{color:var(--text);background:var(--line)}
+.finfo[open]>.note{position:absolute;right:0;top:26px;width:min(560px,80vw);box-shadow:0 8px 24px rgba(0,0,0,.15);margin:0}

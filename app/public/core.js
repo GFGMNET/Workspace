@@ -62,6 +62,7 @@ const ICONS = {
   issue: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/>',
   github: '<path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>',
   warn: '<path d="M12 3 2 21h20zM12 10v5M12 18h.01"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
   stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>', send: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
 };
 const LAYOUT_ICON = { pages: 'book', cards: 'cards', list: 'list', grid: 'image', files: 'folder', table: 'table', kanban: 'kanban', calendar: 'calendar', orgchart: 'users', map: 'map', diagram: 'diagram', chat: 'chat', issues: 'issue', tickets: 'issue', code: 'terminal' };

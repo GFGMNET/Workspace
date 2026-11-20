@@ -1,0 +1,47 @@
+<!doctype html>
+<!-- Test page for docs/plans/DASHBOARD.md: edit mode, move and resize blocks with the mouse, in a 4-wide grid.
+     Used by dashboard-check.js in Chromium (like WebView2 on Windows) and WebKit (like WebKitGTK on Linux). -->
+<html><head><meta charset="utf-8"><title>Dashboard prototype</title><style>
+body{margin:0;font:14px system-ui,sans-serif;background:#f6f7f9}
+.bar{display:flex;gap:8px;padding:10px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:90px;gap:10px;padding:10px}
+.blk{background:#fff;border:1px solid #d8dee4;border-radius:8px;padding:8px;position:relative;user-select:none}
+.edit .blk{border:2px dashed #0969da;cursor:grab}
+.rs{display:none;position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:#0969da}
+.edit .rs{display:block}
+.del{display:none;position:absolute;right:4px;top:4px}.edit .del{display:inline}
+</style></head><body>
+<div class="bar"><button id="edit">Edit</button><button id="add" hidden>Add block</button></div>
+<div class="grid" id="g"></div>
+<script>
+const g = document.getElementById('g');
+let blocks = [{ id: 'a', w: 1, h: 1 }, { id: 'b', w: 1, h: 1 }, { id: 'c', w: 2, h: 1 }, { id: 'd', w: 1, h: 1 }];
+let n = 0;
+function draw() {
+  g.innerHTML = blocks.map(b => `<div class="blk" data-id="${b.id}" style="grid-column:span ${b.w};grid-row:span ${b.h}">${b.id}<button class="del" data-del="${b.id}">x</button><span class="rs" data-rs="${b.id}"></span></div>`).join('');
+}
+draw();
+const edit = document.getElementById('edit'), add = document.getElementById('add');
+edit.onclick = () => { const on = document.body.classList.toggle('edit'); edit.textContent = on ? 'Save' : 'Edit'; add.hidden = !on; };
+add.onclick = () => { blocks.push({ id: 'n' + (++n), w: 1, h: 1 }); draw(); };
+g.addEventListener('click', e => { const d = e.target.dataset.del; if (d) { blocks = blocks.filter(b => b.id !== d); draw(); } });
+// move: drag a block onto another one -> it takes that place; resize: drag the corner -> width/height in grid cells
+g.addEventListener('pointerdown', e => {
+  if (!document.body.classList.contains('edit') || e.target.dataset.del) return;
+  const rs = e.target.dataset.rs, blk = e.target.closest('.blk'); if (!blk) return;
+  const id = rs || blk.dataset.id, b = blocks.find(x => x.id === id);
+  const cell = (g.clientWidth - 50) / 4 + 10, row = 100, x0 = e.clientX, y0 = e.clientY, w0 = b.w, h0 = b.h;
+  e.preventDefault();
+  const move = ev => {
+    if (rs) { b.w = Math.max(1, Math.min(4, w0 + Math.round((ev.clientX - x0) / cell))); b.h = Math.max(1, Math.min(3, h0 + Math.round((ev.clientY - y0) / row))); draw(); }
+  };
+  const up = ev => {
+    removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+    if (rs) return;
+    const over = document.elementFromPoint(ev.clientX, ev.clientY); const t = over && over.closest('.blk');
+    if (t && t.dataset.id !== id) { const from = blocks.indexOf(b), to = blocks.findIndex(x => x.id === t.dataset.id); blocks.splice(from, 1); blocks.splice(to, 0, b); draw(); }
+  };
+  addEventListener('pointermove', move); addEventListener('pointerup', up);
+});
+window.state = () => blocks.map(b => `${b.id}:${b.w}x${b.h}`).join(',');
+</script></body></html>
