@@ -1,5 +1,7 @@
 # Plan: Blender
 
+**Ready 2 Deploy**
+
 ## 1) Name
 
 Blender
@@ -12,10 +14,10 @@ Blender
 
 | part | desc | state | suggestion |
 |---|---|---|---|
-| Project | MCP Blender is connected in a project | unchecked | see open point 1 |
-| Blender | the Claude CLI builds things in Blender through MCP | unchecked | see open point 1 |
+| Project | MCP Blender is connected in a project | not checked — no checks for MCPs (decision 5) | — |
+| Blender | the Claude CLI builds things in Blender through MCP | not checked — no checks for MCPs (decision 5) | — |
 
-Checked: 0 · Unchecked: 2 · Failed: 0
+Checked: 0 · Unchecked: 2 (no checks for MCPs, decision 5) · Failed: 0
 
 ## 4) Description
 
@@ -24,9 +26,7 @@ Poly", and the Claude CLI does it in Blender through MCP. The app itself doesn't
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | "Skip the test phase": does that mean only your own test at the end, or also the feasibility checks of point 3? The plan rules say an unchecked function can't be approved. |
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -36,12 +36,28 @@ Poly", and the Claude CLI does it in Blender through MCP. The app itself doesn't
 | 2 | For MCPs, the existing solution is used if possible: "Blender MCP" (add-on in Blender + MCP server, https://github.com/ahujasid/blender-mcp). |
 | 3 | No test phase for the MCP; instead a wiki article: what is needed and how to connect Blender and the app. |
 | 4 | Switched on per project in `project.yaml`: `mcp:` with `blender` in it. |
+| 5 | For MCPs only: no checks in point 3 and no test phase; an MCP plan can be Ready 2 Deploy without checks (2026-11-20). |
 
 ## 7) Risks
 
-Written after open point 1.
+| id | risk | suggestion |
+|---|---|---|
+| 1 | Not checked (decision 5): whether it works is only seen when it is used. | The wiki article says what is needed and how to connect (decision 3). |
+| 2 | Blender MCP lets Claude run Python code inside Blender; that code can do anything Blender can do on the PC. | The chat's permission questions stay on (Claude asks before a tool is used, unless allowed). |
+| 3 | Blender MCP is someone else's project; it can change or stop. | Decision 2 ("if possible"): if it stops working, a new plan. |
+| 4 | Blender has to be open with the add-on connected, and `uv` installed; otherwise the Blender tools answer with an error in the chat. | The wiki article. |
 
 ## 8) Detail workflow
+
+### 8a) Flow diagram
+
+```mermaid
+flowchart TD
+  A[project.yaml: mcp: blender] --> B[Chat: the app starts the Claude CLI]
+  B --> C[The app adds the MCP server blender: uvx blender-mcp]
+  C --> D[Claude CLI talks to the Blender add-on in the open Blender]
+  D --> E[Blender builds what was asked]
+```
 
 ### 8b) The YAML file
 
@@ -50,4 +66,13 @@ mcp:
   - blender
 ```
 
-Rest written after open point 1.
+### 8c) How it is done
+
+| id | desc |
+|---|---|
+| 1 | The app reads `mcp:` from `project.yaml` (a list of names). |
+| 2 | Known MCPs in the app: `blender` → command `uvx blender-mcp` (decision 2). Unknown names are ignored with a note in the chat. |
+| 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
+| 4 | Wiki article "MCP: Blender" (decision 3): what is needed (Blender, the Blender MCP add-on `addon.py`, `uv`), how to connect (install the add-on, Blender sidebar → BlenderMCP → "Connect to Claude", `mcp: [blender]` in `project.yaml`), what to write in the chat. |
+| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.1.0.md`. |
+| 6 | Release 1.1 with your OK. |
