@@ -1,6 +1,5 @@
 # Plan: Unreal
 
-**Ready 2 Deploy**
 
 
 ## 1) Name
@@ -27,7 +26,9 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 
 ## 5) Open points, only about this feature
 
-None.
+| id | question |
+|---|---|
+| 1 | How the result gets into the project (decision 9): the app tells Claude in every chat with this MCP to keep the Unreal project in the folder `unreal/` of the project — OK, and is that folder name OK? |
 
 ## 6) Decisions, only about this feature
 
@@ -41,6 +42,7 @@ None.
 | 6 | Switching on in the app: project settings (gear) → section "MCP" with a checkbox per program, as in the [approved screen](img/mcp-settings.png); ticking writes `mcp:` in `project.yaml`. |
 | 7 | No own beta for an MCP: it goes out with the release of its version (2026-11-20). |
 | 8 | Requirement: Unreal Engine 5.8 or newer (the maintainer uses 5.8). |
+| 9 | Every result of the MCP is saved in the Workspace project (its folder) — for all MCPs (2026-11-20). |
 
 ## 7) Risks
 
