@@ -77,6 +77,6 @@ mcp:
 | 1b | Project settings (gear): section "MCP" with a checkbox per known program (Blender; Unity and Unreal shown as planned) — ticking adds or removes the name in `mcp:` (decision 6). |
 | 2 | Known MCPs in the app: `blender` → command `uvx blender-mcp` (decision 2). Unknown names are ignored with a note in the chat. |
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
-| 4 | Wiki article "MCP: Blender" (decision 3): what is needed (Blender, the Blender MCP add-on `addon.py`, `uv`), how to connect (install the add-on, Blender sidebar → BlenderMCP → "Connect to Claude", `mcp: [blender]` in `project.yaml`), what to write in the chat. |
+| 4 | **Required** — wiki article "MCP: Blender" (decision 3); Blender is only released with it: what is needed (Blender, the Blender MCP add-on `addon.py`, `uv`), how to connect (install the add-on, Blender sidebar → BlenderMCP → "Connect to Claude", `mcp: [blender]` in `project.yaml`), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
 | 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.1.0.md`. |
 | 6 | No own beta (decision 7): goes out with the release 1.1, with your OK. |
