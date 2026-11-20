@@ -28,15 +28,14 @@ the example sentence is Claude's.)
 
 | id | question |
 |---|---|
-| 1 | There is no official Godot MCP, only community ones. Which one? **Godot AI** (add-on in the open Godot editor, 46 tools for scenes, nodes, scripts, signals, UI, materials…; needs **Godot 4.7+** and `uv`; MIT; https://github.com/hi-godot/godot-ai) — or **godot-mcp** (works through Godot's command line, fewer tools: scenes, nodes, sprites, run the project; any Godot 4, needs Node.js 18+; MIT; https://github.com/Coding-Solo/godot-mcp)? Claude's suggestion: Godot AI, because it works in the open editor like Blender, Unity and Unreal. |
-| 2 | Which Godot version do you use? (Godot AI needs 4.7 or newer.) |
+| 1 | Godot AI needs **Godot 4.7 or newer**. Which Godot version do you use — is 4.7 or newer OK as the requirement? |
 
 ## 6) Decisions, only about this feature
 
 | id | decision |
 |---|---|
 | 1 | The name of an MCP is the name of the program it uses: "Godot". |
-| 2 | For MCPs, the existing solution is used if possible (which one: open point 1). |
+| 2 | For MCPs, the existing solution is used if possible: **Godot AI** (add-on in the open Godot editor + MCP server, free, MIT, https://github.com/hi-godot/godot-ai) — chosen by the maintainer 2026-11-20. |
 | 3 | No test phase for the MCP; instead a wiki article: what is needed and how to connect Godot and the app. |
 | 4 | Switched on per project in `project.yaml`: `mcp:` with `godot` in it. |
 | 5 | For MCPs only: no checks in point 3 and no test phase; an MCP plan can be Ready 2 Deploy without checks (2026-11-20). |
@@ -48,7 +47,7 @@ the example sentence is Claude's.)
 | id | risk | suggestion |
 |---|---|---|
 | 1 | Not checked (decision 5): whether it works is only seen when it is used. | The wiki article says what is needed and how to connect (decision 3). |
-| 2 | Only community solutions exist; they can change or stop. | Decision 2 ("if possible"): if it stops working, a new plan. |
+| 2 | Godot AI is a community project (no official Godot MCP exists); it can change or stop. | Decision 2 ("if possible"): if it stops working, a new plan. |
 | 3 | The MCP can change the Godot project (scenes, scripts). | The chat's permission questions stay on. |
 
 ## 8) Detail workflow
