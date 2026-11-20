@@ -1,0 +1,30 @@
+# Workspace
+
+One workspace for very different projects. A project's `project.yaml` says **which features** it has, and `features/*.yaml` says **what they mean**. There is no database: everything is plain files. It works with **Claude CLI** and **VS Code**.
+
+![Workspace home](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/home.png)
+
+**Version 1.0** is here: a new program (Rust), small, signed with the project's own certificate, for **Windows 11** and **Linux (x64)**. Coming from 0.x? See [[Moving to 1.0|Moving-to-1.0]].
+
+## Start here
+
+- **[[Getting Started|Getting-Started]]**: install, first project, first feature (10 minutes)
+- [[Desktop App|Desktop-App]]: its own window, tray, reminders, start with Windows
+- [[Projects]]: how `project.yaml` works, templates
+- [[Features]]: define your own feature types (all settings), with a **page per feature** (e.g. [[Feature-Wiki]], [[Feature-Tasks]], [[Feature-Chat]], [[Feature-Ticket]])
+- [[Building Blocks|Building-Blocks]]: pages, tables, Kanban, calendar, org chart, map, diagrams, scripts, chat …
+- [[Claude]]: chat, skills, MCP, workspace MCP server
+- [[VS Code and Explorer|VS-Code-and-Explorer]]
+- [[Secrets]]: API keys and passwords, kept encrypted
+- [[Security]] · [[Signing certificate|Signing-certificate]]: what protects you, how to trust the program
+- [[Data and Updates|Data-and-Updates]]: where your data lives, how to update
+- [[Backup]] · [[Import and Export|Import-and-Export]]: what to back up; bringing files in and out
+- [[FAQ]]
+- **[[Requirements]]**: everything the workspace should do, with status (done, planned, open) and the GitHub issue for each
+
+## For developers
+
+- [[Design]]: architecture and rebuild guide
+- [Issues](https://github.com/GFGMNET/Workspace/issues): bugs and ideas
+
+> These pages are generated from `docs/` in the repository. Edit them there, not here, or your changes are overwritten on the next update.
