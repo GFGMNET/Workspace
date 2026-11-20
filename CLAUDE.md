@@ -72,7 +72,7 @@ gets the open points and risks, and nothing begins until they have seen them. Wh
 done as planned, stop and ask the maintainer — no new design on your own.
 A plan that is not **Ready 2 Deploy** when its version is due is skipped: it moves to a later version (decided 2026-11-19).
 MCPs (decided 2026-11-20): named after the program they use (Blender, Unity, Unreal); use the existing solution if possible;
-no checks and no test phase — instead a wiki article with what is needed and how to connect; switched on per project with `mcp:` in `project.yaml`;
+no checks and no test phase — instead a wiki article with what is needed and how to connect; switched on per project with `programs:` in `project.yaml` (not `mcp:`, that is the MCP connections feature; decided 2026-11-20);
 no own beta for an MCP — it goes out with the release of its version; every result of an MCP is saved in the Workspace project, in the
 folder named after the program (`blender/`, `unity/`, …; the app tells Claude in the chat). The **wiki article is required**: an MCP is
 only released together with its wiki article (what is needed, how to connect the program and the app, an example for the chat).
