@@ -34,7 +34,7 @@ None.
 | id | decision |
 |---|---|
 | 1 | The name of an MCP is the name of the program it uses: "Unity". |
-| 2 | For MCPs, the existing solution is used if possible: "MCP for Unity" (Unity package + MCP server, free, MIT, https://github.com/CoplayDev/unity-mcp; not from Unity Technologies). | |
+| 2 | For MCPs, the existing solution is used if possible: "MCP for Unity" (Unity package + MCP server, free, MIT, https://github.com/CoplayDev/unity-mcp; not from Unity Technologies). |
 | 3 | No test phase for the MCP; instead a wiki article: what is needed and how to connect Unity and the app. |
 | 4 | Switched on per project in `project.yaml`: `mcp:` with `unity` in it. |
 | 5 | For MCPs only: no checks in point 3 and no test phase; an MCP plan can be Ready 2 Deploy without checks (2026-11-20). |

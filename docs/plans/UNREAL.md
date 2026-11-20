@@ -34,7 +34,7 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 | id | decision |
 |---|---|
 | 1 | The name of an MCP is the name of the program it uses: "Unreal". |
-| 2 | For MCPs, the existing solution is used if possible: "Unreal MCP", Epic's own plugin built into Unreal Editor (`ModelContextProtocol`, https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor). | |
+| 2 | For MCPs, the existing solution is used if possible: "Unreal MCP", Epic's own plugin built into Unreal Editor (`ModelContextProtocol`, https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor). |
 | 3 | No test phase for the MCP; instead a wiki article: what is needed and how to connect Unreal and the app. |
 | 4 | Switched on per project in `project.yaml`: `mcp:` with `unreal` in it. |
 | 5 | For MCPs only: no checks in point 3 and no test phase; an MCP plan can be Ready 2 Deploy without checks (2026-11-20). |
