@@ -6,11 +6,26 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 
 ## Version 1.0 is coming: **Workspace**
 
-The app is being rebuilt in Rust. It uses the browser engine of your system instead of shipping its own, so the download is about 10 MB instead of 157 MB, with far fewer security updates. The name becomes simply **Workspace**. Everything else stays: the same screens, the same `data/` folder, the same files.
+The app is being rebuilt in Rust. It uses the browser engine of your system instead of shipping its own, so the download is about 9 MB instead of 157 MB, with far fewer security updates. The name becomes simply **Workspace**. Everything else stays: the same screens, the same `data/` folder, the same files.
 
 - Runs on **Windows 11 (x64)** and **Linux (x64)**. Not supported: Windows 10, ARM (e.g. Raspberry Pi), macOS.
-- Try the beta: [pre-releases](https://github.com/GFGMNET/Workspace/releases) (`workspace-v0.9…`), steps in the wiki: [Beta of 1.0](https://github.com/GFGMNET/Workspace/wiki/Beta-1.0). Work on a **copy** of your data folder.
-- Status and plan: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md). The Windows program is signed with the project's own certificate — [how to trust it](https://github.com/GFGMNET/Workspace/wiki/Signing-certificate), [Code signing policy](CODE-SIGNING-POLICY.md). Installed 0.x apps are offered 1.0 when it is released.
+- The Windows program is signed with the project's own certificate — [how to trust it](https://github.com/GFGMNET/Workspace/wiki/Signing-certificate), [Code signing policy](CODE-SIGNING-POLICY.md).
+- Installed 0.x apps are offered 1.0 when it is released. After that, 0.x (Electron) is no longer developed.
+- Status and plan: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md).
+
+## Upcoming changes
+
+| Version | Planned for | What's new |
+|---|---|---|
+| **1.0** | 27 Nov 2026 (if a week passes without a new bug) | **Workspace** in Rust, signed · **Ticket** tab: tickets from GLPI 11 for the project ([plan](docs/plans/TICKETSYSTEM.md)) · the feature info line is hidden behind an *i* icon |
+| **1.0.0.5** | 1 Dec 2026 | **VS Code** tab starts by itself and shows only the editor ([plan](docs/plans/VSCODE.md)) |
+| **1.0.2** | 6 Dec 2026 | **Version Control** tab: files and history from Git and SVN ([plan](docs/plans/VERSION-CONTROL.md)) |
+| **1.1** | 13 Dec 2026 | MCP for **Blender** and **Unity** ([Blender](docs/plans/BLENDER.md), [Unity](docs/plans/UNITY.md)) |
+| **1.2** | 20 Dec 2026 | MCP for **Unreal Engine** 5.8+ ([plan](docs/plans/UNREAL.md)) |
+| **1.2.5** | 27 Dec 2026 | MCP for **Godot** 4.7+ and **OpenSCAD** ([Godot](docs/plans/GODOT.md), [OpenSCAD](docs/plans/OPENSCAD.md)) |
+| **1.2.6** | 3 Jan 2027 | MCP for **FreeCAD** ([plan](docs/plans/FREECAD.md)) · **Dashboard** per project — plan still open ([plan](docs/plans/DASHBOARD.md)) |
+
+MCPs are switched on per project with `mcp:` in `project.yaml`; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program. A plan that is not ready when its date comes moves to a later version.
 
 ## Start (current version 0.x)
 
@@ -20,12 +35,12 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 |---|---|---|
 | Windows | `project-workspace-…-windows-x64.zip` | double-click **ProjectWorkspace.exe** |
 | Linux (PC) | `project-workspace-…-linux-x64.zip` | `./project-workspace` |
-| Linux (ARM, e.g. Raspberry Pi) | `project-workspace-…-linux-arm64.zip` | `./project-workspace` |
+| Linux (ARM, e.g. Raspberry Pi) | `project-workspace-…-linux-arm64.zip` | `./project-workspace` (0.x only) |
 | Linux server without a desktop | the Linux zip | `./project-workspace-server` |
 
 The workspace opens in its own app window.
 
-**With Node.js** (18 or newer, any system; not in 1.0):
+**With Node.js** (18 or newer, any system; 0.x only, not in 1.0):
 
 - **Windows:** double-click `start.bat`
 - **Linux:** `./start.sh`
@@ -66,7 +81,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 
 **Also:** projects can be renamed, archived and saved as **templates**; the home page shows what's **coming up in all projects**; API keys and passwords are kept as encrypted **secrets** (`${secret:name}` in YAML); the desktop app has a **tray icon, reminders** and can start with the computer.
 
-**Starter features:** wiki, knowledge, gallery, files, scripts, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices, github (issues). You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
+**Starter features:** wiki, knowledge, gallery, files, scripts, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices, github (issues); from 1.0 also ticketsystem (GLPI). You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
 
 | | |
 |---|---|
@@ -86,7 +101,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
   ```
   claude mcp add project-workspace --scope user -- node "C:\path\to\Workspace\app\mcp.js"
   ```
-  With the desktop app, the home page shows the exact command for your folder. From 1.0 the program is its own MCP server: `claude mcp add project-workspace --scope user -- "C:\path\to\Workspace.exe" mcp`.
+  This is for 0.x; the home page shows the exact command for your folder. From 1.0 the program is its own MCP server: `claude mcp add project-workspace --scope user -- "C:\path\to\Workspace.exe" mcp`.
 
 ## More
 
