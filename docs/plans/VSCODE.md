@@ -1,6 +1,6 @@
 # Plan: VS Code
 
-**Ready 2 Deploy** · **built** (steps 1–5, tests green on Windows + Linux: https://github.com/GFGMNET/Workspace/actions/runs/44571895704) · next: your test (step 6) · release planned 2026-12-01
+**Ready 2 Deploy** · **built** (steps 1–5, tests green on Windows + Linux: https://github.com/GFGMNET/Workspace/actions/runs/44571895704) · **tested OK by the maintainer 2026-11-20** (step 6) · release planned 2026-12-01
 
 
 ## 1) Name
