@@ -27,7 +27,7 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 
 | id | question |
 |---|---|
-| 1 | Epic's Unreal MCP is documented for **Unreal Engine 5.9** and is experimental. Which Unreal version do you use — is 5.9 or newer OK as the requirement? |
+| 1 | Epic's Unreal MCP is in Unreal Engine since **5.8** (experimental; the docs are already for 5.9, in preview since November 2026). Which Unreal version do you use — is 5.8 or newer OK as the requirement? |
 
 ## 6) Decisions, only about this feature
 
