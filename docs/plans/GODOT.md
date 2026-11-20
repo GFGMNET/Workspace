@@ -14,14 +14,15 @@ Godot
 | part | desc | state | suggestion |
 |---|---|---|---|
 | Project | MCP Godot is connected in a project | not checked — no checks for MCPs (decision 5) | — |
-| Blender | the Claude CLI builds things in Godot through MCP | not checked — no checks for MCPs (decision 5) | — |
+| Godot | the Claude CLI builds things in Godot through MCP | not checked — no checks for MCPs (decision 5) | — |
 
 Checked: 0 · Unchecked: 2 (no checks for MCPs, decision 5) · Failed: 0
 
 ## 4) Description
 
-In a project, MCP Godot is connected. Someone writes in the chat, e.g. "Build me a Medieval Tavern in Blender, use Low
-Poly", and the Claude CLI does it in Blender through MCP. The app itself doesn't need to show feedback.
+In a project, MCP Godot is connected. Someone writes in the chat, e.g. "Build me a small medieval village level in Godot, use Low
+Poly", and the Claude CLI does it in Godot through MCP. The app itself doesn't need to show feedback. (Same as the Blender plan;
+the example sentence is Claude's.)
 
 ## 5) Open points, only about this feature
 
