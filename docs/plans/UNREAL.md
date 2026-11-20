@@ -1,5 +1,7 @@
 # Plan: Unreal
 
+**Ready 2 Deploy**
+
 
 ## 1) Name
 
@@ -25,9 +27,7 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 
 ## 5) Open points, only about this feature
 
-| id | question |
-|---|---|
-| 1 | Epic's Unreal MCP is in Unreal Engine since **5.8** (experimental; the docs are already for 5.9, in preview since November 2026). Which Unreal version do you use — is 5.8 or newer OK as the requirement? |
+None.
 
 ## 6) Decisions, only about this feature
 
@@ -40,13 +40,14 @@ Unreal through MCP. The app itself doesn't need to show feedback. (Same as the B
 | 5 | For MCPs only: no checks in point 3 and no test phase; an MCP plan can be Ready 2 Deploy without checks (2026-11-20). |
 | 6 | Switching on in the app: project settings (gear) → section "MCP" with a checkbox per program, as in the [approved screen](img/mcp-settings.png); ticking writes `mcp:` in `project.yaml`. |
 | 7 | No own beta for an MCP: it goes out with the release of its version (2026-11-20). |
+| 8 | Requirement: Unreal Engine 5.8 or newer (the maintainer uses 5.8). |
 
 ## 7) Risks
 
 | id | risk | suggestion |
 |---|---|---|
 | 1 | Not checked (decision 5): whether it works is only seen when it is used. | The wiki article says what is needed and how to connect (decision 3). |
-| 2 | Epic marks Unreal MCP as **experimental**: it can change between Unreal versions. | Open point 1. |
+| 2 | Epic marks Unreal MCP as **experimental**: it can change between Unreal versions. | Decision 8: 5.8 or newer; the wiki article names the version it was written for. |
 | 3 | Unreal MCP has no login; it only accepts connections from the same PC. | Keep it on the same PC (default). |
 | 4 | Unreal has to be open with the plugin on; otherwise the Unreal tools answer with an error. | The wiki article. |
 
@@ -77,6 +78,6 @@ mcp:
 | 1b | Project settings (gear): section "MCP" with a checkbox per known program (Blender, Unity, Unreal) — ticking adds or removes the name in `mcp:` (decision 6). |
 | 2 | Known MCPs in the app: `unreal` → Unreal MCP at `http://127.0.0.1:8000/mcp` (its default, it starts with the editor) (decision 2). Unknown names are ignored with a note in the chat. |
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
-| 4 | **Required** — wiki article "MCP: Unreal" (decision 3); Unreal is only released with it: what is needed (Unreal Engine with the Unreal MCP plugin, see open point 1), how to connect (Edit → Plugins → Unreal MCP on, tick Unreal in the project settings), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
+| 4 | **Required** — wiki article "MCP: Unreal" (decision 3); Unreal is only released with it: what is needed (Unreal Engine 5.8 or newer with the Unreal MCP plugin, decision 8), how to connect (Edit → Plugins → Unreal MCP on, tick Unreal in the project settings), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
 | 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.2.0.md`. |
 | 6 | No own beta (decision 7): goes out with the release 1.2, with your OK. |
