@@ -148,7 +148,14 @@ function normalizeFeature(key, raw = {}) {
     def.allowed_tools = Array.isArray(def.allowed_tools) ? def.allowed_tools.map(String) : [];
   }
   if (def.stores === 'images') def.albums = def.albums ?? true;
-  if (def.stores === 'github') { def.repo = def.repo ? String(def.repo) : ''; def.state = ['open', 'closed', 'all'].includes(def.state) ? def.state : 'open'; def.search = def.search ?? true; }
+  if (def.stores === 'github') {
+    // the key may be written "Repo:" and the value may be the address from the browser (#84)
+    const k = Object.keys(def).find(x => x.toLowerCase() === 'repo');
+    let r = k ? def[k] : ''; if (k && k !== 'repo') delete def[k];
+    r = String(r ?? '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/^github\.com\//i, '');
+    const parts = r.split('/').filter(Boolean);
+    def.repo = parts.length >= 2 ? parts[0] + '/' + parts[1].replace(/\.git$/, '') : r;
+    def.state = ['open', 'closed', 'all'].includes(def.state) ? def.state : 'open'; def.search = def.search ?? true; }
   return def;
 }
 

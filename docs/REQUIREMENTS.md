@@ -39,7 +39,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B18 | Chat keeps working when you go to another page; Stop stops it; *Always allow* counts at once | ✅ | #70, #71 |
 | B14 | Tables, lists, cards for records; files | ✅ v0.1 | |
 | B15 | Scripts: create scripts inside a project with a code editor | ✅ | #23 |
-| B16 | GitHub issues of a repository as a feature | ✅ | #28 |
+| B16 | GitHub issues of a repository as a feature (`github_issue`, github.com only; repo in any case or as an address) | ✅ | #28, #83, #84 |
 | B17 | Ticket: GLPI 11 tickets of a project — category = project name (created when missing); read, create, edit text, state, follow-ups, solution (osTicket dropped) (plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md)) | ✅ built and tested (2026-11-20); release with 1.0 | #59 |
 
 ## Working with projects

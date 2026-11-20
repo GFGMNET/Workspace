@@ -9,12 +9,28 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 ## Start here
 
 - **[[Getting Started|Getting-Started]]**: install, first project, first feature (10 minutes)
-- [[Desktop App|Desktop-App]]: its own window, tray, reminders, start with Windows
+
+## Features
+
+What a project can have. Every feature page starts with **what you need** for it.
+
+- [[All features|Features]]: how features work, all settings, your own feature types
+- [[Wiki|Feature-Wiki]] · [[Knowledge|Feature-Knowledge]] · [[Gallery|Feature-Gallery]] · [[Files|Feature-Files]] · [[Scripts|Feature-Scripts]] · [[Diagrams|Feature-Diagrams]]
+- [[Tasks|Feature-Tasks]] · [[Calendar|Feature-Calendar]] · [[Team|Feature-Team]] · [[Map|Feature-Map]] · [[Contacts|Feature-Contacts]] · [[Devices|Feature-Devices]]
+- [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[GitHub issues|Feature-Issues]] · [[Ticket (GLPI)|Feature-Ticket]]
+
+## MCP
+
+How Claude uses other programs. Every MCP page starts with **what you need** for it.
+
+- [[About MCP|MCP]] · [[MCP connections|Feature-MCP]]
+
+## More
+
 - [[Projects]]: how `project.yaml` works, templates
-- [[Features]]: define your own feature types (all settings), with a **page per feature** (e.g. [[Feature-Wiki]], [[Feature-Tasks]], [[Feature-Chat]], [[Feature-Ticket]])
 - [[Building Blocks|Building-Blocks]]: pages, tables, Kanban, calendar, org chart, map, diagrams, scripts, chat …
-- [[Claude]]: chat, skills, MCP, workspace MCP server
-- [[VS Code and Explorer|VS-Code-and-Explorer]]
+- [[Claude]]: chat, skills, workspace MCP server
+- [[VS Code and Explorer|VS-Code-and-Explorer]] · [[Desktop App|Desktop-App]]: its own window, tray, reminders, start with Windows
 - [[Secrets]]: API keys and passwords, kept encrypted
 - [[Security]] · [[Signing certificate|Signing-certificate]]: what protects you, how to trust the program
 - [[Data and Updates|Data-and-Updates]]: where your data lives, how to update

@@ -31,7 +31,7 @@ fn repo_ok(r: &str) -> bool {
 }
 
 pub async fn issues(ws: &Workspace, repo: &str, state: &str, refresh: bool) -> Result<Value, HttpError> {
-    if !repo_ok(repo) { return Err(err(400, "Set the repository in project.yaml, e.g.  issues: { feature: github, repo: owner/name }")); }
+    if !repo_ok(repo) { return Err(err(400, "Set the repository in project.yaml, e.g.  issues: { feature: github_issue, repo: owner/name }")); }
     let state = if ["open", "closed", "all"].contains(&state) { state } else { "open" };
     let key = format!("{}|{state}", repo.to_lowercase());
     let hit = cache().lock().unwrap().get(&key).cloned();

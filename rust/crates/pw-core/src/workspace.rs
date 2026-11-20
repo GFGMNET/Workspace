@@ -200,12 +200,23 @@ pub fn normalize_feature(key: &str, raw: &Map<String, Value>) -> Value {
     }
     if stores == "images" && !d.contains_key("albums") { d.insert("albums".into(), json!(true)); }
     if stores == "github" {
-        let repo = s(&d, "repo").unwrap_or_default();
-        d.insert("repo".into(), json!(repo));
+        // the key may be written "Repo:" or "REPO:", and the value may be the address from the browser (#84)
+        let k = d.keys().find(|k| k.eq_ignore_ascii_case("repo")).cloned();
+        let repo = k.as_ref().and_then(|k| { let v = d.remove(k)?; Some(v.as_str().map(|s| s.to_string()).unwrap_or_else(|| v.to_string())) }).unwrap_or_default();
+        d.insert("repo".into(), json!(clean_repo(&repo)));
         let st = s(&d, "state").filter(|x| ["open", "closed", "all"].contains(&x.as_str())).unwrap_or_else(|| "open".into());
         d.insert("state".into(), json!(st));
     }
     Value::Object(d)
+}
+
+/// "https://github.com/Owner/Name.git", "github.com/Owner/Name/issues", " Owner/Name/ " → "Owner/Name" (GitHub itself ignores the case).
+pub fn clean_repo(r: &str) -> String {
+    let mut t = r.trim();
+    for p in ["https://", "http://", "www."] { if let Some(x) = t.strip_prefix(p) { t = x; } }
+    if t.get(..11).map(|x| x.eq_ignore_ascii_case("github.com/")).unwrap_or(false) { t = &t[11..]; }
+    let parts: Vec<&str> = t.split('/').filter(|x| !x.is_empty()).collect();
+    if parts.len() >= 2 { format!("{}/{}", parts[0], parts[1].strip_suffix(".git").unwrap_or(parts[1])) } else { t.to_string() }
 }
 
 impl Workspace {

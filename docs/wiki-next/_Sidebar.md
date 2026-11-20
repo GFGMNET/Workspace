@@ -2,8 +2,35 @@
 
 - [[Home]]
 - [[Getting Started|Getting-Started]]
+
+**Features**
+
+- [[All features|Features]]
+- [[Wiki|Feature-Wiki]]
+- [[Knowledge|Feature-Knowledge]]
+- [[Gallery|Feature-Gallery]]
+- [[Files|Feature-Files]]
+- [[Scripts|Feature-Scripts]]
+- [[Diagrams|Feature-Diagrams]]
+- [[Tasks|Feature-Tasks]]
+- [[Calendar|Feature-Calendar]]
+- [[Team|Feature-Team]]
+- [[Map|Feature-Map]]
+- [[Contacts|Feature-Contacts]]
+- [[Devices|Feature-Devices]]
+- [[Chat|Feature-Chat]]
+- [[Skills|Feature-Skills]]
+- [[GitHub issues|Feature-Issues]]
+- [[Ticket (GLPI)|Feature-Ticket]]
+
+**MCP**
+
+- [[About MCP|MCP]]
+- [[MCP connections|Feature-MCP]]
+
+**More**
+
 - [[Projects]]
-- [[Features]]
 - [[Building Blocks|Building-Blocks]]
 - [[Claude]]
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
@@ -17,18 +44,6 @@
 - [[Import and Export|Import-and-Export]]
 - [[FAQ]]
 - [[Requirements]]
-
-**Feature reference**
-
-- [[Wiki|Feature-Wiki]] · [[Knowledge|Feature-Knowledge]]
-- [[Gallery|Feature-Gallery]] · [[Files|Feature-Files]]
-- [[Scripts|Feature-Scripts]] · [[Diagrams|Feature-Diagrams]]
-- [[Tasks|Feature-Tasks]] · [[Calendar|Feature-Calendar]]
-- [[Team|Feature-Team]] · [[Map|Feature-Map]]
-- [[Contacts|Feature-Contacts]] · [[Devices|Feature-Devices]]
-- [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[MCP|Feature-MCP]]
-- [[Issues|Feature-Issues]]
-- [[Ticket|Feature-Ticket]]
 
 **Developers**
 

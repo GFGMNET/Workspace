@@ -1,0 +1,11 @@
+# Issues of a repository on github.com (GitHub online only — not GitHub Enterprise Server and not other
+# bug trackers). Set the repository in each project:
+#   issues: { feature: github_issue, repo: owner/name }
+# Private repositories need a token in data/settings.yaml:  github: { token: ... }
+# Older projects that say "feature: github" still work (alias).
+name: GitHub issues
+icon: issue
+stores: github
+layout: issues
+state: open
+aliases: [github]

@@ -66,7 +66,7 @@ layout: pages       # how it looks
 search: true
 ```
 
-Edit a project's YAML in its **project.yaml** tab. Edit the features under **Features** in the sidebar.
+Edit a project's YAML with the gear (⚙) next to the project name → **project.yaml**. Edit the features under **Features** in the sidebar.
 
 ## 5. Add your own feature type
 

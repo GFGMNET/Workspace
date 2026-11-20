@@ -9,7 +9,7 @@ const App = {
   refreshProjectOnly: async () => { if (S.project) { try { S.project = await api(`/api/projects/${enc(S.project.slug)}`); renderTabs(); } catch {} } },
 };
 // Links into the wiki (help). Starter features have their own page; others go to the overview.
-const WIKI_FEATURE = { wiki: 'Feature-Wiki', knowledge: 'Feature-Knowledge', gallery: 'Feature-Gallery', files: 'Feature-Files', scripts: 'Feature-Scripts', skills: 'Feature-Skills', mcp: 'Feature-MCP', chat: 'Feature-Chat', tasks: 'Feature-Tasks', calendar: 'Feature-Calendar', team: 'Feature-Team', map: 'Feature-Map', diagrams: 'Feature-Diagrams', contacts: 'Feature-Contacts', devices: 'Feature-Devices', github: 'Feature-Issues' };
+const WIKI_FEATURE = { wiki: 'Feature-Wiki', knowledge: 'Feature-Knowledge', gallery: 'Feature-Gallery', files: 'Feature-Files', scripts: 'Feature-Scripts', skills: 'Feature-Skills', mcp: 'Feature-MCP', chat: 'Feature-Chat', tasks: 'Feature-Tasks', calendar: 'Feature-Calendar', team: 'Feature-Team', map: 'Feature-Map', diagrams: 'Feature-Diagrams', contacts: 'Feature-Contacts', devices: 'Feature-Devices', github: 'Feature-Issues', github_issue: 'Feature-Issues' };
 const wikiUrl = (page = '') => ((S.info && S.info.wiki) || 'https://github.com/GFGMNET/Workspace/wiki') + (page ? '/' + page : '');
 const helpLink = (page, label = 'Help') => `<a class="help" href="${esc(wikiUrl(page))}" target="_blank" rel="noopener" title="Open the wiki">${icon('book', 13)} ${esc(label)}</a>`;
 const fdesc = yaml => (String(yaml || '').match(/^#\s?(.+)$/m) || [, ''])[1].replace(/\s*\(.*$/, '');
@@ -151,7 +151,9 @@ function renderTabs() {
   const tabs = [];
   if (p.meta.overview !== false) tabs.push(tab('_overview', `${icon('cards', 15)} Overview`));
   for (const f of p.features) tabs.push(tab(f.key, `${f.missing ? icon('warn', 14) : featureIcon(f.def, 15)} ${esc(f.def ? f.def.name : f.key)}${!f.missing && counts[f.key] != null && f.def.stores !== 'chat' ? ` <span class="n">${counts[f.key]}</span>` : ''}`, f.missing ? 'missing' : ''));
-  tabs.push(tab('_files', `${icon('folder', 15)} Explorer`), tab('_ide', `${icon('terminal', 15)} VS Code`), tab('_yaml', `<span class="mono" style="font-size:12.5px">project.yaml</span>`));
+  tabs.push(tab('_files', `${icon('folder', 15)} Explorer`), tab('_ide', `${icon('terminal', 15)} VS Code`));
+  // project.yaml lives in the gear (Manage) menu (#87); it shows as a tab only while it is open
+  if (currentTab === '_yaml') tabs.push(tab('_yaml', `<span class="mono" style="font-size:12.5px">project.yaml</span>`));
   const add = `<button type="button" class="tab add btn ghost" style="border-radius:8px 8px 0 0" data-add-feature title="Add a feature" aria-label="Add a feature">${icon('plus', 14)}</button>`;
   // everything that doesn't fit goes into "More" (the open tab always stays visible)
   const paint = hidden => {
@@ -181,8 +183,8 @@ async function renderProject(tab, sub, query) {
     <div class="phead">${menuBtn}${avatar(p.name, p.meta.icon, p.meta.color, p.slug)}
       <div class="title"><h1>${esc(p.name)}</h1><div class="muted small">${esc(p.meta.description || '')}</div>${p.external ? `<div class="faint small" title="location: in project.yaml">${icon('folder', 12)} <span class="mono">${esc(p.path)}</span></div>` : ''}
         ${(Array.isArray(p.meta.tags) && p.meta.tags.length) || p.meta.status ? `<div class="chips" style="margin-top:6px">${(p.meta.tags || []).map(t => `<span class="chip accent">#${esc(t)}</span>`).join('')}${p.meta.status ? `<span class="chip">${esc(p.meta.status)}</span>` : ''}</div>` : ''}</div>
-      <button class="btn ghost icon-btn" type="button" data-manage title="Manage project: rename, features, template, archive, delete" aria-label="Manage project">${icon('gear', 18)}</button></div>
-    ${p.error ? `<div class="err" style="margin-top:12px" role="alert">project.yaml has an error: ${esc(p.error)}. Fix it in the project.yaml tab.</div>` : ''}
+      <button class="btn ghost icon-btn" type="button" data-manage title="Manage project: project.yaml, rename, features, template, archive, delete" aria-label="Manage project">${icon('gear', 18)}</button></div>
+    ${p.error ? `<div class="err" style="margin-top:12px" role="alert">project.yaml has an error: ${esc(p.error)}. <a href="${projectHref('_yaml')}">Open project.yaml</a> (also in the gear menu).</div>` : ''}
     ${!p.error && p.warning ? `<div class="note" style="margin-top:12px;background:var(--warn-bg)" role="status">${icon('warn', 14)} project.yaml: ${esc(p.warning)} <a href="${projectHref('_yaml')}">Open project.yaml</a></div>` : ''}
     <nav class="tabs" id="ptabs" role="tablist" aria-label="Features of ${esc(p.name)}"></nav>
     <div id="fnote"></div><section id="fbody"></section></div>`;
@@ -310,6 +312,8 @@ function manageProject(p) {
     body: `<div class="field"><label for="mpn">Name</label><input id="mpn" name="name" value="${esc(p.name)}" required></div>
       <label class="row small" style="gap:8px;margin:-4px 0 12px"><input type="checkbox" name="folder" style="width:auto"> Also rename the folder <span class="mono faint">projects/${esc(p.slug)}</span></label>
       ${p.external ? `<p class="faint small" style="margin:0 0 12px">The content stays where it is (<span class="mono">${esc(p.path)}</span>).</p>` : ''}
+      <div class="mgsec"><b>project.yaml</b><span class="muted small">Which features this project has, and their settings.</span>
+        <div><button class="btn" type="button" data-myaml><span class="mono" style="font-size:12.5px">project.yaml</span> — open and edit</button></div></div>
       <div class="mgsec"><b>Folder</b><span class="mono small" style="word-break:break-all">${esc(p.path)}</span>
         <div class="row" style="gap:6px"><button class="btn sm" type="button" data-mpath>${icon('copy', 14)} Copy path</button><button class="btn sm" type="button" data-mcli>${icon('terminal', 14)} Copy Claude CLI command</button><button class="btn sm" type="button" data-mcode>${icon('terminal', 14)} Open in VS Code</button></div></div>
       <div class="mgsec"><b>Features</b><div class="mgfeat">${p.features.map(f => `<div class="row"><span style="flex:1">${esc(f.def ? f.def.name : f.key)} <span class="mono faint small">${esc(f.key)}</span></span><button class="btn sm ghost danger" type="button" data-rmf="${esc(f.key)}">Remove</button></div>`).join('') || '<span class="faint small">None</span>'}</div>
@@ -331,6 +335,7 @@ function manageProject(p) {
     if (!confirm(`Remove “${b.dataset.rmf}” from this project? Its files stay in the folder.`)) return;
     S.project = await api(`/api/projects/${enc(p.slug)}/features/${enc(b.dataset.rmf)}`, { method: 'DELETE' }); m.close(); await App.refreshProjects(); go('#/p/' + enc(p.slug)); toast('Feature removed');
   });
+  $('[data-myaml]', m.el).onclick = () => { m.close(); go('#/p/' + enc(p.slug) + '/_yaml'); };
   $('[data-template]', m.el).onclick = () => { m.close(); saveTemplateDialog(p); };
   $('[data-archive]', m.el).onclick = async () => { await api(`/api/projects/${enc(p.slug)}/archive`, { body: {} }); m.close(); S.project = null; await App.refreshProjects(); go('#/'); toast(`“${p.name}” archived`); };
   $('[data-delete]', m.el).onclick = () => { m.close(); confirmDelete(p.name, () => api(`/api/projects/${enc(p.slug)}`, { method: 'DELETE' })); };

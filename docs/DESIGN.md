@@ -141,7 +141,7 @@ aliases: [todo]          # other keys in project.yaml that mean this feature
 | `name` | Display name | key, prettified |
 | `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file | by layout |
 | `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github` | `markdown` |
-| `repo` | github: `owner/name` | none |
+| `repo` | github: `owner/name` (any case of the key; a whole github.com address is accepted too, #84). The starter feature is `github_issue` (alias `github`, #83), github.com only | none |
 | `layout` | see building blocks | first layout of the store |
 | `folder` | where content goes inside a project | the key (skills: `.claude/skills`, chat: `chats`) |
 | `search` | `true` / `false` | true for markdown, records, diagram |
@@ -308,7 +308,7 @@ Vanilla JavaScript with no build step and no framework.
 Screens (from the accepted mockup, issue #2):
 
 1. **Workspace home:** *Coming up in all projects* (overdue tasks first, next 14 days), project cards with feature chips and counts, archived projects, the Claude CLI command for the workspace MCP server.
-2. **Project page:** an **Overview** tab first (a tile per feature with its count, *coming up* in the next 30 days from every date field, open Kanban tasks with overdue ones marked, recently changed items; hide it with `overview: false` in project.yaml), then a tab per feature from `project.yaml`, a note saying which `features/*.yaml` defines it, and a `project.yaml` tab with an editor.
+2. **Project page:** an **Overview** tab first (a tile per feature with its count, *coming up* in the next 30 days from every date field, open Kanban tasks with overdue ones marked, recently changed items; hide it with `overview: false` in project.yaml), then a tab per feature from `project.yaml`, a note saying which `features/*.yaml` defines it, and the `project.yaml` editor, opened from the gear (Manage) menu (#87; it shows as a tab only while open).
 3. **Features:** list, YAML editor with validation, a sketch of the layout, fields, and which projects use it.
 4. **New project:** name, *Start from* a template or blank, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.

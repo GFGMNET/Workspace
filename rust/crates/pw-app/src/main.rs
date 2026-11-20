@@ -149,7 +149,7 @@ fn open_window(h: &AppHandle, url: &str, hash: Option<&str>) {
     let st: Value = std::fs::read_to_string(dir.join(".window.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or(json!({}));
     let target = format!("{url}/{}", hash.unwrap_or(""));
     let Ok(parsed) = target.parse() else { return };
-    let h2 = h.clone(); let base = url.to_string();
+    let h2 = h.clone(); let h3 = h.clone(); let base = url.to_string();
     let mut b = WebviewWindowBuilder::new(h, "main", WebviewUrl::External(parsed))
         .title("Workspace")
         .inner_size(st["width"].as_f64().unwrap_or(1360.0), st["height"].as_f64().unwrap_or(880.0))
@@ -160,6 +160,12 @@ fn open_window(h: &AppHandle, url: &str, hash: Option<&str>) {
             if local(u, &base) { return true; }
             if ["http", "https", "mailto"].contains(&u.scheme()) { let _ = h2.opener().open_url(u.as_str(), None::<&str>); }
             false
+        })
+        // links with target="_blank" (Help & wiki, help links, GitHub) and window.open ask for a new window: open them in the
+        // browser instead; without this the app ignores them (#82)
+        .on_new_window(move |u, _features| {
+            if ["http", "https", "mailto"].contains(&u.scheme()) { let _ = h3.opener().open_url(u.as_str(), None::<&str>); }
+            tauri::webview::NewWindowResponse::Deny
         });
     if let (Some(x), Some(y)) = (st["x"].as_f64(), st["y"].as_f64()) { b = b.position(x, y); }
     if let Ok(w) = b.build() { if st["maximized"] == true { let _ = w.maximize(); } }

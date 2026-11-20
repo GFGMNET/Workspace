@@ -17,7 +17,7 @@ function token() {
 const repoOk = r => /^[\w.-]+\/[\w.-]+$/.test(String(r || ''));
 
 async function issues(repo, { state = 'open', refresh = false } = {}) {
-  if (!repoOk(repo)) throw ws.httpError(400, 'Set the repository in project.yaml, e.g.  issues: { feature: github, repo: owner/name }');
+  if (!repoOk(repo)) throw ws.httpError(400, 'Set the repository in project.yaml, e.g.  issues: { feature: github_issue, repo: owner/name }');
   if (!['open', 'closed', 'all'].includes(state)) state = 'open';
   const key = repo.toLowerCase() + '|' + state;
   const hit = cache.get(key);
