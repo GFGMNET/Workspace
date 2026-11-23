@@ -50,8 +50,10 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
-- Feature requests from users (idea channel): **not wanted** (decided 2026-11-23). Checked and dropped: GitHub issues/Discussions/own repo, Forgejo,
-  e-mail, form services, Fider, Discourse, GLPI, an in-app form with a receiver — too much spam risk and upkeep. Don't offer it again.
+- Feature requests from users (idea channel): **still open — wanted, no way chosen yet** (2026-11-23). Ways the maintainer turned down
+  (don't offer again): GitHub issues, Discussions, an own GitHub repo, Forgejo, e-mail, form services (Google/Microsoft/Tally),
+  GLPI directly from the app, a receiver ("mailbox") in between with automatic merging. Checked and not fitting: Fider (no bot protection),
+  GLPI (no sign-up with confirmed e-mail). Discourse was suggested, not decided. His goal: as little spam/junk as possible.
 
 ## How plans are written (decided 2026-11-19, by the maintainer)
 
