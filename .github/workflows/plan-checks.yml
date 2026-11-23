@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard or comfyui"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui or lmstudio"
         default: all
 
 permissions:
@@ -307,3 +307,33 @@ jobs:
         env:
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
         run: node docs/plans/checks/comfyui-gallery-check.js "$RUNNER_TEMP/out" ${{ matrix.engine }}
+
+  # LM Studio plan (Chat feature, engine: lmstudio): a real LM Studio without screen (llmster) with a small Qwen model,
+  # on the processor; the app's file tools (read, create, change, delete, run) are played by the check.
+  lmstudio:
+    if: inputs.plan == 'all' || inputs.plan == 'lmstudio'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: LM Studio (llmster) + Qwen model
+        run: |
+          curl -fsSL https://lmstudio.ai/install.sh | bash
+          export PATH="$HOME/.lmstudio/bin:$HOME/.local/bin:$PATH"; echo "$HOME/.lmstudio/bin" >> "$GITHUB_PATH"
+          lms version || true
+          lms daemon up
+          lms get qwen/qwen3-1.7b --yes || lms get qwen3-1.7b --yes || lms get qwen3-1.7b -y
+          lms ls
+          key=$(lms ls --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s);const m=a.find(x=>/qwen3/i.test(x.modelKey||x.path||""));console.log(m.modelKey||m.path)})')
+          echo "model: $key"; echo "LMS_MODEL=$key" >> "$GITHUB_ENV"
+          lms load "$key" --yes --context-length 8192 || lms load "$key" --yes
+          lms server start --port 1234 --bind 0.0.0.0 || lms server start --port 1234
+          sleep 3; curl -s http://127.0.0.1:1234/v1/models | head -c 400; echo
+          lms server status || true
+      - name: Check (network, model, stream, read, create, change, delete, run, safety)
+        run: |
+          ip=$(hostname -I | awk '{print $1}')
+          if curl -sf "http://$ip:1234/v1/models" > /dev/null; then u="http://$ip:1234"; else echo "not reachable by network address"; u="http://$ip:1234"; fi
+          LMS_URL="$u" node docs/plans/checks/lmstudio-check.js "$RUNNER_TEMP/lms"
