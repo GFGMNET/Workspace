@@ -258,7 +258,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: comfyui-results
           path: ${{ runner.temp }}/out
@@ -295,7 +295,7 @@ jobs:
       - name: Build the app server (1.0)
         working-directory: rust
         run: cargo build -p pw-server --release --locked
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: comfyui-results
           path: ${{ runner.temp }}/out
