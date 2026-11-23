@@ -32,6 +32,10 @@ const res = (ok, msg) => { console.log((ok ? 'ok    ' : 'FAIL  ') + msg); if (!o
       const f = list.find(x => x.name === n);
       console.log(`info  today the Gallery ${f ? (f.image ? 'shows' : 'lists but does not show') : 'does not list'} ${n} (album KI_Pictures)`);
     }
+    // "+" button: a workflow file is uploaded into the project's comfyui/workflows/ folder (the Explorer's upload)
+    const wfName = 'Picture SDXL.json';
+    const up = await s.api('POST', `/api/fs/upload?scope=p/${encodeURIComponent(slug)}&path=comfyui/workflows&filename=${encodeURIComponent(wfName)}`, { body: Buffer.from('{"1":{"class_type":"EmptyImage","inputs":{}}}'), headers: { 'Content-Type': 'application/octet-stream' } });
+    res(up.status === 200 && fs.existsSync(path.join(s.dir, 'projects', slug, 'comfyui', 'workflows', wfName)), `"+" upload: ${wfName} lands in comfyui/workflows/ (${up.status} ${String(up.text || '').slice(0, 120)})`);
     if (ENGINE) {
       const pw = require('playwright');
       const browser = ENGINE === 'msedge' ? await pw.chromium.launch({ channel: 'msedge' }) : await pw[ENGINE].launch();
