@@ -36,6 +36,8 @@ function renderSidebar() {
   const cur = S.project && location.hash.startsWith('#/p/') ? S.project.slug : null;
   $('#plist').innerHTML = S.projects.map(p => `<a class="pitem ${p.slug === cur ? 'active' : ''}" href="#/p/${enc(p.slug)}" title="${esc(p.name)}" ${p.slug === cur ? 'aria-current="page"' : ''}>${avatar(p.name, p.icon, p.color, p.slug)}<span class="nm">${esc(p.name)}</span>${p.error ? ' <span class="warn" title="project.yaml has an error">⚠</span>' : ''}</a>`).join('')
     || '<div class="small" style="color:var(--side-ink2);padding:6px 8px">No projects yet.</div>';
+  // more than 4 projects: in the "menu left" layout they are in a drop-down too, instead of a long list
+  document.documentElement.classList.toggle('many-projects', S.projects.length > 4);
   // "menu on top": the projects are in a drop-down (#90)
   const curP = cur && S.projects.find(p => p.slug === cur);
   $('#pdbtn').innerHTML = curP ? `${avatar(curP.name, curP.icon, curP.color, curP.slug)}<span class="nm">${esc(curP.name)}</span><span class="dd">▾</span>` : `${icon('folder', 16)}<span class="nm">Projects</span><span class="dd">▾</span>`;

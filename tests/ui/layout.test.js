@@ -59,6 +59,23 @@ let fails = 0;
     ok(!(await page.$eval('[data-fcoll]', e => e.offsetParent)), 'no collapse button for the features in the left layout');
     await page.reload(); await page.waitForSelector('#ptabs .tab');
     ok(await page.$eval('.side', e => getComputedStyle(e).flexDirection === 'column'), 'the choice is remembered');
+    // menu left: up to 4 projects as a list, more than 4 in a drop-down
+    const vis = sel => page.$eval(sel, e => !!e.offsetParent).catch(() => false);
+    let n = (await s.api('GET', '/api/projects')).body.length;
+    if (n <= 4) {
+      ok(await vis('#plist') && !(await vis('#pdrop')), `menu left, ${n} projects: shown as a list`);
+      while (n <= 4) { await s.api('POST', '/api/projects', { body: { name: 'Extra ' + n } }); n++; }
+      await page.reload(); await page.waitForSelector('#ptabs .tab');
+    }
+    ok(!(await vis('#plist')) && await vis('#pdrop'), `menu left, ${n} projects: shown as a drop-down`);
+    await page.click('#pdbtn'); await page.waitForTimeout(200);
+    if (D && name === 'chromium') await page.screenshot({ path: D + '/L8-left-dropdown.png' });
+    ok((await page.$$('#pdmenu .pitem')).length === n, `the drop-down lists all ${n} projects`);
+    await page.click('#pdmenu .pitem:last-of-type'); await page.waitForTimeout(400);
+    ok(/#\/p\//.test(page.url()) && !(await page.$eval('#pdrop', e => e.classList.contains('open'))), 'a project opens from the drop-down, and it closes');
+    await page.keyboard.press('Control+b'); await page.waitForTimeout(200);
+    ok(await vis('#plist') && !(await vis('#pdrop')), 'menu collapsed to icons: the projects stay as icons');
+    await page.keyboard.press('Control+b'); await page.waitForTimeout(200);
     ok(errs.length === 0, 'no script errors ' + errs.join(' | '));
     await b.close();
   }

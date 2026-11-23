@@ -22,7 +22,7 @@ Switch with the **layout button** in the menu (the small window picture, next to
 
 **Light / dark:** the button with the sun, moon or half circle. Each click switches **Light → Dark → Auto** (Auto follows Windows).
 
-- **Menu left** (the classic one): projects and links on the left, the features of a project as tabs along the top. **Collapse** (or Ctrl+B) shrinks the menu to icons.
+- **Menu left** (the classic one): projects and links on the left, the features of a project as tabs along the top. **Collapse** (or Ctrl+B) shrinks the menu to icons. With **more than 4 projects**, the projects are in a **drop-down** at the top of the menu instead of a long list.
 - **Menu top**: the menu is a bar at the top, the projects are in a **drop-down** there, and the features of a project are a list on the left. **« Collapse** at the bottom of that list (or Ctrl+B) shrinks it to icons; **»** opens it again.
 
 In both, **Tabs** (the eye) chooses which features a project shows, and the gear (⚙) next to the project name holds `project.yaml`.
