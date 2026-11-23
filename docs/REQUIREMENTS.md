@@ -46,6 +46,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B20 | ComfyUI tab (no Claude): workflows, prompt boxes found by the app, run, results in the project and the Gallery (video and audio too) | 📋 planned for 1.0.2 — docs/plans/COMFYUI.md | #93 |
 | B21 | Chat with LM Studio (`engine: lmstudio`, url, model): local model, same rights as Claude, no Claude CLI needed | 📋 planned for 1.2.1 — docs/plans/LMSTUDIO.md | #94 |
 | B22 | Help & wiki inside the app (page + panel beside each tab), works without internet | 📋 planned for 1.2.2 — docs/plans/HELP.md | #95 |
+| B23 | Self-hosted bug tracker: Forgejo in the issues feature (`engine: forgejo`, url, token as secret) | 📋 planned for 1.0.2 — docs/plans/FORGEJO.md | #96 |
 
 ## Working with projects
 

@@ -19,7 +19,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 |---|---|---|
 | **1.0** | 27 Nov 2026 (if a week passes without a new bug) | **Workspace** in Rust, signed · **Ticket** tab: tickets from GLPI 11 for the project ([plan](docs/plans/TICKETSYSTEM.md)) · the feature info line is hidden behind an *i* icon |
 | **1.0.1** | 1 Dec 2026 | **VS Code** tab starts by itself and shows only the editor ([plan](docs/plans/VSCODE.md)) |
-| **1.0.2** | 6 Dec 2026 | **Version Control** tab: files and history from Git and SVN ([plan](docs/plans/VERSION-CONTROL.md)) · **ComfyUI** tab: run your ComfyUI workflows, results (pictures, video, audio) in the project and the Gallery ([plan](docs/plans/COMFYUI.md)) |
+| **1.0.2** | 6 Dec 2026 | **Version Control** tab: files and history from Git and SVN ([plan](docs/plans/VERSION-CONTROL.md)) · **ComfyUI** tab: run your ComfyUI workflows, results (pictures, video, audio) in the project and the Gallery ([plan](docs/plans/COMFYUI.md)) · **Forgejo** in the Issues tab: your own self-hosted bug tracker ([plan](docs/plans/FORGEJO.md)) |
 | **1.1** | 13 Dec 2026 | MCP for **Blender** and **Unity** ([Blender](docs/plans/BLENDER.md), [Unity](docs/plans/UNITY.md)) |
 | **1.2** | 20 Dec 2026 | MCP for **Unreal Engine** 5.8+ ([plan](docs/plans/UNREAL.md)) |
 | **1.2.1** | 23 Dec 2026 | **LM Studio in the Chat**: `engine: lmstudio` — a local model (e.g. Qwen Coder) answers and works on the project files, no Claude CLI needed ([plan](docs/plans/LMSTUDIO.md)) |
