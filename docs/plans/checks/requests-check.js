@@ -55,11 +55,16 @@ const list = token => call('GET', '/rest/v1/requests?select=id,title,status&orde
 const send = (token, title) => call('POST', '/rest/v1/requests', { token, body: { title, description: 'check' }, headers: { Prefer: 'return=representation' } });
 
 (async () => {
+  if (process.env.PHASE === 'fail') {   // captcha says "not a human" (Cloudflare test key that always fails)
+    const f1 = await signup('robot@example.com', CAPTCHA);
+    res(f1.status >= 400, `captcha says "not a human": register is refused (${f1.status})`);
+    const f2 = await signin('anna@example.com');
+    res(f2.status >= 400, `captcha says "not a human": sign in is refused, even with the right password (${f2.status})`);
+    console.log('failed: ' + fails); process.exit(fails ? 1 : 0);
+  }
   // 1) register
   const r0 = await signup('nocaptcha@example.com');
   res(r0.status >= 400, `register without captcha is refused (${r0.status})`);
-  const r1 = await signup('badcaptcha@example.com', 'not-a-real-token');
-  res(r1.status >= 400, `register with a wrong captcha is refused (${r1.status})`);
   const r2 = await signup('anna@example.com', CAPTCHA);
   res(r2.status === 200, `register with captcha works (${r2.status})`);
   const s0 = await signin('anna@example.com');
@@ -69,8 +74,6 @@ const send = (token, title) => call('POST', '/rest/v1/requests', { token, body: 
   const v = link ? await fetch(link, { redirect: 'manual' }) : { status: 0 };
   const s1 = await signin('anna@example.com');
   res(s1.status === 200 && !!s1.body.access_token, `after clicking the link, sign in works (link ${v.status}, sign in ${s1.status})`);
-  const s2 = await signin('anna@example.com', 'not-a-real-token');
-  res(s2.status >= 400, `sign in with a wrong captcha is refused (${s2.status})`);
   const anna = { token: s1.body.access_token, id: s1.body.user && s1.body.user.id };
   const ben = await user('ben');
   // admin = the maintainer

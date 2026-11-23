@@ -470,3 +470,11 @@ jobs:
           export SB_URL="$API_URL" SB_ANON="${ANON_KEY:-$PUBLISHABLE_KEY}" SB_SERVICE="${SERVICE_ROLE_KEY:-$SECRET_KEY}" SB_DB="$DB_URL"
           export SB_MAIL="${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}"
           node docs/plans/checks/requests-check.js
+      - name: Check (captcha says "not a human" → register and sign in refused)
+        run: |
+          cd "$RUNNER_TEMP/sb"
+          sed -i 's/secret = "1x0000000000000000000000000000000AA"/secret = "2x0000000000000000000000000000000AA"/' supabase/config.toml
+          supabase stop > /dev/null && supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor > /dev/null
+          . "$RUNNER_TEMP/sb.env"; cd "$GITHUB_WORKSPACE"
+          export SB_URL="$API_URL" SB_ANON="${ANON_KEY:-$PUBLISHABLE_KEY}" SB_SERVICE="${SERVICE_ROLE_KEY:-$SECRET_KEY}" SB_DB="$DB_URL"
+          PHASE=fail node docs/plans/checks/requests-check.js
