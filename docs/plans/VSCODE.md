@@ -9,7 +9,7 @@ VS Code
 
 ## 2) Planned release version
 
-1.0.0.5
+1.0.1 (was 1.0.0.5; changed by the maintainer 2026-11-23)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -71,6 +71,6 @@ No change.
 | 2 | When it runs: only the editor; the row of buttons and the hint text are removed (decision 2). |
 | 3 | VS Code not installed: "VS Code is not installed" with the download link (decision 3). |
 | 4 | Automatic test: `docs/plans/checks/vscode-check.js` runs in `rust.yml` on Windows and Linux, including starting and stopping again with the new integration (decision 4). Done when: all green. |
-| 5 | Docs: REQUIREMENTS.md (→ wiki page "Requirements", decision 3), DESIGN.md, wiki page "VS Code and Explorer", release notes `docs/releases/v1.0.0.5.md`. |
+| 5 | Docs: REQUIREMENTS.md (→ wiki page "Requirements", decision 3), DESIGN.md, wiki page "VS Code and Explorer", release notes `docs/releases/v1.0.1.md`. |
 | 6 | You test it: click "VS Code" → the editor opens without a button. |
-| 7 | Release 1.0.0.5 with your OK. |
+| 7 | Release 1.0.1 with your OK. |
