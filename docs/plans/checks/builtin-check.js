@@ -6,7 +6,8 @@
 //     installed under the normal key, and EXISTING projects keep using the old one (their project.yaml points to the new key;
 //     everything else in project.yaml stays as it was, comments too)
 //  4) new projects get the new one
-//  5) built-in features without a new version are not touched
+//  5) built-in features without a new version are not touched — a new version = a higher `version:` in the feature's YAML
+//  6) "Use the new version" in a project switches that tab to the new one and keeps its own settings
 // Usage: node docs/plans/checks/builtin-check.js
 'use strict';
 const fs = require('fs');
@@ -23,7 +24,8 @@ function updateBuiltin(dataDir, key, newText) {
   const fd = path.join(dataDir, 'features'); const file = path.join(fd, key + '.yaml');
   if (!fs.existsSync(file)) return { skipped: 'not there' };
   const old = fs.readFileSync(file, 'utf8');
-  if (old === newText) return { skipped: 'same version' };
+  const ver = t => Number((t.match(/^version:\s*(\d+)/m) || [, 1])[1]);   // no version: = version 1
+  if (ver(newText) <= ver(old)) return { skipped: 'same version' };
   const depKey = key + '_deprecated';
   const name = (old.match(/^name:\s*(.+)$/m) || [, key])[1].trim();
   fs.writeFileSync(path.join(fd, depKey + '.yaml'), /^name:/m.test(old) ? old.replace(/^name:\s*.+$/m, `name: ${name} (deprecated)`) : `name: ${name} (deprecated)\n` + old);
@@ -75,7 +77,10 @@ function updateBuiltin(dataDir, key, newText) {
     await s.api('PUT', `/api/projects/${slug}/yaml`, { body: { yaml: before } });
     const oldTasks = fs.readFileSync(path.join(s.dir, 'features', 'tasks.yaml'), 'utf8');
     const oldIcon = (oldTasks.match(/^icon:\s*(\S+)/m) || [])[1];
-    const newTasks = oldTasks.replace(/^icon:.*$/m, 'icon: check') + '# version 2: more fields\n';
+    const newTasks = oldTasks.replace(/^icon:.*$/m, 'icon: check').replace(/^name:.*$/m, m => m + '\nversion: 2');
+    const vf = await s.api('PUT', '/api/features/vtest', { body: { yaml: 'name: V\nversion: 2\nstores: records\nlayout: table\n' } });
+    res(vf.status === 200, `a version: line in a feature's YAML is accepted by the app (${vf.status})`);
+    res(updateBuiltin(s.dir, 'wiki', fs.readFileSync(path.join(s.dir, 'features', 'wiki.yaml'), 'utf8') + '# edited, but no higher version\n').skipped === 'same version', 'no higher version: nothing happens, even if the text differs');
     const wikiBefore = fs.readFileSync(path.join(s.dir, 'features', 'wiki.yaml'), 'utf8');
     const u = updateBuiltin(s.dir, 'tasks', newTasks);
     const feats = (await s.api('GET', '/api/features')).body;
@@ -87,6 +92,17 @@ function updateBuiltin(dataDir, key, newText) {
     res(t1 && t1.def.title === 'My to-dos', 'existing project keeps its own settings (title "My to-dos")');
     const after = fs.readFileSync(path.join(s.dir, 'projects', slug, 'project.yaml'), 'utf8');
     res(after.includes('# my notes stay') && after.includes('# own title') && after.split('\n').length === before.split('\n').length + 1, 'project.yaml: only the feature line changed, comments stay');
+    // 6) "Use the new version" in the project: the feature: …_deprecated line goes, the project uses the new one, own settings stay
+    const pf = path.join(s.dir, 'projects', slug, 'project.yaml');
+    const y1 = fs.readFileSync(pf, 'utf8');
+    const lines = y1.split('\n'); const ti = lines.findIndex(l => /^tasks:/.test(l));
+    const fi = lines.findIndex((l, i) => i > ti && /^\s+feature:\s*tasks_deprecated/.test(l)); lines.splice(fi, 1);
+    await s.api('PUT', `/api/projects/${slug}/yaml`, { body: { yaml: lines.join('\n') } });
+    const p2 = (await s.api('GET', `/api/projects/${slug}`)).body;
+    const sw = p2.features.find(f => f.key === 'tasks'), still = p2.features.find(f => f.key === 'later');
+    res(sw.feature === 'tasks' && sw.def.icon === 'check' && sw.def.title === 'My to-dos' && still.feature === 'tasks_deprecated',
+      `"Use the new version" for one tab: tasks → ${sw.feature} (icon ${sw.def.icon}, own title kept), the other tab stays on ${still.feature}`);
+    res(fs.readFileSync(pf, 'utf8').includes('# my notes stay'), '"Use the new version": comments in project.yaml stay');
     // 4) new projects get the new one
     const np = await s.api('POST', '/api/projects', { body: { name: 'New style' } });
     await s.api('PUT', `/api/projects/${np.body.slug}/yaml`, { body: { yaml: 'name: New style\ntasks: {}\n' } });
