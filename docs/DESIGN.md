@@ -141,7 +141,7 @@ aliases: [todo]          # other keys in project.yaml that mean this feature
 | `name` | Display name | key, prettified |
 | `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file | by layout |
 | `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github` | `markdown` |
-| `repo` | github: `owner/name` (any case of the key; a whole github.com address is accepted too, #84). The starter feature is `github_issue` (alias `github`, #83), github.com only | none |
+| `repo` | github: `owner/name` (any case of the key; a whole github.com address is accepted too, #84). The starter feature is `issue` (aliases `github_issue`, `github`, #83), github.com only | none |
 | `layout` | see building blocks | first layout of the store |
 | `folder` | where content goes inside a project | the key (skills: `.claude/skills`, chat: `chats`) |
 | `search` | `true` / `false` | true for markdown, records, diagram |

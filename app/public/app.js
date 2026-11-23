@@ -9,7 +9,7 @@ const App = {
   refreshProjectOnly: async () => { if (S.project) { try { S.project = await api(`/api/projects/${enc(S.project.slug)}`); renderTabs(); } catch {} } },
 };
 // Links into the wiki (help). Starter features have their own page; others go to the overview.
-const WIKI_FEATURE = { wiki: 'Feature-Wiki', knowledge: 'Feature-Knowledge', gallery: 'Feature-Gallery', files: 'Feature-Files', scripts: 'Feature-Scripts', skills: 'Feature-Skills', mcp: 'Feature-MCP', chat: 'Feature-Chat', tasks: 'Feature-Tasks', calendar: 'Feature-Calendar', team: 'Feature-Team', map: 'Feature-Map', diagrams: 'Feature-Diagrams', contacts: 'Feature-Contacts', devices: 'Feature-Devices', github: 'Feature-Issues', github_issue: 'Feature-Issues' };
+const WIKI_FEATURE = { wiki: 'Feature-Wiki', knowledge: 'Feature-Knowledge', gallery: 'Feature-Gallery', files: 'Feature-Files', scripts: 'Feature-Scripts', skills: 'Feature-Skills', mcp: 'Feature-MCP', chat: 'Feature-Chat', tasks: 'Feature-Tasks', calendar: 'Feature-Calendar', team: 'Feature-Team', map: 'Feature-Map', diagrams: 'Feature-Diagrams', contacts: 'Feature-Contacts', devices: 'Feature-Devices', github: 'Feature-Issues', github_issue: 'Feature-Issues', issue: 'Feature-Issues' };
 const wikiUrl = (page = '') => ((S.info && S.info.wiki) || 'https://github.com/GFGMNET/Workspace/wiki') + (page ? '/' + page : '');
 const helpLink = (page, label = 'Help') => `<a class="help" href="${esc(wikiUrl(page))}" target="_blank" rel="noopener" title="Open the wiki">${icon('book', 13)} ${esc(label)}</a>`;
 const fdesc = yaml => (String(yaml || '').match(/^#\s?(.+)$/m) || [, ''])[1].replace(/\s*\(.*$/, '');

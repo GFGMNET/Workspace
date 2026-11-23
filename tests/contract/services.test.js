@@ -50,15 +50,15 @@ test('GitHub issues: list without pull requests, cached, errors explained', asyn
   assert.equal(miss.status, 404); assert.match(miss.body.error, /not found/);
 });
 
-test('GitHub issues: feature github_issue; "Repo:" in any case and the address from the browser work (#83, #84)', async () => {
+test('Issues: feature issue (old names github_issue and github still work); "Repo:" in any case and the address from the browser work (#83, #84)', async () => {
   const pr = await s.api('POST', '/api/projects', { body: { name: 'Repo case' } });
   const slug = pr.body.slug;
-  const y = await s.api('PUT', `/api/projects/${slug}/yaml`, { body: { yaml: 'name: Repo case\nbugs:\n  feature: github_issue\n  Repo: https://github.com/acme/tool.git\nold:\n  feature: github\n  REPO: " acme/tool/ "\n' } });
+  const y = await s.api('PUT', `/api/projects/${slug}/yaml`, { body: { yaml: 'name: Repo case\nbugs:\n  feature: issue\n  Repo: https://github.com/acme/tool.git\nold:\n  feature: github\n  REPO: " acme/tool/ "\nolder:\n  feature: github_issue\n  repo: acme/tool\n' } });
   assert.equal(y.status, 200, y.text);
   const p = (await s.api('GET', `/api/projects/${slug}`)).body;
-  for (const key of ['bugs', 'old']) {
+  for (const key of ['bugs', 'old', 'older']) {
     const f = p.features.find(x => x.key === key);
-    assert.equal(f.feature, 'github_issue', key + ' uses the github_issue feature');
+    assert.equal(f.feature, 'issue', key + ' uses the issue feature');
     assert.equal(f.def.repo, 'acme/tool', key);
     const r = await s.api('GET', `/api/projects/${slug}/f/${key}/github`);
     assert.equal(r.status, 200, r.text); assert.deepEqual(r.body.issues.map(i => i.number), [7]);

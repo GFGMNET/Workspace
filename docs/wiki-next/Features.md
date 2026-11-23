@@ -44,7 +44,7 @@ Every starter feature has its own page with all its settings, examples and what 
 | Diagrams | diagram | [[Feature-Diagrams]] |
 | Contacts | table | [[Feature-Contacts]] |
 | Devices | table | [[Feature-Devices]] |
-| GitHub issues (`github_issue`) | issues (github.com only) | [[Feature-Issues]] |
+| Issues (`issue`) | issues (github.com; Forgejo from 1.0.2) | [[Feature-Issues]] |
 | Ticket (`ticketsystem`) | tickets (GLPI 11) | [[Feature-Ticket]] |
 
 ## Three ways to add one
@@ -80,6 +80,6 @@ Every starter feature has its own page with all its settings, examples and what 
 
 ## Starter features
 
-wiki · knowledge · gallery · files · scripts · skills · mcp · chat · tasks · calendar · team · map · diagrams · contacts · devices · github_issue (GitHub issues) · ticketsystem (GLPI)
+wiki · knowledge · gallery · files · scripts · skills · mcp · chat · tasks · calendar · team · map · diagrams · contacts · devices · issue (Issues) · ticketsystem (GLPI)
 
 New versions can bring new starter features; they are added once. Features you changed or deleted are never touched.

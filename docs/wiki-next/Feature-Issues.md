@@ -1,6 +1,6 @@
-# GitHub issues
+# Issues
 
-The issues of a repository on **github.com** — bugs and ideas — with open/closed/all, label filters, search and the full text when you click one. **New issue** and **On GitHub** open GitHub.
+The issues of a repository on **github.com** — bugs and ideas — with open/closed/all, label filters, search and the full text when you click one. **New issue** and **Issues** open GitHub.
 
 **For GitHub online only** (github.com). It does not work with GitHub Enterprise Server or with other bug trackers.
 
@@ -12,27 +12,25 @@ The issues of a repository on **github.com** — bugs and ideas — with open/cl
 
 | | |
 |---|---|
-| Feature | `github_issue` (older projects say `github` — that still works) |
+| Feature | `issue` (older projects say `github_issue` or `github` — that still works) |
 | Stores | `github` |
 | Layout | `issues` |
-| Definition | `data/features/github_issue.yaml` |
+| Definition | `data/features/issue.yaml` |
 
 ## Add it to a project
 
-The easiest way: click **+ Feature** in the project's tab row and choose **GitHub issues**.
+The easiest way: click **+ Feature** in the project's tab row and choose **Issues**.
 
 Or write it into the project's `project.yaml`:
 
 ```yaml
-issues:                    # the name of the tab — any name you like, e.g. bugs:
-  feature: github_issue    # always exactly this: which feature the tab uses
+issue:                     # the name of the tab — "issue" needs nothing more
   repo: GFGMNET/Workspace  # owner/name of the repository
 ```
 
 | Line | What to write |
 |---|---|
-| `issues:` | Your own name for the tab. Any word, e.g. `bugs:` or `tickets:`. |
-| `feature: github_issue` | Always exactly `github_issue`. |
+| `issue:` | The feature. With this name nothing else is needed. Want another tab name, e.g. `bugs:`? Then add the line `feature: issue` below it. |
 | `repo:` | The repository as **owner/name** — the part after `github.com/` in the browser. For `https://github.com/GFGMNET/Workspace` that is `GFGMNET/Workspace`. Upper or lower case doesn't matter, and you can also paste the whole address. |
 
 ## The definition
@@ -40,17 +38,17 @@ issues:                    # the name of the tab — any name you like, e.g. bug
 This is the starter definition. Change it under **Features** in the app, or in the file, and every project that uses it follows.
 
 ```yaml
-# Issues of a repository on github.com (GitHub online only — not GitHub Enterprise Server and not other
-# bug trackers). Set the repository in each project:
-#   issues: { feature: github_issue, repo: owner/name }
+# Issues of a repository (bugs and ideas). In 1.0: GitHub online (github.com) only — the self-hosted Forgejo
+# comes with 1.0.2 (docs/plans/FORGEJO.md). Set the repository in each project:
+#   issue: { repo: owner/name }
 # Private repositories need a token in data/settings.yaml:  github: { token: ... }
-# Older projects that say "feature: github" still work (alias).
-name: GitHub issues
+# Older projects that say "feature: github_issue" or "feature: github" still work (aliases).
+name: Issues
 icon: issue
 stores: github
 layout: issues
 state: open
-aliases: [github]
+aliases: [github_issue, github]
 ```
 
 ## Settings

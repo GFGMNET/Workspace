@@ -8,7 +8,7 @@ tags: [development, example]
 # e.g.  location: C:\dev\Workspace   (project.yaml stays in data/projects/workspace-dev/)
 location: "{install}"
 issues:
-  feature: github_issue
+  feature: issue
   repo: GFGMNET/Workspace
 docs:
   feature: wiki

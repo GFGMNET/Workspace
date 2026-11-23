@@ -20,7 +20,7 @@
 - [[Devices|Feature-Devices]]
 - [[Chat|Feature-Chat]]
 - [[Skills|Feature-Skills]]
-- [[GitHub issues|Feature-Issues]]
+- [[Issues|Feature-Issues]]
 - [[Ticket (GLPI)|Feature-Ticket]]
 
 **MCP**

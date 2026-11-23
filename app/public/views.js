@@ -742,7 +742,7 @@ VIEWS.issues = async ctx => {
         <label class="finput" style="flex:1 1 240px;max-width:360px;margin:0">${icon('search', 14)}<input type="search" data-q placeholder="Search issues" aria-label="Search issues"></label>
         <span class="sp"></span><span class="faint small">${esc(def.repo)} · ${data.cached ? 'updated ' + esc(ago(data.fetched)) : 'just loaded'}</span>
         <button class="btn sm" type="button" data-refresh>Refresh</button>
-        <a class="btn sm" href="${repoUrl}/issues" target="_blank" rel="noopener">${icon('github', 14)} On GitHub</a>
+        <a class="btn sm" href="${repoUrl}/issues" target="_blank" rel="noopener">${icon('github', 14)} Issues</a>
         <a class="btn sm primary" href="${repoUrl}/issues/new" target="_blank" rel="noopener">${icon('plus', 14)} New issue</a></div>
       ${data.error ? `<div class="err" style="margin-bottom:10px">${esc(data.error)}</div>` : ''}
       ${labels.length ? `<div class="chips" style="margin-bottom:12px">${labels.map(l => `<button type="button" class="chip ilabel ${active.has(l.name) ? 'on' : ''}" style="--lc:#${esc(l.color)}" data-label="${esc(l.name)}" aria-pressed="${active.has(l.name)}">${esc(l.name)}</button>`).join('')}</div>` : ''}
