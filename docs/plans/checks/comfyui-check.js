@@ -6,6 +6,7 @@
 //  4) results: pictures, video and audio come back from ComfyUI
 //  5) saved: the results are saved in the project folder
 //  6) network: ComfyUI is reached by its network address, not only on the same PC
+//  7) the app finds the text boxes (prompts) of a workflow by itself, positive or negative, and uses them in the run
 // The gallery (pictures, video, audio shown in the app's browser engines) is checked by comfyui-media-check.js.
 // Usage: COMFY_URL=http://<ip>:8188 node docs/plans/checks/comfyui-check.js <out-dir>
 'use strict';
@@ -97,6 +98,70 @@ const kind = buf => buf.slice(0, 4).toString('hex') === '89504e47' ? 'png' : buf
     }
     if (!files.length) res(false, `results: ${f} gave no file`);
   }
+  // 7) the app finds the text boxes of a workflow by itself (open point 6, B): every multiline text input of a box is a
+  //    prompt field, named by the box's title, and marked positive/negative by where it leads (an input named positive/negative).
+  const isText = (cls, k) => { const d = info[cls]; const sp = d && ((d.input.required || {})[k] || (d.input.optional || {})[k]); return !!(sp && (sp[0] === 'STRING' || sp[0] === 'COMBO' && 0) && sp[1] && sp[1].multiline); };
+  function prompts(wf) {
+    const out = [];
+    for (const [id, n] of Object.entries(wf)) for (const [k, v] of Object.entries(n.inputs || {})) {
+      if (typeof v !== 'string' || !isText(n.class_type, k)) continue;
+      // follow the links forward until an input called positive or negative
+      let role = 'prompt'; const seen = new Set([id]); let front = [id];
+      while (front.length && role === 'prompt') {
+        const next = [];
+        for (const [id2, n2] of Object.entries(wf)) for (const [k2, v2] of Object.entries(n2.inputs || {})) {
+          if (Array.isArray(v2) && front.includes(String(v2[0]))) {
+            if (/^(positive|negative)$/.test(k2)) { role = k2; break; }
+            if (!seen.has(id2)) { seen.add(id2); next.push(id2); }
+          }
+        }
+        front = next;
+      }
+      out.push({ node: id, input: k, title: (n._meta && n._meta.title) || n.class_type, role, text: v });
+    }
+    return out;
+  }
+  const L = (n, title, cls, inputs) => [n, { class_type: cls, inputs, _meta: { title } }];
+  const tests = {
+    'picture (SD: positive + negative)': [Object.fromEntries([
+      L('1', 'Load Checkpoint', 'CheckpointLoaderSimple', { ckpt_name: 'x.safetensors' }),
+      L('2', 'Positive', 'CLIPTextEncode', { text: 'a server room', clip: ['1', 1] }),
+      L('3', 'Negative', 'CLIPTextEncode', { text: 'blurry', clip: ['1', 1] }),
+      L('4', 'Empty Latent Image', 'EmptyLatentImage', { width: 512, height: 512, batch_size: 1 }),
+      L('5', 'KSampler', 'KSampler', { model: ['1', 0], positive: ['2', 0], negative: ['3', 0], latent_image: ['4', 0], seed: 1, steps: 20, cfg: 7, sampler_name: 'euler', scheduler: 'normal', denoise: 1 }),
+      L('6', 'VAE Decode', 'VAEDecode', { samples: ['5', 0], vae: ['1', 2] }), L('7', 'Save Image', 'SaveImage', { images: ['6', 0], filename_prefix: 'x' })]),
+      ['Positive:positive', 'Negative:negative']],
+    'video (Wan: two positive scenes + negative, through the video box)': [Object.fromEntries([
+      L('1', 'Load CLIP', 'CLIPLoader', { clip_name: 'x', type: 'wan' }),
+      L('2', 'Scene 1', 'CLIPTextEncode', { text: 'rack turns', clip: ['1', 0] }),
+      L('3', 'Scene 2', 'CLIPTextEncode', { text: 'lights blink', clip: ['1', 0] }),
+      L('4', 'Combine', 'ConditioningCombine', { conditioning_1: ['2', 0], conditioning_2: ['3', 0] }),
+      L('5', 'Negative', 'CLIPTextEncode', { text: 'static, blurry', clip: ['1', 0] }),
+      L('6', 'Wan Image to Video', 'WanImageToVideo', { positive: ['4', 0], negative: ['5', 0], vae: ['9', 0], width: 832, height: 480, length: 33, batch_size: 1 }),
+      L('7', 'KSampler', 'KSampler', { model: ['8', 0], positive: ['6', 0], negative: ['6', 1], latent_image: ['6', 2], seed: 1, steps: 20, cfg: 6, sampler_name: 'euler', scheduler: 'normal', denoise: 1 })]),
+      ['Scene 1:positive', 'Scene 2:positive', 'Negative:negative']],
+    'picture (Flux: two text boxes in one box, no negative)': [Object.fromEntries([
+      L('1', 'DualCLIPLoader', 'DualCLIPLoader', { clip_name1: 'a', clip_name2: 'b', type: 'flux' }),
+      L('2', 'Prompt', 'CLIPTextEncodeFlux', { clip: ['1', 0], clip_l: 'server room', t5xxl: 'a tidy server room, photo', guidance: 3.5 }),
+      L('3', 'Guider', 'BasicGuider', { model: ['4', 0], conditioning: ['2', 0] })]),
+      ['Prompt:prompt', 'Prompt:prompt']],
+  };
+  for (const [name, [wf, want]] of Object.entries(tests)) {
+    const missing = [...new Set(Object.values(wf).map(n => n.class_type))].filter(c => !info[c]);
+    const got = prompts(wf).map(p => `${p.title}:${p.role}`);
+    res(!missing.length && JSON.stringify(got) === JSON.stringify(want), `text boxes found by the app — ${name}: ${got.join(', ') || 'none'}${missing.length ? ' (boxes missing in this ComfyUI: ' + missing.join(', ') + ')' : ''}`);
+  }
+  // and a found text box is really used when the workflow runs (no AI model needed: the text becomes the file name)
+  if (info.PrimitiveStringMultiline) {
+    const wf = Object.fromEntries([L('1', 'Prompt', 'PrimitiveStringMultiline', { value: 'old' }), L('2', 'Picture', 'EmptyImage', { width: 32, height: 32, batch_size: 1, color: 0 }),
+      L('3', 'Save Image', 'SaveImage', { images: ['2', 0], filename_prefix: ['1', 0] })]);
+    const f = prompts(wf); f.forEach(p => { wf[p.node].inputs[p.input] = 'found_by_app'; });
+    const q = await j('/prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: wf }) });
+    let h; for (let i = 0; i < 60 && q.status === 200; i++) { h = (await j('/history/' + q.body.prompt_id)).body[q.body.prompt_id]; if (h && h.status && h.status.completed) break; await sleep(1000); }
+    const names = h ? Object.values(h.outputs).flatMap(o => (o.images || []).map(x => x.filename)) : [];
+    res(f.length === 1 && names.some(n => n.startsWith('found_by_app')), `text box found and filled by the app is used in the run (${names.join(', ') || JSON.stringify(q.body).slice(0, 200)})`);
+  } else res(false, 'PrimitiveStringMultiline not in this ComfyUI');
+
   const kinds = new Set(saved.map(s => s.kind));
   res(kinds.has('png') || kinds.has('webp'), 'results: picture');
   res(kinds.has('mp4') || kinds.has('webm'), `results: video (${['mp4', 'webm'].filter(k => kinds.has(k)).join(', ') || 'none'})`);
