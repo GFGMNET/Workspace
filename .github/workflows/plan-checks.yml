@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi or dashboard"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard or comfyui"
         default: all
 
 permissions:
@@ -202,3 +202,67 @@ jobs:
         env:
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
         run: node docs/plans/checks/dashboard-check.js
+
+  # docs/plans/COMFYUI.md: a real ComfyUI (latest release, on the processor — no graphics card, no AI model needed),
+  # reached by its network address; then the results are shown in WebKit (Linux) and Edge = WebView2 (Windows).
+  comfyui:
+    if: inputs.plan == 'all' || inputs.plan == 'comfyui'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: ComfyUI (latest release)
+        run: |
+          tag=$(git ls-remote --tags --sort=-v:refname https://github.com/comfyanonymous/ComfyUI 'v*' | grep -v '\^{}' | head -1 | sed 's#.*refs/tags/##')
+          echo "ComfyUI $tag"
+          git clone -q --depth 1 --branch "$tag" https://github.com/comfyanonymous/ComfyUI "$RUNNER_TEMP/ComfyUI"
+          cd "$RUNNER_TEMP/ComfyUI"
+          pip install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+          pip install -q -r requirements.txt
+          nohup python main.py --cpu --listen 0.0.0.0 --port 8188 > "$RUNNER_TEMP/comfy.log" 2>&1 &
+          for i in $(seq 1 120); do curl -sf http://127.0.0.1:8188/system_stats > /dev/null && break; sleep 2; done
+          curl -sf http://127.0.0.1:8188/system_stats | head -c 400; echo
+      - name: Check (workflows, prompt text, run, results, saved, network)
+        run: |
+          ip=$(hostname -I | awk '{print $1}')
+          COMFY_URL="http://$ip:8188" node docs/plans/checks/comfyui-check.js "$RUNNER_TEMP/out"
+      - name: ComfyUI log
+        if: always()
+        run: tail -n 60 "$RUNNER_TEMP/comfy.log" || true
+      - name: Gallery in WebKit (Linux)
+        if: always()
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          npx playwright install --with-deps webkit > /dev/null
+          node docs/plans/checks/comfyui-media-check.js "$RUNNER_TEMP/out" webkit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: comfyui-results
+          path: ${{ runner.temp }}/out
+
+  comfyui-windows:
+    if: inputs.plan == 'all' || inputs.plan == 'comfyui'
+    needs: comfyui
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: comfyui-results
+          path: ${{ runner.temp }}/out
+      - name: Gallery in Edge (= WebView2, Windows)
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          node docs/plans/checks/comfyui-media-check.js "$RUNNER_TEMP/out" msedge
