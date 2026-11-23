@@ -84,7 +84,7 @@ jobs:
           cp LICENSE $d/ 2>/dev/null || true
           (cd dist && zip -qry "workspace-v$v-linux-${{ matrix.arch }}.zip" workspace)
           ls -l dist/*.zip
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.zip
       - uses: actions/upload-artifact@v7
@@ -144,7 +144,7 @@ jobs:
           if (Test-Path LICENSE) { Copy-Item LICENSE $d }
           Compress-Archive -Path $d -DestinationPath "dist/workspace-v$v-windows-x64.zip"
           Get-Item dist/*.zip | Select-Object Name, Length
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.zip
       - uses: actions/upload-artifact@v7
