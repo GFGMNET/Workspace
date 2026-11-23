@@ -50,11 +50,13 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
-- Feature requests from users (idea channel): **still open — wanted, no way chosen yet** (2026-11-23). Ways the maintainer turned down
-  (don't offer again): GitHub issues, Discussions, an own GitHub repo, Forgejo, e-mail, form services (Google/Microsoft/Tally),
-  GLPI directly from the app, a receiver ("mailbox") in between with automatic merging. Also turned down: Supabase (three accounts, pausing), NocoDB.
-  PocketBase on his own server was suggested and stopped (not decided). Restarting from zero with his own approach. Checked and not fitting: Fider (no bot protection),
-  GLPI (no sign-up with confirmed e-mail). Discourse was suggested, not decided. His goal: as little spam/junk as possible.
+- Feature requests from users (idea channel): **not cancelled — paused for review** (2026-11-23). Before going on, the whole workflow
+  must be reviewed so it is not wonky and has no parts that can't be done. Latest idea (his): the user links his GitHub account in the app,
+  sends "Request a new feature", it is saved on GitHub (repo `Workspace-requests`) and nothing happens until he approves; overview in the app
+  (approved for all, own waiting ones), not approved in 15 days = rejected. Turned down (don't offer again): GitHub Discussions, e-mail,
+  form services (Google/Microsoft/Tally), GLPI directly from the app, a "mailbox" receiver with automatic merging, Supabase, NocoDB.
+  Not fitting: Fider (no bot protection), GLPI (no sign-up). Suggested, not decided: Discourse, PocketBase. Goal: as little spam as possible.
+  Don't loop: no new tool suggestions one after another — first the review.
 
 ## How plans are written (decided 2026-11-19, by the maintainer)
 
