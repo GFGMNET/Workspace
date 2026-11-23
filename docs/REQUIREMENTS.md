@@ -44,6 +44,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B18 | Choose per project which tabs are shown (`hide_tabs:` in project.yaml); project.yaml opened from the gear menu | ✅ in 1.0 | #87, #89 |
 | B19 | Two layouts to switch between: menu left, or menu on top with the projects in a drop-down and the features on the left (collapsible) | ✅ in 1.0 | #90 |
 | B20 | ComfyUI tab (no Claude): workflows, prompt boxes found by the app, run, results in the project and the Gallery (video and audio too) | 📋 planned for 1.0.2 — docs/plans/COMFYUI.md | #93 |
+| B21 | Chat with LM Studio (`engine: lmstudio`, url, model): local model, same rights as Claude, no Claude CLI needed | 📋 planned for 1.2.1 — docs/plans/LMSTUDIO.md | #94 |
 
 ## Working with projects
 
