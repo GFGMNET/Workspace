@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui or lmstudio"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio or help"
         default: all
 
 permissions:
@@ -350,3 +350,30 @@ jobs:
         env:
           REPLAY: '1'
         run: node docs/plans/checks/lmstudio-check.js "$env:RUNNER_TEMP\lms"
+
+  # Help & wiki inside the app (1.2.2): the real wiki pages with the app's renderer, offline, in WebKit (Linux) and Edge (Windows).
+  help:
+    if: inputs.plan == 'all' || inputs.plan == 'help'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, engines: 'chromium,webkit' }
+          - { os: windows-latest, engines: msedge }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Browsers
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          if [ "$RUNNER_OS" = Linux ]; then npx playwright install --with-deps chromium webkit > /dev/null; fi
+      - name: Help & wiki — bundle, order, links, pictures offline, search, (i) hover/click
+        env:
+          ENGINES: ${{ matrix.engines }}
+        run: node docs/plans/checks/help-check.js
