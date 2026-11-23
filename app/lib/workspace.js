@@ -226,7 +226,9 @@ function loadProject(slug, features = null) {
     else if (v && typeof v === 'object') { overrides = { ...v }; seeds = Array.isArray(v.items) ? v.items : []; delete overrides.items; }
     const fkey = String(overrides.feature || k);
     delete overrides.feature;
-    const found = fmap.get(fkey) || fmap.get(fkey.toLowerCase()) || [...fmap.values()].find(x => Array.isArray(x.raw.aliases) && x.raw.aliases.map(a => String(a).toLowerCase()).includes(fkey.toLowerCase()));
+    const FAM = ['issue', 'github_issue', 'github'];   // the issues feature was renamed (#83, #99): any name finds whichever is there
+    const found = fmap.get(fkey) || fmap.get(fkey.toLowerCase()) || [...fmap.values()].find(x => Array.isArray(x.raw.aliases) && x.raw.aliases.map(a => String(a).toLowerCase()).includes(fkey.toLowerCase()))
+      || (FAM.includes(fkey.toLowerCase()) ? FAM.map(n => fmap.get(n)).find(Boolean) : undefined);
     const def = found ? normalizeFeature(k, { ...found.raw, ...overrides }) : null;
     if (def) def.featureName = found.def.name;
     feats.push({ key: k, feature: found ? found.key : fkey, missing: !found, def, seeds, overrides });
@@ -923,6 +925,9 @@ function ensureWorkspace() {
   if (isDir(sdir)) for (const f of fs.readdirSync(sdir).filter(n => /\.ya?ml$/.test(n))) {
     const key = f.replace(/\.ya?ml$/, '');
     if (installed.has(key)) continue;
+    // a renamed starter feature is not added again next to its old name (#99)
+    const oldNames = key === 'issue' ? ['github', 'github_issue'] : [];
+    if (oldNames.some(o => installed.has(o) || exists(path.join(FEATURES_DIR, o + '.yaml')))) { installed.add(key); continue; }
     const target = path.join(FEATURES_DIR, f);
     if (!exists(target)) { fs.copyFileSync(path.join(sdir, f), target); notes.push(`added feature ${key}`); }
     installed.add(key);

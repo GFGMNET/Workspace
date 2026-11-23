@@ -82,6 +82,19 @@ test('open-url: only web addresses, nothing that could run something (#98)', { s
   }
 });
 
+test('issues: with only an old "github" feature, "issue" still works and no second Issues feature is added (#99)', async () => {
+  const s2 = await startServer({ examples: false, setup: dir => { const fs = require('fs'), path = require('path'); fs.mkdirSync(path.join(dir, 'features'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'features', 'github.yaml'), 'name: Issues\nstores: github\nlayout: issues\n'); } });
+  try {
+    const feats = (await s2.api('GET', '/api/features')).body.map(f => f.key);
+    assert.ok(feats.includes('github') && !feats.includes('issue'), 'only the old one: ' + feats.join(','));
+    const pr = await s2.api('POST', '/api/projects', { body: { name: 'Old one' } });
+    await s2.api('PUT', `/api/projects/${pr.body.slug}/yaml`, { body: { yaml: 'name: Old one\nissue:\n  repo: acme/tool\n' } });
+    const f = (await s2.api('GET', `/api/projects/${pr.body.slug}`)).body.features.find(x => x.key === 'issue');
+    assert.equal(f.feature, 'github'); assert.equal(f.def.repo, 'acme/tool');
+  } finally { await s2.stop(); }
+});
+
 test('updates: the check finds a newer release; later and skip are remembered', async () => {
   const c = await s.api('POST', '/api/update/check', { body: {} });
   assert.equal(c.status, 200);

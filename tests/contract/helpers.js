@@ -61,9 +61,10 @@ function sse(port, method, p, { body, until = () => false, timeout = 15000 } = {
 }
 
 // Starts a server with an empty data folder. Returns { port, dir, api, stop }.
-async function startServer({ env = {}, examples = true } = {}) {
+async function startServer({ env = {}, examples = true, setup } = {}) {
   const port = await freePort();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-contract-'));
+  if (setup) setup(dir);   // e.g. an existing data folder from an older version
   const cmd = (process.env.PW_SERVER_CMD || `"${process.execPath}" "${path.join(ROOT, 'app', 'server.js')}" {port}`).replace('{port}', String(port));
   const child = spawn(cmd, { shell: true, cwd: ROOT, env: { ...process.env, WORKSPACE_DIR: dir, UPDATE_CHECK: '0', CLAUDE_COMMAND: FAKE_CLAUDE, ...env }, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
   let log = ''; child.stdout.on('data', d => { log += d; }); child.stderr.on('data', d => { log += d; });

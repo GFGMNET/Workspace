@@ -254,6 +254,10 @@ impl Workspace {
         for f in names {
             let Some(key) = f.strip_suffix(".yaml").or_else(|| f.strip_suffix(".yml")).map(|k| k.to_string()) else { continue };
             if installed.contains(&key) { continue; }
+            // a renamed starter feature is not added again next to its old name (#99): the old one keeps working,
+            // and the new name resolves to it through the aliases of the feature that is there
+            let old_names: &[&str] = if key == "issue" { &["github", "github_issue"] } else { &[] };
+            if old_names.iter().any(|o| installed.iter().any(|i| i == o) || fd.join(format!("{o}.yaml")).exists()) { installed.push(key); continue; }
             let target = fd.join(&f);
             if !target.exists() && fs::copy(self.starter_dir().join("features").join(&f), &target).is_ok() { notes.push(format!("added feature {key}")); }
             installed.push(key);
@@ -328,7 +332,10 @@ impl Workspace {
             let fkey = overrides.remove("feature").map(|x| x.as_str().map(|s| s.to_string()).unwrap_or_else(|| x.to_string())).unwrap_or_else(|| k.clone());
             let found = features.iter().find(|f| f["key"] == fkey.as_str())
                 .or_else(|| features.iter().find(|f| f["key"] == fkey.to_lowercase().as_str()))
-                .or_else(|| features.iter().find(|f| f["raw"]["aliases"].as_array().map(|a| a.iter().any(|x| x.as_str().map(|s| s.to_lowercase()) == Some(fkey.to_lowercase()))).unwrap_or(false)));
+                .or_else(|| features.iter().find(|f| f["raw"]["aliases"].as_array().map(|a| a.iter().any(|x| x.as_str().map(|s| s.to_lowercase()) == Some(fkey.to_lowercase()))).unwrap_or(false)))
+                // the issues feature was renamed (github → github_issue → issue, #83, #99): any of the names finds whichever is there
+                .or_else(|| { const FAM: [&str; 3] = ["issue", "github_issue", "github"];
+                    if FAM.contains(&fkey.to_lowercase().as_str()) { FAM.iter().find_map(|n| features.iter().find(|f| f["key"] == *n)) } else { None } });
             let def = found.map(|f| {
                 let mut raw = f["raw"].as_object().cloned().unwrap_or_default();
                 for (a, b) in overrides.iter() { raw.insert(a.clone(), b.clone()); }
