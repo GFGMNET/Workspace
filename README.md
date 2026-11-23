@@ -23,6 +23,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 | **1.1** | 13 Dec 2026 | MCP for **Blender** and **Unity** ([Blender](docs/plans/BLENDER.md), [Unity](docs/plans/UNITY.md)) |
 | **1.2** | 20 Dec 2026 | MCP for **Unreal Engine** 5.8+ ([plan](docs/plans/UNREAL.md)) |
 | **1.2.1** | 23 Dec 2026 | **LM Studio in the Chat**: `engine: lmstudio` — a local model (e.g. Qwen Coder) answers and works on the project files, no Claude CLI needed ([plan](docs/plans/LMSTUDIO.md)) |
+| **1.2.2** | 24 Dec 2026 | **Help & wiki inside the app**: the wiki on its own page in the app and as a panel beside each tab — works without internet ([plan](docs/plans/HELP.md)) |
 | **1.2.5** | 27 Dec 2026 | MCP for **Godot** 4.7+ and **OpenSCAD** ([Godot](docs/plans/GODOT.md), [OpenSCAD](docs/plans/OPENSCAD.md)) |
 | **1.2.6** | 3 Jan 2027 | MCP for **FreeCAD** ([plan](docs/plans/FREECAD.md)) · **Dashboard** on the Overview: blocks with numbers and lists ([plan](docs/plans/DASHBOARD.md)) |
 
