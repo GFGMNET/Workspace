@@ -247,7 +247,7 @@ jobs:
           path: ${{ runner.temp }}/out
 
   comfyui-windows:
-    if: inputs.plan == 'all' || inputs.plan == 'comfyui'
+    if: always() && (inputs.plan == 'all' || inputs.plan == 'comfyui')
     needs: comfyui
     runs-on: windows-latest
     defaults:

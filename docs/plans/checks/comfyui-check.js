@@ -44,8 +44,9 @@ const kind = buf => buf.slice(0, 4).toString('hex') === '89504e47' ? 'png' : buf
     for (const [k, spec] of Object.entries(def.input.required || {})) {
       if (k in inputs) continue;
       const [type, opt] = spec;
-      if (Array.isArray(type)) inputs[k] = type[0];
-      else if (opt && 'default' in opt) inputs[k] = opt.default;
+      if (opt && 'default' in opt) inputs[k] = opt.default;
+      else if (Array.isArray(type)) inputs[k] = type[0];
+      else if (type === 'COMBO' && opt && Array.isArray(opt.options)) inputs[k] = opt.options[0];
     }
     return { class_type: cls, inputs };
   };
