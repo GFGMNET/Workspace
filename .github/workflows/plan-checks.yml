@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio or help"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help or forgejo"
         default: all
 
 permissions:
@@ -377,3 +377,26 @@ jobs:
         env:
           ENGINES: ${{ matrix.engines }}
         run: node docs/plans/checks/help-check.js
+
+  # Forgejo in the issues feature: a real Forgejo (latest release, Docker), reached by its network address.
+  forgejo:
+    if: inputs.plan == 'all' || inputs.plan == 'forgejo'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Forgejo (latest release)
+        run: |
+          tag=$(curl -s "https://codeberg.org/api/v1/repos/forgejo/forgejo/releases?limit=10" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s).filter(x=>!x.prerelease&&/^v\d+\.\d+\.\d+$/.test(x.tag_name));console.log(r[0].tag_name.slice(1))})')
+          echo "Forgejo $tag"
+          docker run -d --name forgejo -p 3000:3000 -e FORGEJO__security__INSTALL_LOCK=true -e FORGEJO__server__ROOT_URL=http://localhost:3000/ codeberg.org/forgejo/forgejo:$tag
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/api/v1/version && break; sleep 2; done; echo
+          docker exec -u git forgejo forgejo admin user create --admin --username alice --password 's3cret-Forgejo-1' --email alice@example.com --must-change-password=false
+          t=$(docker exec -u git forgejo forgejo admin user generate-access-token --username alice --token-name check --scopes all --raw)
+          echo "::add-mask::$t"; echo "FORGEJO_TOKEN=$t" >> "$GITHUB_ENV"
+      - name: Check (network, list, fields, filter, private repo, create + comment)
+        run: |
+          ip=$(hostname -I | awk '{print $1}')
+          FORGEJO_URL="http://$ip:3000" node docs/plans/checks/forgejo-check.js
