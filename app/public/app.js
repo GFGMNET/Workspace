@@ -19,12 +19,18 @@ const go = h => { if (location.hash === h) route(); else location.hash = h; };
 function setTheme(t) {
   try { localStorage.setItem('pw-theme', t); } catch {}
   if (t === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
-  $$('[data-theme-set]').forEach(b => b.classList.toggle('on', b.dataset.themeSet === t));
+  themeButton(t);
   mermaidReady = null; if (!App.dirty) route();
 }
-$$('[data-theme-set]').forEach(b => b.onclick = () => setTheme(b.dataset.themeSet));
-(() => { let t = 'system'; try { t = localStorage.getItem('pw-theme') || 'system'; } catch {} $$('[data-theme-set]').forEach(b => b.classList.toggle('on', b.dataset.themeSet === t)); })();
-
+// one toggle button: Light → Dark → Auto (follow Windows); the picture shows what is on now
+const THEMES = { light: ['sun', 'Light'], dark: ['moon', 'Dark'], system: ['auto', 'Auto (follows Windows)'] }, NEXT = { light: 'dark', dark: 'system', system: 'light' };
+const curTheme = () => { let t = 'system'; try { t = localStorage.getItem('pw-theme') || 'system'; } catch {} return THEMES[t] ? t : 'system'; };
+function themeButton(t) {
+  const b = $('[data-action="theme"]'); if (!b) return;
+  b.dataset.theme = t; b.title = `Look: ${THEMES[t][1]} — click for ${THEMES[NEXT[t]][1]}`; b.innerHTML = icon(THEMES[t][0], 14);
+}
+$('[data-action="theme"]').onclick = () => setTheme(NEXT[curTheme()]);
+themeButton(curTheme());
 // ---------- sidebar ----------
 function renderSidebar() {
   const cur = S.project && location.hash.startsWith('#/p/') ? S.project.slug : null;
@@ -61,11 +67,17 @@ const isTop = () => document.documentElement.classList.contains('layout-top') &&
 function setLayout(l) {
   document.documentElement.classList.toggle('layout-top', l === 'top');
   try { localStorage.setItem('pw-layout', l); } catch {}
-  $$('[data-layout-set]').forEach(b => b.classList.toggle('on', b.dataset.layoutSet === l));
+  layoutButton();
   if (S.project && $('#ptabs')) renderTabs();
 }
-$$('[data-layout-set]').forEach(b => b.onclick = () => setLayout(b.dataset.layoutSet));
-$$('[data-layout-set]').forEach(b => b.classList.toggle('on', b.dataset.layoutSet === (document.documentElement.classList.contains('layout-top') ? 'top' : 'left')));
+// one toggle button next to Light / Dark / Auto; its picture shows the layout it switches to
+function layoutButton() {
+  const top = document.documentElement.classList.contains('layout-top'), b = $('[data-action="layout"]'); if (!b) return;
+  b.title = top ? 'Menu on top — click for menu on the left' : 'Menu on the left — click for menu on top';
+  b.innerHTML = icon(top ? 'layleft' : 'laytop', 14);
+}
+$('[data-action="layout"]').onclick = () => setLayout(document.documentElement.classList.contains('layout-top') ? 'left' : 'top');
+layoutButton();
 function setFeaturesCollapsed(on) {
   document.documentElement.classList.toggle('ftabs-collapsed', on);
   try { localStorage.setItem('pw-ftabs', on ? 'collapsed' : 'open'); } catch {}

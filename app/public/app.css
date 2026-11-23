@@ -478,7 +478,8 @@ button.ilabel.on{background:var(--lc);color:#fff}
 .pdmenu{display:none;position:absolute;top:calc(100% + 6px);left:0;width:300px;max-height:70vh;overflow:auto;background:var(--side);border:1px solid var(--side2);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:8px;z-index:70}
 .pdrop.open .pdmenu{display:block}
 .pdmenu .pitem{display:flex} .pdmenu .side-new{width:100%;margin-top:6px} .pdmenu .plabel{padding:4px 8px 6px}
-.layoutsw{margin-top:-4px}
+.theme .tsw{display:flex;align-items:center;justify-content:center;padding:5px 10px}
+.theme .tsw:hover{background:var(--side3);color:#fff}
 .pside,.pmain{display:contents}
 .fcoll{display:none}
 @media (min-width:901px){
@@ -495,7 +496,7 @@ button.ilabel.on{background:var(--lc);color:#fff}
 :root.layout-top .side-foot .side-link{width:auto;padding:7px 8px;white-space:nowrap;justify-content:flex-start}
 :root.layout-top .side .txt{display:inline} :root.layout-top .side-link .n{display:inline;margin-left:4px}
 :root.layout-top .side-ver .txt{display:none} :root.layout-top .side-ver{width:auto}
-:root.layout-top .side-foot .theme{display:flex;margin:0;flex:none} :root.layout-top .side-foot .theme button{white-space:nowrap;padding:4px 8px}
+:root.layout-top .side-foot .theme{display:flex;margin:0;flex:none} :root.layout-top .side-foot .theme button{white-space:nowrap;padding:4px 8px;flex:none}
 :root.layout-top .pbody{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;margin-top:14px;align-items:start}
 :root.layout-top .pside{display:flex;flex-direction:column;position:sticky;top:12px;min-width:0}
 :root.layout-top .pmain{display:block;min-width:0}
