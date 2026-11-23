@@ -672,12 +672,20 @@ VIEWS.tickets = async ctx => {
   async function list() {
     ctx.el.innerHTML = `<div class="empty">Loading tickets…</div>`;
     let data; try { data = await api(base); } catch (e) { return fail(e, list); }
-    ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><span class="sp"></span>
+    // filter by state (#97): Open = New + In progress (GLPI has no "open" state), Pending, Closed, Solved; default Open
+    const FILTERS = { open: ['Open', [1, 2, 3]], pending: ['Pending', [4]], closed: ['Closed', [6]], solved: ['Solved', [5]] };
+    const fkey = `pw-tk-${ctx.p.slug}-${ctx.f.key}`;
+    let fil = 'open'; try { const v = sessionStorage.getItem(fkey); if (FILTERS[v]) fil = v; } catch {}
+    const shown = data.tickets.filter(t => FILTERS[fil][1].includes(t.status));
+    ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px">
+        <div class="seg" role="group" aria-label="State">${Object.entries(FILTERS).map(([k, [n]]) => `<button type="button" class="${fil === k ? 'on' : ''}" data-tfil="${k}" aria-pressed="${fil === k}">${n}</button>`).join('')}</div>
+        <span class="sp"></span>
         <button class="btn primary" type="button" data-new title="New Ticket" aria-label="New Ticket">${icon('plus', 16)}</button></div>
-      <div class="card list-rows" style="padding:0">${data.tickets.map(t => `<a class="lrow" href="${ctx.href(t.id)}">
+      <div class="card list-rows" style="padding:0">${shown.map(t => `<a class="lrow" href="${ctx.href(t.id)}">
           <span class="mono faint" style="width:70px">#${t.id}</span>
           <span style="flex:1;min-width:0"><b>${esc(t.name)}</b><span class="faint small" style="display:block">${t.followups} follow-up${t.followups === 1 ? '' : 's'} · opened ${when(t.opened)}${t.status >= 5 ? ' · solution' : ''}</span></span>
-          ${stateChip(t)}<span class="faint small" style="width:130px;text-align:right">${when(t.updated)}</span></a>`).join('') || `<div class="empty">No tickets yet.</div>`}</div>`;
+          ${stateChip(t)}<span class="faint small" style="width:130px;text-align:right">${when(t.updated)}</span></a>`).join('') || `<div class="empty">${data.tickets.length ? `No ${FILTERS[fil][0].toLowerCase()} tickets.` : 'No tickets yet.'}</div>`}</div>`;
+    $$('[data-tfil]', ctx.el).forEach(b => b.onclick = () => { try { sessionStorage.setItem(fkey, b.dataset.tfil); } catch {} list(); });
     $('[data-new]', ctx.el).onclick = () => newTicket();
   }
 

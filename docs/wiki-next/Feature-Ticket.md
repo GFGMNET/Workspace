@@ -4,6 +4,9 @@ The **Ticket** tab shows the tickets of your GLPI 11 server that belong to the p
 create a ticket (**+**, help text *New Ticket*), read it, edit its text, set its state, add follow-ups and a solution.
 From version 1.0 (*Workspace*).
 
+Above the list are four filters: **Open** (GLPI's *New* and *In progress*), **Pending**, **Closed** and **Solved**.
+**Open** is chosen when you open the tab.
+
 ## What you need
 
 - Version 1.0 (*Workspace*) or newer.
