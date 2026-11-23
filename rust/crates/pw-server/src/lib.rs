@@ -65,6 +65,7 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/chat-permission/{turn}", post(chat_permission))
         .route("/api/chat-permission/{turn}/{req}/answer", post(chat_answer))
         .route("/api/examples", post(examples))
+        .route("/api/open-url", post(open_url))
         .route("/api/features", get(features))
         .route("/api/features/{k}", put(feature_save).delete(feature_delete))
         .route("/api/projects", get(projects).post(project_create))
@@ -214,6 +215,25 @@ async fn info(State(ws): S) -> Json<Value> {
         "mcpScript": null, "exe": exe.clone(),
         "wiki": "https://github.com/GFGMNET/Workspace/wiki", "mcpCommand": format!("\"{}\" mcp", exe.clone().unwrap_or_default()), "mcpEnv": null, "desktop": std::env::var_os("PW_EXE").is_some()
     }))
+}
+/// Opens a web address in the system browser — for links in the desktop app's window (Help & wiki, help links, GitHub):
+/// the window itself ignores links that ask for a new window on some systems (#98). Only http(s) and mailto, no spaces or
+/// quotes, and only in the desktop app. Started without a shell (Windows: url.dll, Linux: xdg-open).
+async fn open_url(b: Bytes) -> ApiResult {
+    let b = body_json(&b)?;
+    let url = b["url"].as_str().unwrap_or("").to_string();
+    let lower = url.to_ascii_lowercase();
+    let ok = (lower.starts_with("https://") || lower.starts_with("http://") || lower.starts_with("mailto:")) && url.len() < 2048
+        && !url.chars().any(|c| c.is_whitespace() || c.is_control() || c == '"' || c == '\'' || c == '`' || c == '<' || c == '>');
+    if !ok { return Err(workspace::err(400, "Only web addresses (http, https, mailto) can be opened").into()); }
+    if std::env::var_os("PW_EXE").is_none() { return Err(workspace::err(404, "Only in the desktop app").into()); }
+    #[cfg(windows)]
+    let mut c = { let mut c = std::process::Command::new("rundll32"); c.args(["url.dll,FileProtocolHandler", &url]);
+        use std::os::windows::process::CommandExt; c.creation_flags(0x0800_0000); c };
+    #[cfg(not(windows))]
+    let mut c = { let mut c = std::process::Command::new("xdg-open"); c.arg(&url); c };
+    c.stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null());
+    match c.spawn() { Ok(_) => Ok(Json(json!({ "ok": true }))), Err(e) => Err(workspace::err(500, &format!("Can't open the browser: {e}")).into()) }
 }
 async fn examples(State(ws): S) -> Json<Value> { Json(json!({ "added": ws.add_examples() })) }
 async fn features(State(ws): S) -> Json<Value> {

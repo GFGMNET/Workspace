@@ -75,6 +75,13 @@ test('hide_tabs: is a project setting, not a feature (#89)', async () => {
   assert.ok(p.features.some(f => f.key === 'wiki'), 'the hidden feature is still in the project');
 });
 
+test('open-url: only web addresses, nothing that could run something (#98)', { skip: !process.env.PW_SERVER_CMD && 'Rust server only' }, async () => {
+  for (const url of ['javascript:alert(1)', 'file:///etc/passwd', 'C:\\Windows\\notepad.exe', 'https://x.org/a b', 'https://x.org/"&calc', '']) {
+    const r = await s.api('POST', '/api/open-url', { body: { url } });
+    assert.equal(r.status, 400, url + ' → ' + r.status);
+  }
+});
+
 test('updates: the check finds a newer release; later and skip are remembered', async () => {
   const c = await s.api('POST', '/api/update/check', { body: {} });
   assert.equal(c.status, 200);

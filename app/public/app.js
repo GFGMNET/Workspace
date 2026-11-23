@@ -40,6 +40,16 @@ function renderSidebar() {
   $('#navFiles').classList.toggle('active', location.hash.startsWith('#/files'));
 }
 $('[data-action="new-project"]').onclick = () => newProjectDialog();
+// Desktop app: links that open a new window (Help & wiki, help links, GitHub, downloads) go to the system browser through
+// the app server — the window ignores them on some systems (#98). In a normal browser nothing changes.
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a[href]');
+  if (!a || !S.info || !S.info.desktop || e.defaultPrevented) return;
+  const href = a.href; if (!/^(https?:|mailto:)/i.test(href)) return;
+  if (new URL(href, location.href).origin === location.origin) return;
+  e.preventDefault();
+  api('/api/open-url', { body: { url: href } }).catch(() => window.open(href, '_blank', 'noopener'));
+}, true);
 function closeProjectMenu() { $('#pdrop').classList.remove('open'); $('#pdbtn').setAttribute('aria-expanded', 'false'); }
 $('#pdbtn').onclick = () => { const o = $('#pdrop').classList.toggle('open'); $('#pdbtn').setAttribute('aria-expanded', String(o)); };
 document.addEventListener('mousedown', e => { if (!e.target.closest('#pdrop')) closeProjectMenu(); });
