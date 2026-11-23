@@ -47,6 +47,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B21 | Chat with LM Studio (`engine: lmstudio`, url, model): local model, same rights as Claude, no Claude CLI needed | 📋 planned for 1.2.1 — docs/plans/LMSTUDIO.md | #94 |
 | B22 | Help & wiki inside the app (page + panel beside each tab), works without internet | 📋 planned for 1.2.2 — docs/plans/HELP.md | #95 |
 | B23 | Self-hosted bug tracker: Forgejo in the issues feature (`engine: forgejo`, url, token as secret) | 📋 planned for 1.0.2 — docs/plans/FORGEJO.md | #96 |
+| B24 | Built-in features: restore deleted ones (tick which), `version:` in the feature file, update keeps the old one as "(deprecated)", "Use the new version" per tab | 📋 planned for 1.0.1 — docs/plans/BUILTIN.md | #100 |
 
 ## Working with projects
 
