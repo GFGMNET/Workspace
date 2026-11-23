@@ -266,3 +266,44 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
           node docs/plans/checks/comfyui-media-check.js "$RUNNER_TEMP/out" msedge
+
+  # COMFYUI.md: results also in the Gallery (video and audio too) — the real ComfyUI results, served by the 1.0 app server,
+  # played in WebKit (Linux) and Edge = WebView2 (Windows).
+  comfyui-gallery:
+    if: always() && (inputs.plan == 'all' || inputs.plan == 'comfyui')
+    needs: comfyui
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, engine: webkit }
+          - { os: windows-latest, engine: msedge }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      PW_INSTALL: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build the app server (1.0)
+        working-directory: rust
+        run: cargo build -p pw-server --release --locked
+      - uses: actions/download-artifact@v4
+        with:
+          name: comfyui-results
+          path: ${{ runner.temp }}/out
+      - name: Browser
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          if [ "$RUNNER_OS" = Linux ]; then npx playwright install --with-deps webkit > /dev/null; fi
+      - name: Gallery — pictures, video, audio served by the app
+        env:
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
+        run: node docs/plans/checks/comfyui-gallery-check.js "$RUNNER_TEMP/out" ${{ matrix.engine }}
