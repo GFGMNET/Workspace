@@ -448,12 +448,14 @@ jobs:
           python3 - <<'PY'
           import re
           p = 'supabase/config.toml'; s = open(p).read()
-          s = re.sub(r'(\[auth\.email\][^\[]*?)enable_confirmations = false', r'\1enable_confirmations = true', s, flags=re.S)
+          i = s.index('\n[auth.email]'); j = s.index('enable_confirmations = false', i)
+          s = s[:j] + 'enable_confirmations = true' + s[j + len('enable_confirmations = false'):]
           s = re.sub(r'#\s*\[auth\.captcha\]\n(#.*\n)*', '', s)
           s = s.replace('[auth.email]', '[auth.captcha]\nenabled = true\nprovider = "turnstile"\nsecret = "1x0000000000000000000000000000000AA"\n\n[auth.email]', 1)
           open(p, 'w').write(s)
           PY
           grep -n -A3 'auth.captcha\]' supabase/config.toml; grep -n 'enable_confirmations' supabase/config.toml
+          mkdir -p supabase/migrations
           cp "$GITHUB_WORKSPACE/docs/plans/checks/requests-schema.sql" supabase/migrations/20261123000000_requests.sql
           supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
           supabase status -o env | grep -v -i key
