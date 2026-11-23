@@ -17,17 +17,19 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 
 | Version | Planned for | What's new |
 |---|---|---|
-| **1.0** | 27 Nov 2026 (if a week passes without a new bug) | **Workspace** in Rust, signed · **Ticket** tab: tickets from GLPI 11 for the project ([plan](docs/plans/TICKETSYSTEM.md)) · the feature info line is hidden behind an *i* icon |
-| **1.0.1** | 1 Dec 2026 | **VS Code** tab starts by itself and shows only the editor ([plan](docs/plans/VSCODE.md)) |
-| **1.0.2** | 6 Dec 2026 | **Version Control** tab: files and history from Git and SVN ([plan](docs/plans/VERSION-CONTROL.md)) · **ComfyUI** tab: run your ComfyUI workflows, results (pictures, video, audio) in the project and the Gallery ([plan](docs/plans/COMFYUI.md)) · **Forgejo** in the Issues tab: your own self-hosted bug tracker ([plan](docs/plans/FORGEJO.md)) |
-| **1.1** | 13 Dec 2026 | MCP for **Blender** and **Unity** ([Blender](docs/plans/BLENDER.md), [Unity](docs/plans/UNITY.md)) |
-| **1.2** | 20 Dec 2026 | MCP for **Unreal Engine** 5.8+ ([plan](docs/plans/UNREAL.md)) |
-| **1.2.1** | 23 Dec 2026 | **LM Studio in the Chat**: `engine: lmstudio` — a local model (e.g. Qwen Coder) answers and works on the project files, no Claude CLI needed ([plan](docs/plans/LMSTUDIO.md)) |
-| **1.2.2** | 24 Dec 2026 | **Help & wiki inside the app**: the wiki on its own page in the app and as a panel beside each tab — works without internet ([plan](docs/plans/HELP.md)) |
-| **1.2.5** | 27 Dec 2026 | MCP for **Godot** 4.7+ and **OpenSCAD** ([Godot](docs/plans/GODOT.md), [OpenSCAD](docs/plans/OPENSCAD.md)) |
-| **1.2.6** | 3 Jan 2027 | MCP for **FreeCAD** ([plan](docs/plans/FREECAD.md)) · **Dashboard** on the Overview: blocks with numbers and lists ([plan](docs/plans/DASHBOARD.md)) |
+| **1.0** | 27 Nov 2026 | **Workspace** in Rust, signed · **Ticket** tab: tickets from GLPI 11 for the project ([plan](docs/plans/TICKETSYSTEM.md)) · the feature info line is hidden behind an *i* icon |
+| **1.0.1** | 2 Dec 2026 | **VS Code** tab starts by itself and shows only the editor ([plan](docs/plans/VSCODE.md)) |
+| **1.0.2** | 7 Dec 2026 | **Version Control** tab: files and history from Git and SVN ([plan](docs/plans/VERSION-CONTROL.md)) · **ComfyUI** tab: run your ComfyUI workflows, results (pictures, video, audio) in the project and the Gallery ([plan](docs/plans/COMFYUI.md)) · **Forgejo** in the Issues tab: your own self-hosted bug tracker ([plan](docs/plans/FORGEJO.md)) |
+| **1.1** | 12 Dec 2026 | MCP for **Blender** and **Unity** ([Blender](docs/plans/BLENDER.md), [Unity](docs/plans/UNITY.md)) |
+| **1.2** | 17 Dec 2026 | MCP for **Unreal Engine** 5.8+ ([plan](docs/plans/UNREAL.md)) |
+| **1.2.1** | 22 Dec 2026 | **LM Studio in the Chat**: `engine: lmstudio` — a local model (e.g. Qwen Coder) answers and works on the project files, no Claude CLI needed ([plan](docs/plans/LMSTUDIO.md)) |
+| **1.2.2** | 27 Dec 2026 | **Help & wiki inside the app**: the wiki on its own page in the app and as a panel beside each tab — works without internet ([plan](docs/plans/HELP.md)) |
+| **1.2.5** | 1 Jan 2027 | MCP for **Godot** 4.7+ and **OpenSCAD** ([Godot](docs/plans/GODOT.md), [OpenSCAD](docs/plans/OPENSCAD.md)) |
+| **1.2.6** | 6 Jan 2027 | MCP for **FreeCAD** ([plan](docs/plans/FREECAD.md)) · **Dashboard** on the Overview: blocks with numbers and lists ([plan](docs/plans/DASHBOARD.md)) |
 
-MCPs are switched on per project; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program. A plan that is not ready when its date comes moves to a later version.
+MCPs are switched on per project; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program.
+
+**How releases are timed:** 1.0 comes on 27 Nov; after that a new version every 5 days. If a bug is reported in those 5 days, the next version comes 5 days later (only once) and brings the fixes; bugs found in the extra days go into the version after. A plan that is not ready when its version is due moves to a later version.
 
 ## Start (current version 0.x)
 

@@ -8,7 +8,7 @@ Forgejo in the issues feature (self-hosted bug tracker)
 
 ## 2) Planned release version
 
-1.0.2 — 6 Dec 2026 (together with Git/SVN and ComfyUI)
+1.0.2 — 7 Dec 2026 (together with Git/SVN and ComfyUI; 5-day release rule)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -41,7 +41,7 @@ None (all answered 2026-11-23).
 | 1 | Self-hosted bug tracker: **Forgejo**, built into the issues feature like the Chat: `engine: github` (default) or `forgejo`. |
 | 2 | The feature is called **`issue`** — already in 1.0 (done 2026-11-23); `github_issue` and `github` keep working. |
 | 3 | The functions stay as GitHub issues today: read, filter, search in the app; **New issue** and the links open the browser. |
-| 4 | Version 1.0.2, 6 Dec 2026. |
+| 4 | Version 1.0.2 (7 Dec 2026 under the 5-day release rule). |
 | 5 | Forgejo: `url:` and `repo:`; the token for a private repository in `project.yaml` as a secret (`token: ${secret:forgejo-token}`). |
 | 6 | Self-made HTTPS certificates are ignored. |
 | 7 | The button that opens the issues in the browser is called **Issues** (both engines; done in 1.0). |

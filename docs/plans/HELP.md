@@ -8,7 +8,7 @@ Help & wiki inside the app
 
 ## 2) Planned release version
 
-1.2.2 — 24 Dec 2026
+1.2.2 — 27 Dec 2026 (release every 5 days after 1.0, decided 2026-11-23)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -46,7 +46,7 @@ None (all answered 2026-11-23).
 | id | decision |
 |---|---|
 | 1 | Both combined: a full help page in the app and a help panel at the side of each tab. |
-| 2 | Version 1.2.2, released 24 Dec 2026. |
+| 2 | Version 1.2.2 (27 Dec 2026 under the 5-day release rule). |
 | 3 | The GitHub wiki stays. |
 | 4 | (i): hover shows the short info line as today, a click opens the help panel. |
 | 5 | Only for the PC (Windows, Linux) — no tablet or phone. |

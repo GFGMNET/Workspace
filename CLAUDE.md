@@ -71,6 +71,9 @@ or whose check failed cannot be approved. Checks live in `docs/plans/checks/`. B
 gets the open points and risks, and nothing begins until they have seen them. While building: if a step cannot be
 done as planned, stop and ask the maintainer — no new design on your own.
 A plan that is not **Ready 2 Deploy** when its version is due is skipped: it moves to a later version (decided 2026-11-19).
+Release timing (decided 2026-11-23): 1.0 on 27 Nov 2026; then a new version every 5 days in plan order. If a GitHub issue
+labelled **bug** is reported in those 5 days, the next version moves once by 5 days and brings all fixes together; bugs found in the
+extra days go into the version after. Hiccups (no bug label) never delay a release. A daily scheduled task "Release train" does it.
 MCPs (decided 2026-11-20): named after the program they use (Blender, Unity, Unreal); use the existing solution if possible;
 no checks and no test phase — instead a wiki article with what is needed and how to connect; switched on per project with `programs:` in `project.yaml` (not `mcp:`, that is the MCP connections feature; decided 2026-11-20);
 no own beta for an MCP — it goes out with the release of its version; every result of an MCP is saved in the Workspace project, in the

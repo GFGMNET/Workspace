@@ -8,7 +8,7 @@ LM Studio in the Chat
 
 ## 2) Planned release version
 
-1.2.1 — 23 Dec 2026
+1.2.1 — 22 Dec 2026 (release every 5 days after 1.0, decided 2026-11-23)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -48,7 +48,7 @@ None (all answered 2026-11-23).
 | 2 | Requirement: Claude → Claude CLI; LM Studio → only LM Studio. |
 | 3 | Both have the same rights: read, create, change, delete files, run commands. |
 | 4 | `feature: chat` is not needed when the key is `chat:`. |
-| 5 | Version 1.2.1, released 23 Dec 2026. |
+| 5 | Version 1.2.1 (22 Dec 2026 under the 5-day release rule). |
 | 6 | `permissions:` (`ask` / `auto` / `read-only`) works for LM Studio as for Claude (Allow · Always allow in this chat · Don't allow). |
 | 7 | Skills and MCP connections for LM Studio: later, not in 1.2.1. |
 | 8 | `model:` keeps its name: with `engine: claude` the Claude model (e.g. `sonnet`), with `engine: lmstudio` the LM Studio model. |
