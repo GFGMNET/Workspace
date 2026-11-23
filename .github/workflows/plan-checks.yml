@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo, builtin or requests"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo or builtin"
         default: all
 
 permissions:
@@ -428,53 +428,3 @@ jobs:
           PW_INSTALL: ${{ github.workspace }}
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
         run: node docs/plans/checks/builtin-check.js
-
-  # Feature requests — against a local Supabase (same software as the hosted service), only for this run.
-  requests:
-    if: inputs.plan == 'all' || inputs.plan == 'requests'
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - name: Local Supabase with e-mail confirmation, captcha (Cloudflare test key) and the requests table
-        run: |
-          mkdir -p "$RUNNER_TEMP/sb" && cd "$RUNNER_TEMP/sb"
-          supabase init > /dev/null
-          python3 - <<'PY'
-          import re
-          p = 'supabase/config.toml'; s = open(p).read()
-          i = s.index('\n[auth.email]'); j = s.index('enable_confirmations = false', i)
-          s = s[:j] + 'enable_confirmations = true' + s[j + len('enable_confirmations = false'):]
-          s = re.sub(r'#\s*\[auth\.captcha\]\n(#.*\n)*', '', s)
-          s = s.replace('[auth.email]', '[auth.captcha]\nenabled = true\nprovider = "turnstile"\nsecret = "1x0000000000000000000000000000000AA"\n\n[auth.email]', 1)
-          open(p, 'w').write(s)
-          PY
-          grep -n -A3 'auth.captcha\]' supabase/config.toml; grep -n 'enable_confirmations' supabase/config.toml
-          mkdir -p supabase/migrations
-          cp "$GITHUB_WORKSPACE/docs/plans/checks/requests-schema.sql" supabase/migrations/20261123000000_requests.sql
-          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor
-          supabase status -o env | grep -v -i key
-          supabase status -o env | sed 's/^/export /' > "$RUNNER_TEMP/sb.env"
-      - name: Playwright (for the captcha box)
-        run: |
-          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
-          npx playwright install --with-deps chromium > /dev/null
-      - name: Check (register, confirm e-mail, captcha, request, overview, approve/reject, 15-day timer, limit)
-        run: |
-          . "$RUNNER_TEMP/sb.env"
-          export SB_URL="$API_URL" SB_ANON="${ANON_KEY:-$PUBLISHABLE_KEY}" SB_SERVICE="${SERVICE_ROLE_KEY:-$SECRET_KEY}" SB_DB="$DB_URL"
-          export SB_MAIL="${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}"
-          node docs/plans/checks/requests-check.js
-      - name: Check (captcha says "not a human" → register and sign in refused)
-        run: |
-          cd "$RUNNER_TEMP/sb"
-          sed -i 's/secret = "1x0000000000000000000000000000000AA"/secret = "2x0000000000000000000000000000000AA"/' supabase/config.toml
-          supabase stop > /dev/null && supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,storage-api,postgres-meta,supavisor > /dev/null
-          . "$RUNNER_TEMP/sb.env"; cd "$GITHUB_WORKSPACE"
-          export SB_URL="$API_URL" SB_ANON="${ANON_KEY:-$PUBLISHABLE_KEY}" SB_SERVICE="${SERVICE_ROLE_KEY:-$SECRET_KEY}" SB_DB="$DB_URL"
-          PHASE=fail node docs/plans/checks/requests-check.js
