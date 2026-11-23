@@ -337,3 +337,16 @@ jobs:
           ip=$(hostname -I | awk '{print $1}')
           if curl -sf "http://$ip:1234/v1/models" > /dev/null; then u="http://$ip:1234"; else echo "not reachable by network address"; u="http://$ip:1234"; fi
           LMS_URL="$u" node docs/plans/checks/lmstudio-check.js "$RUNNER_TEMP/lms"
+
+  lmstudio-windows:
+    if: inputs.plan == 'all' || inputs.plan == 'lmstudio'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: The app's file tools on Windows (the model's calls from the Linux run)
+        env:
+          REPLAY: '1'
+        run: node docs/plans/checks/lmstudio-check.js "$env:RUNNER_TEMP\lms"

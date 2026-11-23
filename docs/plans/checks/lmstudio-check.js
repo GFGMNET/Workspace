@@ -75,7 +75,25 @@ async function turn(text, { stream = false } = {}) {
 }
 const tries = async (n, fn) => { let last; for (let i = 0; i < n; i++) { last = await fn(i); if (last.ok) return last; } return last; };
 
+// REPLAY=1 (Windows): no model — the app's side runs the tool calls the model made in the Linux run, so reading, creating,
+// changing, deleting files and running a command are also checked on Windows (cmd).
+async function replay() {
+  fs.rmSync(PROJECT, { recursive: true, force: true }); fs.mkdirSync(PROJECT, { recursive: true });
+  fs.writeFileSync(path.join(PROJECT, 'readme.md'), 'The secret word is PELICAN.\n');
+  const f = path.join(PROJECT, 'notes', 'hello.md');
+  const call = (n, a) => { try { return String(TOOLS[n].run(a)); } catch (e) { return 'ERROR: ' + e.message; } };
+  res(/PELICAN/.test(call('read_file', { path: 'readme.md' })), 'windows: read readme.md');
+  call('write_file', { path: 'notes/hello.md', content: 'Hello from Qwen' }); res(fs.existsSync(f) && /Hello from Qwen/.test(fs.readFileSync(f, 'utf8')), 'windows: create notes/hello.md');
+  call('edit_file', { path: 'notes/hello.md', old_text: 'Hello', new_text: 'Goodbye' }); res(/Goodbye from Qwen/.test(fs.readFileSync(f, 'utf8')), 'windows: change notes/hello.md');
+  call('delete_file', { path: 'notes/hello.md' }); res(!fs.existsSync(f), 'windows: delete notes/hello.md');
+  call('run_command', { command: 'node -e "require(\'fs\').writeFileSync(\'date.txt\', String(6*7))"' });
+  const out = path.join(PROJECT, 'date.txt'); res(fs.existsSync(out) && fs.readFileSync(out, 'utf8') === '42', 'windows: run a command (cmd)');
+  res(/outside/.test(call('read_file', { path: '..\\..\\Windows\\win.ini' })), 'windows: a path outside the project folder is refused');
+  console.log('failed: ' + fails); process.exit(fails ? 1 : 0);
+}
+
 (async () => {
+  if (process.env.REPLAY) return replay();
   fs.rmSync(PROJECT, { recursive: true, force: true }); fs.mkdirSync(PROJECT, { recursive: true });
   fs.writeFileSync(path.join(PROJECT, 'project.yaml'), 'name: LM Studio check\nchat:\n  engine: lmstudio\n  url: ' + URL0 + '\n  model: ' + MODEL + '\n');
   fs.writeFileSync(path.join(PROJECT, 'readme.md'), 'The secret word is PELICAN.\n');
