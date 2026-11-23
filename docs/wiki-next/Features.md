@@ -92,6 +92,10 @@ tasks:
 
 - **Only the built-in building blocks.** A feature chooses one kind of storage (`stores`) and one layout from the list
   below. It can't bring its own screen or program code.
+- **No connections to other programs or services.** A feature you make yourself only works with the files in the
+  project. It can't connect to Home Assistant, a database, a shop or any other service. Only the connections built into
+  the app talk to other servers: **Issues** (GitHub; Forgejo from 1.0.2) and **Ticket** (GLPI) — later also ComfyUI.
+  A new connection needs a new version of the app.
 - **Layout and storage must fit together** (e.g. *kanban* only with *records*). The app refuses a wrong combination and
   says which layouts fit.
 - **Only the listed field types.** No formulas, no calculated fields, no sums.
@@ -102,7 +106,7 @@ tasks:
 - **One definition for all projects.** Changing the feature file changes it in every project that uses it (per-project
   changes go into `project.yaml`, see above).
 - **A feature that a project still uses can't be deleted** — the app says which projects use it.
-- **Issues and Ticket need their server** (GitHub / GLPI) and the network; everything else works offline.
+- **Issues and Ticket need their server** (GitHub / GLPI) and the network; all other features work offline.
 - **One person at a time:** everything is files; don't edit the same project on two computers at the same moment.
 
 ## All settings
