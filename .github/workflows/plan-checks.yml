@@ -425,5 +425,6 @@ jobs:
         run: cargo build -p pw-server --release --locked
       - name: Check (missing, restore, update with deprecated copy, projects keep the old one)
         env:
+          PW_INSTALL: ${{ github.workspace }}
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
         run: node docs/plans/checks/builtin-check.js
