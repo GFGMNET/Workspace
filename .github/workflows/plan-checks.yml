@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help or forgejo"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo or builtin"
         default: all
 
 permissions:
@@ -400,3 +400,30 @@ jobs:
         run: |
           ip=$(hostname -I | awk '{print $1}')
           FORGEJO_URL="http://$ip:3000" node docs/plans/checks/forgejo-check.js
+
+  # Built-in features: restore and update (1.0.1) — against the 1.0 app server.
+  builtin:
+    if: inputs.plan == 'all' || inputs.plan == 'builtin'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build the app server (1.0)
+        working-directory: rust
+        run: cargo build -p pw-server --release --locked
+      - name: Check (missing, restore, update with deprecated copy, projects keep the old one)
+        env:
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
+        run: node docs/plans/checks/builtin-check.js
