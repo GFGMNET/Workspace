@@ -92,7 +92,7 @@ const tries = async (n, fn) => { let last; for (let i = 0; i < n; i++) { last = 
   res(s.ok, `stream: answer comes in ${s.r.pieces} pieces (${((Date.now() - t0) / 1000).toFixed(1)} s): "${s.r.answer.trim().slice(0, 60)}"`);
 
   // 3) read
-  const rd = await tries(2, async () => { const r = await turn('What is the secret word in readme.md?', { stream: true }); return { ok: /PELICAN/i.test(r.answer) && r.used.some(u => u.startsWith('read_file')), r }; });
+  const rd = await tries(3, async () => { const r = await turn('Read the file readme.md and tell me the secret word written in it.', { stream: true }); return { ok: /PELICAN/i.test(r.answer) && r.used.some(u => u.startsWith('read_file')), r }; });
   res(rd.ok, `read: ${rd.r.used.join(' | ')} → "${rd.r.answer.trim().slice(0, 60)}"`);
   // 4) create
   const f = path.join(PROJECT, 'notes', 'hello.md');
