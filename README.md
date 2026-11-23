@@ -17,7 +17,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 
 | Version | Planned for | What's new |
 |---|---|---|
-| **1.0** | 27 Nov 2026 | **Workspace** in Rust, signed · **Ticket** tab: tickets from GLPI 11 for the project ([plan](docs/plans/TICKETSYSTEM.md)) · the feature info line is hidden behind an *i* icon |
+| **1.0** | 27 Nov 2026 | **Workspace** in Rust, signed · **Ticket** tab: tickets from GLPI 11 for the project ([plan](docs/plans/TICKETSYSTEM.md)) · **two layouts** to switch between: menu left, or menu on top with the projects in a drop-down and the features on the left (collapsible) · **Tabs** button: choose per project which tabs are shown · `project.yaml` in the gear menu · the issues feature is called `issue` · *Help & wiki* opens again · new wiki order · the feature info line is hidden behind an *i* icon |
 | **1.0.1** | 2 Dec 2026 | **VS Code** tab starts by itself and shows only the editor ([plan](docs/plans/VSCODE.md)) |
 | **1.0.2** | 7 Dec 2026 | **Version Control** tab: files and history from Git and SVN ([plan](docs/plans/VERSION-CONTROL.md)) · **ComfyUI** tab: run your ComfyUI workflows, results (pictures, video, audio) in the project and the Gallery ([plan](docs/plans/COMFYUI.md)) · **Forgejo** in the Issues tab: your own self-hosted bug tracker ([plan](docs/plans/FORGEJO.md)) |
 | **1.1** | 12 Dec 2026 | MCP for **Blender** and **Unity** ([Blender](docs/plans/BLENDER.md), [Unity](docs/plans/UNITY.md)) |
