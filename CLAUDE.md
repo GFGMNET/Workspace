@@ -24,6 +24,8 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   Commits that fix one say `Closes #n`.
 - Keep **docs current** with every change: DESIGN.md, REQUIREMENTS.md, the wiki pages in `docs/wiki/`, the next release
   notes in `docs/releases/`. Plain words, short sentences.
+  Release notes are detailed for users — what is new or changed and how to use it — following `docs/releases/TEMPLATE.md`
+  (decided 2026-11-24); the README table stays short.
 - Run `npm test` (unit checks) before committing; contract tests: `npm run test:contract`; YAML: `npm run test:yaml`.
 - GitHub: use the REST API through `gh api` (GraphQL is blocked in Claude's environment). Releases and workflows are started
   with `gh api -X POST repos/GFGMNET/Workspace/actions/workflows/<file>/dispatches -f ref=main`. Creating/deleting releases
