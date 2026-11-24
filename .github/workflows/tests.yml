@@ -51,4 +51,6 @@ jobs:
           npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
           if [ "$RUNNER_OS" = Linux ]; then npx playwright install --with-deps chromium webkit > /dev/null; else npx playwright install chromium webkit > /dev/null; fi
       - name: Layouts
-        run: node tests/ui/layout.test.js
+        run: |
+          node tests/ui/layout.test.js
+          node tests/ui/search.test.js

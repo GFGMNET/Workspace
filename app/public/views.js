@@ -184,7 +184,7 @@ VIEWS.cards = async ctx => {
   }
   const tags = [...new Set(items.flatMap(i => i.tags))].sort();
   ctx.el.innerHTML = `<div class="row" style="margin-bottom:14px">
-      <label class="finput" style="flex:1 1 280px;max-width:420px;margin:0">${icon('search', 14)}<input type="search" data-q placeholder="Search ${esc(ctx.f.def.name.toLowerCase())}" aria-label="Search"></label>
+      ${ctx.f.def.search !== false ? `<label class="finput" style="flex:1 1 280px;max-width:420px;margin:0">${icon('search', 14)}<input type="search" data-q placeholder="Search ${esc(ctx.f.def.name.toLowerCase())}" aria-label="Search"></label>` : ''}
       <div class="chips">${tags.map(t => `<button type="button" class="chip" data-tag="${esc(t)}" aria-pressed="false">#${esc(t)}</button>`).join('')}</div>
       <span class="sp"></span><button class="btn primary" type="button" data-new>${icon('plus', 14)} New ${esc(ctx.f.def.new_item.toLowerCase())}</button></div>
     <div class="grid" data-grid>${items.map(it => `<a class="card kcard" href="${ctx.href(it.id)}" data-id="${esc(it.id)}" data-tags="${esc(it.tags.join('|'))}" data-text="${esc((it.title + ' ' + it.summary).toLowerCase())}">
@@ -195,20 +195,26 @@ VIEWS.cards = async ctx => {
   const q = $('[data-q]', ctx.el); const active = new Set(); let hitIds = null, t;
   const apply = () => $$('[data-grid] .kcard', ctx.el).forEach(c => {
     const tagsOk = [...active].every(x => c.dataset.tags.split('|').includes(x));
-    const qq = q.value.trim().toLowerCase();
+    const qq = q ? q.value.trim().toLowerCase() : '';
     const textOk = !qq || c.dataset.text.includes(qq) || (hitIds && hitIds.has(c.dataset.id));
     c.style.display = tagsOk && textOk ? '' : 'none';
   });
-  q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); hitIds = null; if (qq.length > 1) { try { hitIds = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); } catch {} } apply(); }, 160); });
+  if (q) q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); hitIds = null; if (qq.length > 1) { try { hitIds = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); } catch {} } apply(); }, 160); });
   $$('[data-tag]', ctx.el).forEach(b => b.onclick = () => { const on = !active.has(b.dataset.tag); on ? active.add(b.dataset.tag) : active.delete(b.dataset.tag); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); apply(); });
 };
 VIEWS.list = async ctx => {
   if (ctx.f.def.stores === 'records') return recordList(ctx);
   const { items } = await api(itemsUrl(ctx));
   if (ctx.sub) { ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><a class="btn sm" href="${ctx.href('')}">${icon('chevl', 14)} Back</a></div><div class="pane" id="pane"></div>`; return pageView(ctx, $('#pane'), ctx.sub, items); }
-  ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><span class="sp"></span><button class="btn primary" type="button" data-new>${icon('plus', 14)} New ${esc(ctx.f.def.new_item.toLowerCase())}</button></div>
-    <div class="card list-rows" style="padding:0">${items.map(it => `<a class="lrow" href="${ctx.href(it.id)}" style="color:inherit;text-decoration:none"><b style="flex:1">${esc(it.title)}</b><span class="faint small">${esc(ago(it.modified))}</span></a>`).join('') || emptyBox(ctx, 'Nothing yet.')}</div>`;
+  // search bar like "cards": titles right away, the text of the pages through the search (search: false hides it)
+  const search = ctx.f.def.search !== false;
+  ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px">${search ? `<label class="finput" style="flex:1 1 280px;max-width:420px;margin:0">${icon('search', 14)}<input type="search" data-q placeholder="Search ${esc(ctx.f.def.name.toLowerCase())}" aria-label="Search ${esc(ctx.f.def.name)}"></label>` : ''}<span class="sp"></span><button class="btn primary" type="button" data-new>${icon('plus', 14)} New ${esc(ctx.f.def.new_item.toLowerCase())}</button></div>
+    <div class="card list-rows" style="padding:0">${items.map(it => `<a class="lrow" href="${ctx.href(it.id)}" style="color:inherit;text-decoration:none" data-id="${esc(it.id)}" data-text="${esc((it.title + ' ' + (it.summary || '') + ' ' + (it.tags || []).join(' ')).toLowerCase())}"><b style="flex:1">${esc(it.title)}</b><span class="faint small">${esc(ago(it.modified))}</span></a>`).join('') || emptyBox(ctx, 'Nothing yet.')}</div>`;
   wireNew(ctx, ctx.el);
+  const q = $('[data-q]', ctx.el); if (!q) return;
+  let hitIds = null, t;
+  const apply = () => { const qq = q.value.trim().toLowerCase(); $$('.lrow', ctx.el).forEach(r => { r.style.display = !qq || r.dataset.text.includes(qq) || (hitIds && hitIds.has(r.dataset.id)) ? '' : 'none'; }); };
+  q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); hitIds = null; if (qq.length > 1) { try { hitIds = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); } catch {} } apply(); }, 160); });
 };
 
 // ---------- records: table / list / cards ----------
