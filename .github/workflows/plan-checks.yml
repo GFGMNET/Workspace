@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo, builtin or layouts"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo, builtin, layouts or opengame"
         default: all
 
 permissions:
@@ -461,3 +461,60 @@ jobs:
           PW_INSTALL: ${{ github.workspace }}
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
         run: node docs/plans/checks/layouts-check.js
+
+  # Idea "OpenGame" (game prototypes from one sentence): only if a SMALLER local model makes a playable game (maintainer,
+  # 2026-11-24). OpenGame + LM Studio with Qwen2.5-Coder 7B build a Snake game; then it is played in Chromium.
+  opengame:
+    if: inputs.plan == 'opengame'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: LM Studio (llmster) + Qwen2.5-Coder 7B
+        run: |
+          curl -fsSL https://lmstudio.ai/install.sh | bash
+          export PATH="$HOME/.lmstudio/bin:$HOME/.local/bin:$PATH"; echo "$HOME/.lmstudio/bin" >> "$GITHUB_PATH"
+          lms daemon up
+          lms get qwen2.5-coder-7b-instruct --yes || lms get lmstudio-community/qwen2.5-coder-7b-instruct-gguf --yes || lms get qwen/qwen2.5-coder-7b --yes
+          lms ls
+          key=$(lms ls --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s);const m=a.find(x=>/coder/i.test(x.modelKey||x.path||""));console.log(m.modelKey||m.path)})')
+          echo "model: $key"; echo "LMS_MODEL=$key" >> "$GITHUB_ENV"
+          lms load "$key" --yes --context-length 32768 || lms load "$key" --yes
+          lms server start --port 1234
+          sleep 3; curl -s http://127.0.0.1:1234/v1/models | head -c 300; echo
+      - name: OpenGame (from GitHub)
+        run: |
+          git clone --depth 1 https://github.com/leigest519/OpenGame.git "$RUNNER_TEMP/OpenGame"
+          cd "$RUNNER_TEMP/OpenGame" && git log -1 --format='OpenGame %h %cd' && npm install --no-audit --no-fund > /dev/null && npm run build > /dev/null && npm link > /dev/null
+          which opengame
+      - name: Let OpenGame build a Snake game with the local model
+        timeout-minutes: 240
+        env:
+          OPENAI_BASE_URL: http://127.0.0.1:1234/v1
+          OPENAI_API_KEY: lm-studio
+        run: |
+          mkdir -p "$RUNNER_TEMP/game" && cd "$RUNNER_TEMP/game"
+          export OPENAI_MODEL="$LMS_MODEL"
+          start=$(date +%s)
+          opengame -p "Build a Snake clone as a web game with arrow-key and WASD controls and a dark theme. Use simple shapes, no images and no sound. Put a ready-to-open index.html in this folder." --yolo 2>&1 | tee "$RUNNER_TEMP/opengame.log" | tail -n 60 || true
+          echo "took $(( ($(date +%s) - start) / 60 )) minutes"
+          find . -path ./node_modules -prune -o -type f -print | head -60
+      - name: Browser
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          npx playwright install --with-deps chromium > /dev/null
+      - name: Check (game page, loads, shows something, reacts to keys)
+        run: node docs/plans/checks/opengame-check.js "$RUNNER_TEMP/game" "$RUNNER_TEMP/opengame-out"
+      - name: Keep the game, the screenshots and the log
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/opengame-out"; cp "$RUNNER_TEMP/opengame.log" "$RUNNER_TEMP/opengame-out/" 2>/dev/null || true
+          (cd "$RUNNER_TEMP" && tar --exclude=node_modules -czf opengame-out/game.tgz game) || true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: opengame-results
+          path: ${{ runner.temp }}/opengame-out
