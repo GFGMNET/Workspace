@@ -199,7 +199,7 @@ VIEWS.cards = async ctx => {
     const textOk = !qq || c.dataset.text.includes(qq) || (hitIds && hitIds.has(c.dataset.id));
     c.style.display = tagsOk && textOk ? '' : 'none';
   });
-  if (q) q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); hitIds = null; if (qq.length > 1) { try { hitIds = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); } catch {} } apply(); }, 160); });
+  if (q) q.addEventListener('input', () => { hitIds = null; apply(); clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); if (qq.length > 1) { try { const h = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); if (q.value.trim() === qq) { hitIds = h; apply(); } } catch {} } }, 160); });
   $$('[data-tag]', ctx.el).forEach(b => b.onclick = () => { const on = !active.has(b.dataset.tag); on ? active.add(b.dataset.tag) : active.delete(b.dataset.tag); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); apply(); });
 };
 VIEWS.list = async ctx => {
@@ -214,7 +214,8 @@ VIEWS.list = async ctx => {
   const q = $('[data-q]', ctx.el); if (!q) return;
   let hitIds = null, t;
   const apply = () => { const qq = q.value.trim().toLowerCase(); $$('.lrow', ctx.el).forEach(r => { r.style.display = !qq || r.dataset.text.includes(qq) || (hitIds && hitIds.has(r.dataset.id)) ? '' : 'none'; }); };
-  q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); hitIds = null; if (qq.length > 1) { try { hitIds = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); } catch {} } apply(); }, 160); });
+  // titles filter right away; words inside the pages come in when the search answers (#108)
+  q.addEventListener('input', () => { hitIds = null; apply(); clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); if (qq.length > 1) { try { const h = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); if (q.value.trim() === qq) { hitIds = h; apply(); } } catch {} } }, 160); });
 };
 
 // ---------- records: table / list / cards ----------

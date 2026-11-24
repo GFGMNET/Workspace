@@ -34,11 +34,12 @@ const ok = (c, m) => { console.log((c ? 'ok    ' : 'FAIL  ') + m); if (!c) fails
         const bar = await page.$('input[data-q]');
         ck(!!bar === want, `${layout}, search: ${want}: search bar ${want ? 'shown' : 'hidden'}`);
         if (!bar) continue;
-        await bar.fill('holi'); await page.waitForTimeout(600);
-        ck(JSON.stringify(await shown()) === '["Holiday"]', `${layout}: a title is found (${await shown()})`);
-        await bar.fill('zebra'); await page.waitForTimeout(800);
-        ck(JSON.stringify(await shown()) === '["Holiday"]', `${layout}: a word inside a page is found (${await shown()})`);
-        await bar.fill(''); await page.waitForTimeout(400);
+        const until = async want => { for (let i = 0; i < 40; i++) { if (JSON.stringify(await shown()) === want) return true; await page.waitForTimeout(100); } return false; };
+        await bar.fill('holi');
+        ck(await until('["Holiday"]'), `${layout}: a title is found (${await shown()})`);
+        await bar.fill('zebra');
+        ck(await until('["Holiday"]'), `${layout}: a word inside a page is found (${await shown()})`);
+        await bar.fill(''); await page.waitForTimeout(300);
         ck((await shown()).length === 2, `${layout}: empty search shows all again`);
       }
       ck(errs.length === 0, 'no script errors ' + errs.join(' | '));
