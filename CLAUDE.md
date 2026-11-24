@@ -62,6 +62,11 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   Not fitting: Fider (no bot protection), GLPI (no sign-up). Suggested, not decided: Discourse, PocketBase. Goal: as little spam as possible.
   Don't loop: no new tool suggestions one after another — first the review.
 
+- **Security gate (decided 2026-11-24):** before every release (1.0 and each version after it) and when a version is built, the
+  security checks run and must be clean: "Rust security check" (rust-security.yml, cargo-deny: known vulnerabilities in the
+  1.0 app's libraries) and CodeQL (code scan). A finding is fixed first, like a bug (Rust library: Actions "Rust lock update"
+  with the crate names → commit the new rust/Cargo.lock from branch `rust-lock-update`). Never release with a failing security check.
+
 ## How plans are written (decided 2026-11-19, by the maintainer)
 
 Every plan has exactly these parts, in this order:

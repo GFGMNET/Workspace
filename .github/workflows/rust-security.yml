@@ -25,11 +25,14 @@ jobs:
           manifest-path: rust/Cargo.toml
           command: check advisories licenses sources bans
           arguments: --workspace
-      - name: Open an issue (weekly run)
-        if: failure() && github.event_name == 'schedule'
+      # weekly run AND every change on main: a finding must not go unnoticed (2026-11-24: a push failure was missed for a day)
+      - name: Open an issue (if none is open yet)
+        if: failure() && github.event_name != 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          open=$(gh issue list --repo "$GITHUB_REPOSITORY" --label security --state open --search "Rust security check found a problem in:title" --json number --jq length)
+          [ "$open" != "0" ] && { echo "an issue is already open"; exit 0; }
           gh issue create --repo "$GITHUB_REPOSITORY" --label security \
             --title "Rust security check found a problem ($(date -u +%F))" \
-            --body "The weekly cargo-deny check failed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID — usually a crate with a known vulnerability that needs an update."
+            --body "The cargo-deny check failed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID — usually a crate with a known vulnerability that needs an update."
