@@ -60,7 +60,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W5 | Open projects and files in VS Code | ✅ | #21 |
 | W6 | Full VS Code inside the app (browser VS Code via `code serve-web`, or code-server / OpenVSCode Server) | ✅ | #24 |
 | W6b | VS Code tab: focused layout with just explorer and editor | 📋 | #62 |
-| W6c | VS Code tab opens the editor by itself (no button), shows "VS Code is starting…", only the editor; "VS Code is not installed" with download link — plan [plans/VSCODE.md](plans/VSCODE.md) | 🚧 built, release 1.0.1 (planned 2026-12-01) | |
+| W6c | VS Code tab opens the editor by itself (no button), shows "VS Code is starting…", only the editor; "VS Code is not installed" with download link — plan [plans/VSCODE.md](plans/VSCODE.md) | ✅ built and tested; release with 1.0 (moved from 1.0.1, maintainer's decision 2026-11-24) | |
 | W6a | VS Code tab must work without changing browser settings (served through the app's own address) | ✅ checked on a runner (Chromium + Electron) · to re-test on Windows | #30, #33, #34, #57 |
 | W7 | Collapsible left sidebar | ✅ | #15 |
 | W8 | Rename and archive projects in the app; delete = delete the project folder | ✅ | #11 |
@@ -72,7 +72,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W14 | Project templates: save a project (with or without content), start new projects from it | ✅ | #39 |
 | W15 | Everything due in all projects on the home page; reminders, tray icon, start with Windows (desktop app) | ✅ | #40 |
 | W16 | Backup of the data folder | ❌ not built: documented in the wiki (*Backup*) | |
-| W18 | Versions: Git or SVN per project, local, on a share or an own server (set by IP address and port), no GitHub needed (plan: [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md)) | 📋 v1.0.1 (Rust) | #60 |
+| W18 | Versions: Git or SVN per project, local, on a share or an own server (set by IP address and port), no GitHub needed (plan: [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md)) | 📋 1.0.2 | #60 |
 | W19 | Project header: tabs that don't fit go into *More*; *Manage* is a gear icon (folder path, Claude CLI command, VS Code inside) | ✅ | #68, #69 |
 | W17 | Import / export | ❌ not built: files are copied in and out, documented in the wiki (*Import and Export*) | |
 
