@@ -699,7 +699,12 @@ function listen() {
       if (ev.type === 'features') { S.features = await api('/api/features').catch(() => S.features); }
       await App.refreshProjects();
       if (App.dirty || $('#overlay .modal-bg')) return; // never disturb someone editing
-      if (ev.type === 'project' && S.project && S.project.slug === ev.slug) { S.project = await api(`/api/projects/${enc(ev.slug)}`).catch(() => S.project); route(); }
+      if (ev.type === 'project' && S.project && S.project.slug === ev.slug) {
+        S.project = await api(`/api/projects/${enc(ev.slug)}`).catch(() => S.project);
+        // the VS Code tab stays as it is: rebuilding it reloads the editor (black window) and starts VS Code a second time (#102)
+        if (document.querySelector('iframe.ide, [data-ide-wait]')) return;
+        route();
+      }
       else if (ev.type === 'features' && location.hash.startsWith('#/features')) route();
       else if (!S.project && (location.hash === '' || location.hash === '#/')) route();
     }, 300);

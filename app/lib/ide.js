@@ -80,6 +80,24 @@ function ping(port) {
   });
 }
 
+// Ready = VS Code's own page answers with the token (not just the port); the first page after a start can take a while
+// (code serve-web downloads its server then) — showing the tab before that gave a black window (#102).
+function ready(s, tkn) {
+  let p = fill(s.url, { port: s.port, token: tkn, base: s.base, folder: '' }); if (!p.startsWith('/')) p = '/' + p;
+  if (s.strip) { const rest = p.slice(s.base.length); p = rest.startsWith('/') ? rest : '/' + rest; }
+  return new Promise(resolve => {
+    const req = http.get({ host: '127.0.0.1', port: s.port, path: p, timeout: 30000, headers: { Cookie: `vscode-tkn=${tkn}` } }, res => { res.resume(); resolve(res.statusCode >= 200 && res.statusCode < 400); });
+    req.on('error', () => resolve(false)); req.on('timeout', () => { req.destroy(); resolve(false); });
+  });
+}
+
+// Something already listens on the port (also a VS Code still busy starting); a second start there fails with
+// "Only one usage of each socket address…" (os error 10048) (#102).
+function listening(port) {
+  return new Promise(resolve => { const c = net.connect({ host: '127.0.0.1', port }); const done = v => { c.destroy(); resolve(v); };
+    c.setTimeout(1000, () => done(false)); c.on('connect', () => done(true)); c.on('error', () => done(false)); });
+}
+
 async function status() {
   const s = settings(); const tkn = token();
   const running = await ping(s.port);
@@ -91,19 +109,27 @@ async function status() {
 function folderParam(abs) { const p = String(abs).replace(/\\/g, '/'); return encodeURIComponent(/^[A-Za-z]:\//.test(p) ? '/' + p : p); }
 
 async function start() {
-  const s = settings();
-  if (await ping(s.port)) return status();
-  if (starting) return status();
+  const s = settings(); const tkn = token();
+  if (await ping(s.port) && await ready(s, tkn)) return status();
+  // a start is already under way (the tab was shown twice): wait for it instead of answering "did not start" (#102)
+  if (starting) { const until = Date.now() + 180000; while (starting && Date.now() < until) await new Promise(r => setTimeout(r, 500)); return status(); }
   starting = true; log = [];
-  const cmd = fill(s.command, { port: s.port, token: token(), base: s.base });
-  child = spawn(cmd, { shell: true, cwd: ws.ROOT, windowsHide: true, detached: process.platform !== 'win32', env: { ...process.env } });
-  const take = d => { for (const l of String(d).split(/\r?\n/)) if (l.trim()) log.push(l.replace(/[a-f0-9]{32,}/g, '•••').slice(0, 300)); if (log.length > 200) log = log.slice(-100); };
-  child.stdout.on('data', take); child.stderr.on('data', take);
-  child.on('exit', code => { if (code) log.push(`(stopped with exit code ${code})`); child = null; starting = false; });
-  child.on('error', e => { log.push(e.message); child = null; starting = false; });
-  // wait until it answers (the first start downloads the VS Code server, which can take a while)
-  const until = Date.now() + 120000;
-  while (Date.now() < until && child) { if (await ping(s.port)) break; await new Promise(r => setTimeout(r, 1000)); }
+  const cmd = fill(s.command, { port: s.port, token: tkn, base: s.base });
+  if (!(await listening(s.port))) {   // the port is taken already (a VS Code still getting ready from an earlier start): don't start a second one
+    child = spawn(cmd, { shell: true, cwd: ws.ROOT, windowsHide: true, detached: process.platform !== 'win32', env: { ...process.env } });
+    const take = d => { for (const l of String(d).split(/\r?\n/)) if (l.trim()) log.push(l.replace(/[a-f0-9]{32,}/g, '•••').slice(0, 300)); if (log.length > 200) log = log.slice(-100); };
+    child.stdout.on('data', take); child.stderr.on('data', take);
+    child.on('exit', code => { if (code) log.push(`(stopped with exit code ${code})`); child = null; });
+    child.on('error', e => { log.push(e.message); child = null; });
+  }
+  // wait until VS Code's page answers (the first start downloads the VS Code server, which can take a while)
+  const until = Date.now() + 180000;
+  while (Date.now() < until) {
+    const up = await listening(s.port);
+    if (up && await ready(s, tkn)) break;
+    if (!child && !up) break;
+    await new Promise(r => setTimeout(r, 1000));
+  }
   starting = false;
   const st = await status();
   if (!st.running && !child && !log.length) log.push(`Could not start: ${cmd.replace(/[a-f0-9]{32,}/g, '•••')}`);

@@ -96,6 +96,30 @@ async fn ping(port: u16) -> bool {
     matches!(tokio::time::timeout(Duration::from_millis(1500), go).await, Ok(Some(())))
 }
 
+/// Ready = VS Code's own page answers with the token (not just the port). The first page after a start can take a while
+/// (code serve-web downloads its server then); showing the tab before that gave a black window (#102).
+fn ready_path(s: &Settings, tkn: &str) -> String {
+    let p = fill(&s.url, &[("port", &s.port.to_string()), ("token", tkn), ("base", &s.base), ("folder", "")]);
+    let p = if p.starts_with('/') { p } else { format!("/{p}") };
+    target_path(&p, s)
+}
+async fn ready(port: u16, path: &str, tkn: &str) -> bool {
+    let go = async {
+        let mut s = tokio::net::TcpStream::connect(("127.0.0.1", port)).await.ok()?;
+        s.write_all(format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nCookie: {COOKIE}={tkn}\r\nConnection: close\r\n\r\n").as_bytes()).await.ok()?;
+        let mut b = [0u8; 16]; let n = s.read(&mut b).await.ok()?;
+        let code: u16 = String::from_utf8_lossy(&b[..n]).split_whitespace().nth(1)?.parse().ok()?;
+        (200..400).contains(&code).then_some(())
+    };
+    matches!(tokio::time::timeout(Duration::from_secs(30), go).await, Ok(Some(())))
+}
+
+/// Something already listens on the port (also a VS Code that is still busy starting and doesn't answer yet).
+/// Starting a second one there fails with "Only one usage of each socket address…" (os error 10048) (#102).
+async fn listening(port: u16) -> bool {
+    matches!(tokio::time::timeout(Duration::from_secs(1), tokio::net::TcpStream::connect(("127.0.0.1", port))).await, Ok(Ok(_)))
+}
+
 pub async fn status(ws: &Workspace) -> Value {
     let s = settings(ws); let tkn = token(ws);
     let running = ping(s.port).await;
@@ -137,37 +161,48 @@ fn take_log(line: &str) {
 }
 
 pub async fn start(ws: &Workspace) -> Value {
-    let s = settings(ws);
-    if ping(s.port).await { return status(ws).await; }
+    let s = settings(ws); let tkn = token(ws); let path = ready_path(&s, &tkn);
+    if ping(s.port).await && ready(s.port, &path, &tkn).await { return status(ws).await; }
+    // a start is already under way (the tab was shown twice, e.g. after a change in the project): wait for it
+    // instead of answering "did not start" (#102)
     let busy = { let mut r = run().lock().unwrap(); if r.starting { true } else { r.starting = true; r.log.clear(); false } };
-    if busy { return status(ws).await; }
-    let port = s.port.to_string(); let tkn = token(ws);
+    if busy {
+        let until = Instant::now() + Duration::from_secs(180);
+        while Instant::now() < until && run().lock().unwrap().starting { tokio::time::sleep(Duration::from_millis(500)).await; }
+        return status(ws).await;
+    }
+    let port = s.port.to_string();
     let cmd = fill(&s.command, &[("port", &port), ("token", &tkn), ("base", &s.base)]);
-    let mut c = shell(&cmd);
-    c.current_dir(&ws.root).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
-    match c.spawn() {
-        Ok(mut child) => {
-            run().lock().unwrap().pid = child.id();
-            for out in [child.stdout.take().map(|o| Box::new(o) as Box<dyn tokio::io::AsyncRead + Unpin + Send>), child.stderr.take().map(|o| Box::new(o) as Box<dyn tokio::io::AsyncRead + Unpin + Send>)].into_iter().flatten() {
+    if !listening(s.port).await {   // the port is taken already (a VS Code still getting ready from an earlier start): don't start a second one
+        let mut c = shell(&cmd);
+        c.current_dir(&ws.root).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+        match c.spawn() {
+            Ok(mut child) => {
+                run().lock().unwrap().pid = child.id();
+                for out in [child.stdout.take().map(|o| Box::new(o) as Box<dyn tokio::io::AsyncRead + Unpin + Send>), child.stderr.take().map(|o| Box::new(o) as Box<dyn tokio::io::AsyncRead + Unpin + Send>)].into_iter().flatten() {
+                    tokio::spawn(async move {
+                        use tokio::io::AsyncBufReadExt;
+                        let mut lines = tokio::io::BufReader::new(out).lines();
+                        while let Ok(Some(l)) = lines.next_line().await { take_log(&l); }
+                    });
+                }
                 tokio::spawn(async move {
-                    use tokio::io::AsyncBufReadExt;
-                    let mut lines = tokio::io::BufReader::new(out).lines();
-                    while let Ok(Some(l)) = lines.next_line().await { take_log(&l); }
+                    let st = child.wait().await;
+                    let mut r = run().lock().unwrap();
+                    if let Ok(st) = st { if !st.success() { r.log.push(format!("(stopped with exit code {})", st.code().unwrap_or(-1))); } }
+                    r.pid = None;
                 });
             }
-            tokio::spawn(async move {
-                let st = child.wait().await;
-                let mut r = run().lock().unwrap();
-                if let Ok(st) = st { if !st.success() { r.log.push(format!("(stopped with exit code {})", st.code().unwrap_or(-1))); } }
-                r.pid = None; r.starting = false;
-            });
+            Err(e) => { let mut r = run().lock().unwrap(); r.log.push(e.to_string()); r.pid = None; }
         }
-        Err(e) => { let mut r = run().lock().unwrap(); r.log.push(e.to_string()); r.pid = None; r.starting = false; }
     }
-    // wait until it answers (the first start downloads the VS Code server, which can take a while)
-    let until = Instant::now() + Duration::from_secs(120);
-    while Instant::now() < until && run().lock().unwrap().pid.is_some() {
-        if ping(s.port).await { break; }
+    // wait until VS Code's page answers (the first start downloads the VS Code server, which can take a while)
+    let until = Instant::now() + Duration::from_secs(180);
+    while Instant::now() < until {
+        let alive = run().lock().unwrap().pid.is_some();
+        let up = listening(s.port).await;
+        if up && ready(s.port, &path, &tkn).await { break; }
+        if !alive && !up { break; }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
     run().lock().unwrap().starting = false;

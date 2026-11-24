@@ -77,6 +77,7 @@ jobs:
             npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null && npx playwright install --with-deps chromium > /dev/null
           fi
           PATH="$T/vscode/bin:$PATH" node docs/plans/checks/vscode-check.js
+          node docs/plans/checks/vscode-start-check.js   # #102: two clicks at once, port still taken, tab not reloaded
       - name: Package
         run: |
           d=dist/workspace-proto
@@ -138,6 +139,7 @@ jobs:
             npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null && npx playwright install --with-deps chromium > /dev/null
           fi
           PATH="$T/vscode/bin:$PATH" node docs/plans/checks/vscode-check.js
+          node docs/plans/checks/vscode-start-check.js   # #102: two clicks at once, port still taken, tab not reloaded
       - name: Signing with the own certificate (test certificate; docs/plans/SIGNING.md)
         timeout-minutes: 10
         run: pwsh docs/plans/checks/signing-check.ps1 -Exe rust/target/release/workspace-server.exe
