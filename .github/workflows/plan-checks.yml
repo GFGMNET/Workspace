@@ -502,7 +502,13 @@ jobs:
           mkdir -p "$RUNNER_TEMP/game" && cd "$RUNNER_TEMP/game"
           export OPENAI_MODEL="$LMS_MODEL"
           start=$(date +%s)
-          opengame -p "Build a Snake clone as a web game with arrow-key and WASD controls and a dark theme. Use simple shapes, no images and no sound. Put a ready-to-open index.html in this folder." --yolo 2>&1 | tee "$RUNNER_TEMP/opengame.log" | tail -n 60 || true
+          # up to 4 tries: Node drops a request after 5 minutes without an answer, and without a graphics card the model needs
+          # longer than that to read OpenGame's long instructions the first time; LM Studio keeps what it has read, so a retry is quicker
+          for i in 1 2 3 4; do
+            echo "== try $i ($(date +%H:%M))"
+            opengame -p "Build a Snake clone as a web game with arrow-key and WASD controls and a dark theme. Use simple shapes, no images and no sound. Put a ready-to-open index.html in this folder." --yolo 2>&1 | tee -a "$RUNNER_TEMP/opengame.log" | tail -n 40 || true
+            find . -name index.html -not -path '*/node_modules/*' | grep -q . && break
+          done
           echo "took $(( ($(date +%s) - start) / 60 )) minutes"
           find . -path ./node_modules -prune -o -type f -print | head -60
       - name: Browser
