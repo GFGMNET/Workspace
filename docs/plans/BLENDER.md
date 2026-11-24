@@ -10,7 +10,7 @@ Blender
 
 ## 2) Planned release version
 
-1.1
+1.0.2 (was 1.1; 1.1 and 1.2 merged into 1.0.2 by the maintainer 2026-11-24)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -85,4 +85,4 @@ programs:
 | 3b | Same place: a note for Claude in the chat — keep the `.blend` files (and exports) in the folder `blender/` of the project (decision 10); the app creates the folder. |
 | 4 | **Required** — wiki article "MCP: Blender" (decision 3); Blender is only released with it: what is needed (Blender, the Blender MCP add-on `addon.py`, `uv`), how to connect (install the add-on, Blender sidebar → BlenderMCP → "Connect to Claude", `programs: [blender]` in `project.yaml`), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
 | 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.1.0.md`. |
-| 6 | No own beta (decision 7): goes out with the release 1.1, with your OK. |
+| 6 | No own beta (decision 7): goes out with the release 1.0.2, with your OK. |
