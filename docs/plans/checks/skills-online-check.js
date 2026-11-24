@@ -51,11 +51,14 @@ function describe(s, md) {
   const fm = (md.match(/^---\n([\s\S]*?)\n---/) || [, ''])[1];
   const field = k => ((fm.match(new RegExp(`^${k}:\\s*(.+)$`, 'm')) || [, ''])[1]).replace(/^["']|["']$/g, '').trim();
   const scripts = s.files.filter(f => /\.(sh|bash|ps1|bat|cmd|py|js|mjs|ts|rb|pl|exe)$/i.test(f.path) || /^scripts\//.test(f.path)).map(f => f.path);
-  const online = [...new Set([...md.matchAll(/https?:\/\/(?:api\.|[\w-]+\.)?[\w-]+\.(?:com|ai|io|net|dev|org)[^\s)"'`]*/g)].map(m => new URL(m[0]).hostname)
-    .filter(h => !/github\.com|githubusercontent|anthropic\.com|claude\.(ai|com)$/.test(h)))];
-  const key = /api[_ -]?key|token|secret|account|sign ?up|subscription/i.test(md);
+  // every web address the skill calls (any ending: .com, .ai, .run …), without GitHub / Anthropic's own pages
+  const online = [...new Set([...md.matchAll(/https?:\/\/[\w.-]+\.[a-z]{2,}(?=[\/\s:)"'`]|$)/gi)].map(m => new URL(m[0]).hostname)
+    .filter(h => !/(^|\.)(github\.com|githubusercontent\.com|anthropic\.com|claude\.(ai|com)|example\.(com|org))$/i.test(h)))];
+  // keys it expects, e.g. $EACHLABS_API_KEY
+  const keys = [...new Set([...md.matchAll(/\$\{?([A-Z][A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|KEY))\}?/g)].map(m => m[1]))];
+  const key = keys.length > 0 || /api[_ -]?key|sign ?up|subscription/i.test(md);
   return { name: field('name') || path.posix.basename(s.dir), description: field('description'), source: `github.com/${s.owner}/${s.repo}/${s.dir}`,
-    author: s.owner, license: s.license || '—', files: s.files.map(f => f.path), scripts, online, needsAccount: key && online.length > 0 };
+    author: s.owner, license: s.license || '—', files: s.files.map(f => f.path), scripts, online, keys, needsAccount: key && online.length > 0 };
 }
 
 (async () => {
@@ -70,13 +73,14 @@ function describe(s, md) {
       const s = await resolve(link); const md = await raw(s, 'SKILL.md'); const d = describe(s, md); got[label] = { s, md, d };
       res(true, `${label}: found ${d.source} (${d.files.length} files)`);
       res(!!d.name && !!d.description, `${label}: info shown — "${d.name}": ${d.description.slice(0, 70)}…`);
-      console.log(`      author ${d.author} · license ${d.license} · scripts: ${d.scripts.length ? d.scripts.slice(0, 4).join(', ') : 'none'} · online service: ${d.online.slice(0, 3).join(', ') || 'none'}${d.needsAccount ? ' (probably needs an account)' : ''}`);
+      console.log(`      author ${d.author} · license ${d.license} · scripts: ${d.scripts.length ? d.scripts.slice(0, 4).join(', ') : 'none'} · online service: ${d.online.slice(0, 3).join(', ') || 'none'}${d.needsAccount ? ' (probably needs an account)' : ''}${d.keys.length ? ' · keys: ' + d.keys.join(', ') : ''}`);
     } catch (e) { res(false, `${label}: ${e.message}`); }
   }
   const pdf = got['GitHub folder (with scripts)'];
   if (pdf) res(pdf.d.scripts.length > 0, `scripts are recognised and named in the warning (${pdf.d.scripts.length} in the pdf skill)`);
   const fp = got['skills.sh'] || got['the maintainer\'s example (skills.rest)'];
-  if (fp) res(fp.d.online.length > 0, `an online service is recognised (${fp.d.online.join(', ')})`);
+  if (fp) res(fp.d.online.length > 0 && fp.d.needsAccount && fp.d.keys.includes('EACHLABS_API_KEY'), `an online service and its key are recognised (${fp.d.online.join(', ')}; ${fp.d.keys.join(', ')})`);
+  if (pdf) res(pdf.d.online.length === 0 && !pdf.d.needsAccount, `a skill without an online service is not flagged (pdf: ${pdf.d.online.join(', ') || 'none'})`);
   try { await resolve('https://example.com/skill/x'); res(false, 'other websites are refused'); } catch (e) { res(/only skills/.test(e.message), `other websites are refused (${e.message})`); }
 
   // Install: the whole skill into the project; the Skills tab lists it; nothing runs
