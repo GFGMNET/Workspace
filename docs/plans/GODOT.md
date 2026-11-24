@@ -10,7 +10,7 @@ Godot
 
 ## 2) Planned release version
 
-1.2.5
+1.0.5 (was 1.2.5; 1.2.5 and 1.2.6 merged into 1.0.5, renumbered by the maintainer 2026-11-24: rather merge releases than go up in the version number)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -86,5 +86,5 @@ programs:
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config`. |
 | 3b | Same place: a note for Claude in the chat — keep the Godot project in the folder `godot/` of the project (decision 10); the app creates the folder. |
 | 4 | **Required** — wiki article "MCP: Godot" (decision 3); Godot is only released with it: what is needed (Godot 4.7 or newer, the Godot AI add-on in `addons/godot_ai/`, `uv`), how to connect (Project → Project Settings → Plugins → Godot AI on, tick Godot in the project settings), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
-| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.2.5.md`. |
-| 6 | No own beta (decision 7): goes out with the release 1.2.5, with your OK. |
+| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.0.5.md`. |
+| 6 | No own beta (decision 7): goes out with the release 1.0.5, with your OK. |
