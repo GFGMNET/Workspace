@@ -520,7 +520,7 @@ The UI can be rebuilt freely on top of the API in section 7.
 | Feature | Plan | Issue |
 |---|---|---|
 | Ticketsystem (GLPI 11; osTicket dropped) — v1.1, Rust | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
-| Versions (Git, then SVN; local, shared folder or own server) — **1.0.2** (Ready 2 Deploy) | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
+| Versions (Git, then SVN; local, shared folder or own server) — **1.0.1** (Ready 2 Deploy) | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
 | Trusted releases (signed exe, update check) | [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md) | #49, #31 |
 | macOS app | ❌ not planned (2026-11-18) | #56 |
 | VS Code tab: focused layout (editor + explorer) | | #62 |

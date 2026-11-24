@@ -18,8 +18,7 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 | Version | Planned for | What's new |
 |---|---|---|
 | **1.0** | 27 Nov 2026 | • Workspace in Rust, signed<br>• Ticket tab (GLPI)<br>• Two layouts: menu left or menu top<br>• Tabs button: choose the tabs per project<br>• project.yaml in the gear menu<br>• Issues feature renamed to `issue`<br>• Help & wiki opens again<br>• VS Code tab starts by itself<br>• New wiki order |
-| **1.0.1** | 2 Dec 2026 | • Restore deleted built-in features<br>• New versions of built-in features, projects switch when you want |
-| **1.0.2** | 7 Dec 2026 | • Version Control tab (Git, SVN)<br>• ComfyUI tab<br>• Forgejo in the Issues tab |
+| **1.0.1** | 2 Dec 2026 | • Restore deleted built-in features<br>• New versions of built-in features, projects switch when you want<br>• Version Control tab (Git, SVN)<br>• ComfyUI tab<br>• Forgejo in the Issues tab |
 | **1.1** | 12 Dec 2026 | • MCP: Blender<br>• MCP: Unity |
 | **1.2** | 17 Dec 2026 | • MCP: Unreal Engine |
 | **1.2.1** | 22 Dec 2026 | • LM Studio in the Chat |

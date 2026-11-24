@@ -8,7 +8,7 @@ Forgejo in the issues feature (self-hosted bug tracker)
 
 ## 2) Planned release version
 
-1.0.2 — 7 Dec 2026 (together with Git/SVN and ComfyUI; 5-day release rule)
+1.0.1 — 2 Dec 2026 (1.0.1 and 1.0.2 merged into 1.0.1 by the maintainer 2026-11-24)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -41,7 +41,7 @@ None (all answered 2026-11-23).
 | 1 | Self-hosted bug tracker: **Forgejo**, built into the issues feature like the Chat: `engine: github` (default) or `forgejo`. |
 | 2 | The feature is called **`issue`** — already in 1.0 (done 2026-11-23); `github_issue` and `github` keep working. |
 | 3 | The functions stay as GitHub issues today: read, filter, search in the app; **New issue** and the links open the browser. |
-| 4 | Version 1.0.2 (7 Dec 2026 under the 5-day release rule). |
+| 4 | Version 1.0.1 (2 Dec 2026; was 1.0.2, merged 2026-11-24). |
 | 5 | Forgejo: `url:` and `repo:`; the token for a private repository in `project.yaml` as a secret (`token: ${secret:forgejo-token}`). |
 | 6 | Self-made HTTPS certificates are ignored. |
 | 7 | The button that opens the issues in the browser is called **Issues** (both engines; done in 1.0). |
@@ -86,4 +86,4 @@ issue:
 | 2 | With `engine: forgejo` the app reads `/api/v1/repos/<repo>/issues` from `url:` (state, type=issues, pages of 50), with the same fields as from GitHub; certificates ignored (decision 6); clear messages when not reachable / not found. |
 | 3 | The tab works as today; **New issue** and **Issues** open the Forgejo pages (decisions 3, 7). |
 | 4 | Automatic tests against a fake Forgejo (contract tests); the plan check again before the release (risk 3). |
-| 5 | Wiki page "Issues": *What you need* per engine, the settings, the notes on the server address and the network; DESIGN.md, REQUIREMENTS.md, release notes of 1.0.2. |
+| 5 | Wiki page "Issues": *What you need* per engine, the settings, the notes on the server address and the network; DESIGN.md, REQUIREMENTS.md, release notes of 1.0.1. |

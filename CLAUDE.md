@@ -46,7 +46,7 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   says so) — if that can't be confirmed, don't present it. Checked and not possible: Azure Trusted Signing (companies only in the EU),
   Sectigo/Comodo (no individual purchase confirmed).
 - 1.0 is called **Workspace** everywhere (window, tray, `Workspace.exe`, `workspace`, `workspace-server`, zips `workspace-v…`); decided 2026-11-18 (#77).
-- Ticketsystem = GLPI 11 only, by entity, in **1.0** (moved from 1.1 on 2026-11-19; osTicket dropped; #59 closes with the 1.0 release). Versions (Git first, then SVN; server by IP + port) in **v1.0.2** (decided 2026-11-19, moved from 1.0.1). VS Code (VSCODE.md) is in **1.0** (decided 2026-11-24; it was already in the betas). 1.0.1 = built-in features restore/update (BUILTIN.md).
+- Ticketsystem = GLPI 11 only, by entity, in **1.0** (moved from 1.1 on 2026-11-19; osTicket dropped; #59 closes with the 1.0 release). Versions (Git first, then SVN; server by IP + port) in **1.0.1**. VS Code (VSCODE.md) is in **1.0** (decided 2026-11-24; it was already in the betas). 1.0.1 (2 Dec) = built-in features restore/update, Versions (Git/SVN), ComfyUI, Forgejo — 1.0.1 and 1.0.2 merged by the maintainer 2026-11-24.
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).

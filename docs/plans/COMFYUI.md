@@ -8,7 +8,7 @@ ComfyUI
 
 ## 2) Planned release version
 
-1.0.2
+1.0.1 — 2 Dec 2026 (1.0.1 and 1.0.2 merged into 1.0.1 by the maintainer 2026-11-24)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -55,7 +55,7 @@ None (all answered 2026-11-23).
 | id | decision |
 |---|---|
 | 1 | Its own feature and tab, called **ComfyUI**; only the screen, no Claude. LM Studio gets its own plan. |
-| 2 | Version 1.0.2. |
+| 2 | Version 1.0.1 (was 1.0.2; merged 2026-11-24). |
 | 3 | List of workflows → fields → **Run** → results in a gallery, saved in the project. |
 | 4 | Results: pictures, video and audio. |
 | 5 | ComfyUI on the same PC or in the network; the address is `url:` in `project.yaml`. If it is missing, a message is shown. |
