@@ -528,6 +528,7 @@ Order and dates: README "Upcoming changes" (1.0 on 27 Nov 2026, then a new versi
 | 1.0.1 | Versions (Git, then SVN; local, shared folder or own server) | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
 | 1.0.1 | ComfyUI tab | [plans/COMFYUI.md](plans/COMFYUI.md) | #93 |
 | 1.0.1 | Forgejo in the Issues tab | [plans/FORGEJO.md](plans/FORGEJO.md) | #96 |
+| 1.0.1 | More layouts for text: journal, book, notes, board, table, blog | [plans/LAYOUTS.md](plans/LAYOUTS.md) | #116 |
 | 1.0.2 | MCPs: Blender, Unity, Unreal Engine | [BLENDER](plans/BLENDER.md), [UNITY](plans/UNITY.md), [UNREAL](plans/UNREAL.md) | #109–#111 |
 | 1.0.3 | LM Studio in the Chat | [plans/LMSTUDIO.md](plans/LMSTUDIO.md) | #94 |
 | 1.0.4 | Help & wiki inside the app | [plans/HELP.md](plans/HELP.md) | #95 |
