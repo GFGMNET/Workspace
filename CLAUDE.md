@@ -67,6 +67,12 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   1.0 app's libraries) and CodeQL (code scan). A finding is fixed first, like a bug (Rust library: Actions "Rust lock update"
   with the crate names → commit the new rust/Cargo.lock from branch `rust-lock-update`). Never release with a failing security check.
 
+- **Pull requests from others (decided 2026-11-24):** only the maintainer and Claude change the repository; others fork it and send a
+  pull request. Before the maintainer merges one, Claude checks it and tells him in plain words whether it's OK: what it changes,
+  tests and security checks green (CI on Windows + Linux, Rust security check, CodeQL), no secrets or client data, the plan rules
+  (a new function needs a plan the maintainer approved), docs updated. Only the maintainer merges. A built-in feature from a pull
+  request (`app/starter/features/`) also gets a test before it goes into a release.
+
 ## How plans are written (decided 2026-11-19, by the maintainer)
 
 Every plan has exactly these parts, in this order:
