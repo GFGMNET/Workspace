@@ -630,7 +630,8 @@ async function refreshUpdates() {
   } else { bar.hidden = true; bar.innerHTML = ''; }
   return u;
 }
-// the update window shows only the short part of the release notes ("## In short"); all details are on the GitHub release page.
+// the update window (design by the maintainer 2026-11-24): a back-up warning, then only the short part of the release notes
+// ("## In short": New / Changed / Fixed / Security as short lists), then a link to all details on the GitHub release page.
 // Older notes without that part: the text up to the first "##" heading (or the first lines).
 function shortNotes(text) {
   const t = String(text || '').replace(/\r/g, '');
@@ -643,6 +644,7 @@ function updatesDialog(u) {
   const when = u.lastCheck ? ago(u.lastCheck) : 'never';
   const m = modal({ title: 'Version and updates', ok: u.available ? 'Update now' : null, cancel: 'Close',
     body: `<p style="margin:0 0 8px">You have <b>version ${esc(u.current)}</b>. ${u.available ? `<b>Version ${esc(u.latest.version)}</b> is available.` : u.latest ? 'This is the latest version.' : 'No releases published yet.'}</p>
+      ${u.available ? `<div class="warnbox" role="note">⚠ <b>It is recommended to back up your data folder</b> before updating.</div>` : ''}
       ${u.latest && u.latest.notes ? `<div class="relnotes md">${md(shortNotes(u.latest.notes))}</div><p class="small" style="margin:6px 0 0"><a href="${esc(u.latest.page || `https://github.com/${u.repo}/releases`)}" target="_blank" rel="noopener">Read all details on GitHub →</a></p>` : ''}
       ${u.error ? `<div class="err">${esc(u.error)}</div>` : ''}
       <p class="faint small" style="margin:8px 0 0">Checked ${esc(when)} · weekly, from <a href="https://github.com/${esc(u.repo)}/releases" target="_blank" rel="noopener">github.com/${esc(u.repo)}</a>${u.enabled ? '' : ' · automatic checks are off (settings.yaml → updates: check: false)'}.

@@ -521,3 +521,9 @@ button.ilabel.on{background:var(--lc);color:#fff}
 :root.layout-top.ftabs-collapsed .fcoll .ar{display:inline-block;transform:rotate(180deg)}
 }
 @media (min-width:901px) and (max-width:1440px){:root.layout-top .side-foot .side-link .txt{display:none}}
+
+/* update window: back-up warning (#117) */
+.warnbox{background:#3a2f12;border:1px solid #6b5520;color:#ffe2a6;border-radius:10px;padding:9px 12px;margin:0 0 10px}
+:root[data-theme=light] .warnbox{background:#fff4d6;border-color:#e6c26a;color:#5a4200}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]) .warnbox{background:#fff4d6;border-color:#e6c26a;color:#5a4200}}
+.relnotes h4{margin:10px 0 2px;font-size:13px}

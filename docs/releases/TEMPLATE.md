@@ -10,9 +10,18 @@ Use this structure (leave out a section that would be empty, except *In short*):
 
 One or two sentences: what this version is about.
 
-## In short                   ← REQUIRED, 3–6 short lines. The app's update window shows only this part,
-                                with a link "Read all details on GitHub" to the full text below.
-- **New:** …  · **Changed:** … · **Fixed:** … · anything the user must do before updating
+## In short                   ← REQUIRED. The app's update window shows only this part (design by the maintainer,
+                                2026-11-24): first, always, "⚠ It is recommended to back up your data folder" (the app
+                                adds it), then these short lists, then a link "Read all details on GitHub".
+#### New
+- one short line per new thing
+#### Changed
+- one short line per change the user notices
+#### Fixed
+- one short line per fixed problem, in the user's words
+#### Security
+- one short line (e.g. "Two libraries updated")
+                              ← leave out a list that would be empty
 
 ## Before you update          ← only if the user must do something first (backup, a new requirement, a setting)
 
