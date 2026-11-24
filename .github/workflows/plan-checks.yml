@@ -488,7 +488,10 @@ jobs:
       - name: OpenGame (from GitHub)
         run: |
           git clone --depth 1 https://github.com/leigest519/OpenGame.git "$RUNNER_TEMP/OpenGame"
-          cd "$RUNNER_TEMP/OpenGame" && git log -1 --format='OpenGame %h %cd' && npm install --no-audit --no-fund > /dev/null && npm run build > /dev/null && npm link > /dev/null
+          cd "$RUNNER_TEMP/OpenGame" && git log -1 --format='OpenGame %h %cd'
+          # its onnxruntime part tries to download a CUDA (graphics card) build that no longer exists (404) — skip it, as its own message says
+          npm install --no-audit --no-fund --onnxruntime-node-install-cuda=skip 2>&1 | tail -5
+          npm run build 2>&1 | tail -5 && npm link > /dev/null
           which opengame
       - name: Let OpenGame build a Snake game with the local model
         timeout-minutes: 240
