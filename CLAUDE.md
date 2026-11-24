@@ -64,6 +64,11 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   Not fitting: Fider (no bot protection), GLPI (no sign-up). Suggested, not decided: Discourse, PocketBase. Goal: as little spam as possible.
   Don't loop: no new tool suggestions one after another — first the review.
 
+- Game prototypes (OpenGame, github.com/leigest519/OpenGame): **skipped** (2026-11-24) — the maintainer's rule was "only if it works
+  with a smaller local model". Checked (plan check `opengame`, Qwen2.5-Coder 7B in LM Studio): no game, the model can't get through
+  OpenGame's long instructions in time on a normal PC. Alternatives looked at: OpenGameBuilder (fixed game types, 5% royalty),
+  Genex Desktop (no Windows). Don't offer again unless the maintainer brings it up.
+
 - **Security gate (decided 2026-11-24):** before every release (1.0 and each version after it) and when a version is built, the
   security checks run and must be clean: "Rust security check" (rust-security.yml, cargo-deny: known vulnerabilities in the
   1.0 app's libraries) and CodeQL (code scan). A finding is fixed first, like a bug (Rust library: Actions "Rust lock update"
