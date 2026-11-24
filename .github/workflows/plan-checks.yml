@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       plan:
-        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo or builtin"
+        description: "Which plan to check: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo, builtin or layouts"
         default: all
 
 permissions:
@@ -428,3 +428,36 @@ jobs:
           PW_INSTALL: ${{ github.workspace }}
           PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
         run: node docs/plans/checks/builtin-check.js
+
+  # More layouts for text (1.0.1): Journal, Book, Sticky notes, Board, Table, Blog — against the 1.0 app server, plus
+  # full screen / drag & drop / editing in place in Chromium (like WebView2) and WebKit (like WebKitGTK).
+  layouts:
+    if: inputs.plan == 'all' || inputs.plan == 'layouts'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build the app server (1.0)
+        working-directory: rust
+        run: cargo build -p pw-server --release --locked
+      - name: Browsers (Chromium + WebKit)
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          if [ "$RUNNER_OS" = Linux ]; then npx playwright install --with-deps chromium webkit > /dev/null; else npx playwright install chromium webkit > /dev/null; fi
+      - name: Check
+        env:
+          PW_INSTALL: ${{ github.workspace }}
+          PW_SERVER_CMD: ${{ github.workspace }}/rust/target/release/workspace-server {port}
+        run: node docs/plans/checks/layouts-check.js
