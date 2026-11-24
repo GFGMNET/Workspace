@@ -3,12 +3,16 @@
 Release notes are for **users**: they should understand what is new or different and how to use it — not just a list.
 The README "Upcoming changes" table stays short; the release notes have the details. Plain words, short sentences.
 
-Use this structure (leave out a section that would be empty):
+Use this structure (leave out a section that would be empty, except *In short*):
 
 ```
 # Workspace X.Y.Z
 
 One or two sentences: what this version is about.
+
+## In short                   ← REQUIRED, 3–6 short lines. The app's update window shows only this part,
+                                with a link "Read all details on GitHub" to the full text below.
+- **New:** …  · **Changed:** … · **Fixed:** … · anything the user must do before updating
 
 ## Before you update          ← only if the user must do something first (backup, a new requirement, a setting)
 
