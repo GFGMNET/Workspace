@@ -49,7 +49,8 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 - Ticketsystem = GLPI 11 only, by entity, in **1.0** (moved from 1.1 on 2026-11-19; osTicket dropped; #59 closes with the 1.0 release). Versions (Git first, then SVN; server by IP + port) in **1.0.1**. VS Code (VSCODE.md) is in **1.0** (decided 2026-11-24; it was already in the betas). 1.0.1 (2 Dec) = built-in features restore/update, Versions (Git/SVN), ComfyUI, Forgejo — 1.0.1 and 1.0.2 merged by the maintainer 2026-11-24.
   Version numbers (decided 2026-11-24): rather merge releases than go up in the version number; 1.0.2 = MCPs Blender, Unity, Unreal (was 1.1 and 1.2). 1.0.3 = LM Studio (was 1.2.1), 1.0.4 = Help & wiki in the app (was 1.2.2),
   1.0.5 = MCPs Godot, OpenSCAD, FreeCAD + Dashboard (1.2.5 and 1.2.6 merged).
-  Release dates and build timing are reviewed again later with the maintainer.
+  Dates (agreed 2026-11-24, every 5 days): 1.0.1 = 2 Dec, 1.0.2 = 7 Dec, 1.0.3 = 12 Dec, 1.0.4 = 17 Dec, 1.0.5 = 22 Dec. When each one gets
+  built is still to be agreed with the maintainer (a plan not built in time moves to the next version).
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
