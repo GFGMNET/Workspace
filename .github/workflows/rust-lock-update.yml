@@ -1,0 +1,35 @@
+# Helper: updates single Rust libraries in rust/Cargo.lock (e.g. after the Rust security check found a known vulnerability)
+# and puts the new lock file on the branch `rust-lock-update`; Claude then commits it to main (so the normal checks run).
+# Needed because Claude's work environment can't reach crates.io. Run: Actions → "Rust lock update" → crates "url".
+name: Rust lock update
+
+on:
+  workflow_dispatch:
+    inputs:
+      crates:
+        description: Libraries to update (separated by spaces), e.g. "url"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: cargo update -p … (only the named libraries)
+        env:
+          CRATES: ${{ inputs.crates }}
+        run: |
+          cd rust
+          for c in $CRATES; do cargo update -p "$c"; done
+          git diff --stat Cargo.lock
+          git diff Cargo.lock | grep -E '^[-+](name|version) ' || true
+      - name: Push the lock file to the branch rust-lock-update
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b rust-lock-update
+          git add rust/Cargo.lock
+          git commit -qm "Cargo.lock: update ${{ inputs.crates }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" rust-lock-update
