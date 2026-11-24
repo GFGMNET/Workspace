@@ -82,7 +82,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 
 **Also:** projects can be renamed, archived and saved as **templates**; the home page shows what's **coming up in all projects**; API keys and passwords are kept as encrypted **secrets** (`${secret:name}` in YAML); the desktop app has a **tray icon, reminders** and can start with the computer.
 
-**Starter features:** wiki, knowledge, gallery, files, scripts, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices, github (issues); from 1.0 also ticketsystem (GLPI). You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
+**Starter features:** wiki, knowledge, gallery, files, scripts, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices, issue (GitHub issues; older projects may say `github`); from 1.0 also ticketsystem (GLPI). You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
 
 | | |
 |---|---|

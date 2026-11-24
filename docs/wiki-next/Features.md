@@ -119,7 +119,7 @@ tasks:
 | `repo` | github: `owner/name` of the repository | none |
 | `layout` | markdown → `pages`, `cards`, `list` · records → `table`, `list`, `cards`, `kanban`, `calendar`, `orgchart`, `map` · images → `grid` · files → `files`, `code` · diagram → `diagram` · chat → `chat` · github → `issues` · glpi → `tickets` | first one |
 | `folder` | where the content goes in a project | the key |
-| `search` | `true` / `false` | true for text and records |
+| `search` | `true` / `false` | true for text and records — a search bar in *pages*, *cards* and *list* (titles and words inside the pages); `false` hides it |
 | `new_item` | label of the **+ New** button | by store |
 | `aliases` | other keys that mean this feature | none |
 | `fields` | records: list of `name` or `{name, type, label, options, to, multiple}` | `[title]` |

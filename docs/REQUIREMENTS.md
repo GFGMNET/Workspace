@@ -42,12 +42,15 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B16 | GitHub issues of a repository as a feature (`issue`, github.com only — Forgejo from 1.0.1; repo in any case or as an address) | ✅ | #28, #83, #84 |
 | B17 | Ticket: GLPI 11 tickets of a project — category = project name (created when missing); read, create, edit text, state, follow-ups, solution (osTicket dropped) (plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md)) | ✅ built and tested (2026-11-20); release with 1.0 | #59 |
 | B18 | Choose per project which tabs are shown (`hide_tabs:` in project.yaml); project.yaml opened from the gear menu | ✅ in 1.0 | #87, #89 |
-| B19 | Two layouts to switch between: menu left, or menu on top with the projects in a drop-down and the features on the left (collapsible) | ✅ in 1.0 | #90 |
+| B19 | Two layouts to switch between: menu left, or menu on top with the projects in a drop-down and the features on the left (collapsible); one toggle button each for the layout and for light / dark / auto; menu left with more than 4 projects shows them in a drop-down | ✅ in 1.0 | #90, #101, #102 |
 | B20 | ComfyUI tab (no Claude): workflows, prompt boxes found by the app, run, results in the project and the Gallery (video and audio too) | 📋 planned for 1.0.1 — docs/plans/COMFYUI.md | #93 |
 | B21 | Chat with LM Studio (`engine: lmstudio`, url, model): local model, same rights as Claude, no Claude CLI needed | 📋 planned for 1.0.3 — docs/plans/LMSTUDIO.md | #94 |
 | B22 | Help & wiki inside the app (page + panel beside each tab), works without internet | 📋 planned for 1.0.4 — docs/plans/HELP.md | #95 |
 | B23 | Self-hosted bug tracker: Forgejo in the issues feature (`engine: forgejo`, url, token as secret) | 📋 planned for 1.0.1 — docs/plans/FORGEJO.md | #96 |
 | B24 | Built-in features: restore deleted ones (tick which), `version:` in the feature file, update keeps the old one as "(deprecated)", "Use the new version" per tab | 📋 planned for 1.0.1 — docs/plans/BUILTIN.md | #100 |
+| B25 | MCPs per program, switched on per project with `programs:` — Blender, Unity, Unreal Engine (1.0.2); Godot, OpenSCAD, FreeCAD (1.0.5); each with its wiki article, results saved in the project | 📋 planned for 1.0.2 / 1.0.5 — docs/plans/ | #109–#114 |
+| B26 | Dashboard on the Overview: blocks per project (what + number or list + simple filter) | 📋 planned for 1.0.5 — docs/plans/DASHBOARD.md | #115 |
+| B27 | Feature requests from users | ❓ paused for a review (2026-11-23) | |
 
 ## Working with projects
 
@@ -60,7 +63,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | W5 | Open projects and files in VS Code | ✅ | #21 |
 | W6 | Full VS Code inside the app (browser VS Code via `code serve-web`, or code-server / OpenVSCode Server) | ✅ | #24 |
 | W6b | VS Code tab: focused layout with just explorer and editor | 📋 | #62 |
-| W6c | VS Code tab opens the editor by itself (no button), shows "VS Code is starting…", only the editor; "VS Code is not installed" with download link — plan [plans/VSCODE.md](plans/VSCODE.md) | ✅ built and tested; release with 1.0 (moved from 1.0.1, maintainer's decision 2026-11-24) | |
+| W6c | VS Code tab opens the editor by itself (no button), shows "VS Code is starting…", only the editor; "VS Code is not installed" with download link — plan [plans/VSCODE.md](plans/VSCODE.md); starts reliably (no black window, no "port in use", #104) | ✅ built and tested; release with 1.0 (moved from 1.0.1, maintainer's decision 2026-11-24) | |
 | W6a | VS Code tab must work without changing browser settings (served through the app's own address) | ✅ checked on a runner (Chromium + Electron) · to re-test on Windows | #30, #33, #34, #57 |
 | W7 | Collapsible left sidebar | ✅ | #15 |
 | W8 | Rename and archive projects in the app; delete = delete the project folder | ✅ | #11 |
