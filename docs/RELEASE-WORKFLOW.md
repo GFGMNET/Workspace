@@ -4,7 +4,10 @@ Releases: [GitHub Releases](https://github.com/GFGMNET/Workspace/releases) · No
 
 ```mermaid
 flowchart TD
-   A["All plans of the version are built"] --> B["Complete beta for the maintainer and testers"]
+   Z["Maintainer asks for a feature"] --> Y["Plan + checks (FEATURE-WORKFLOW)"]
+   Y --> X["Ready 2 Deploy"]
+   X --> A["Built into the next version"]
+   A --> B["Complete beta for the maintainer and testers<br/>— only now the release date is set (day 5)"]
    B --> C["5 test days — nothing new is added:<br/>a new feature asked for now goes into the next version (1.0.2)"]
    C --> D{"Bug (label bug) in the 5 days?"}
    D -->|No| G["Security gate: Rust security check + CodeQL"]
@@ -18,4 +21,5 @@ flowchart TD
    J --> K([End])
 ```
 
+No release date is fixed in advance: as quick and as safe as possible — the date is set when the complete beta is out.
 Hiccups never delay a release. The day-5 step runs as a scheduled task that Claude sets when the complete beta is out.
