@@ -1,6 +1,7 @@
 # FAQ
 
 > **Use at your own risk.** Workspace is free software, provided "as is" without any warranty (MIT License).
+>
 > **You are responsible for your data and its backups** — not the app and not its maintainer. Back up your `data` folder regularly and before every update: [[Backup]].
 
 ## Basics
