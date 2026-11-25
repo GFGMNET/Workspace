@@ -27,6 +27,10 @@ flowchart TD
 ```mermaid
 flowchart TD
  subgraph User
-  Bug Reported after Release
+  BUG[Bug Reported after Release]
  end
+ subgraph Maintainer
+  TEST[Test]
+ end
+ BUG --> TEST
 ```
