@@ -1,12 +1,15 @@
-# Publishes the wiki pages from docs/ to the GitHub wiki on every push to main.
+# Publishes the wiki pages from docs/ to the GitHub wiki on every push to main, and once a day (vote counts).
 # One-time setup: create the first wiki page on GitHub (GitHub creates the wiki repository then).
 name: Publish wiki
 
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'tools/build-wiki.js', '.github/workflows/wiki.yml']
+    paths: ['docs/**', 'tools/build-wiki.js', 'tools/vote-counts.js', '.github/workflows/wiki.yml']
   workflow_dispatch:
+  # once a day, so the vote counts on "Vote for features" stay current (maintainer, 2026-11-25)
+  schedule:
+    - cron: '17 4 * * *'
 
 permissions:
   contents: write
@@ -25,6 +28,10 @@ jobs:
           node-version: 20
       - name: Build wiki pages
         run: node tools/build-wiki.js build/wiki
+      - name: Vote counts on "Vote for features"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: '[ -f build/wiki/Vote-for-features.md ] && node tools/vote-counts.js build/wiki/Vote-for-features.md || echo "no vote page"'
       - name: Push to the wiki
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}

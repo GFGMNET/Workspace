@@ -15,9 +15,13 @@ To take a vote back, click your 👍 or 👎 again. In the GitHub app on a phone
 
 ## The ideas
 
-| Idea | What it would do |
-|---|---|
-| [Skills from the internet](https://github.com/GFGMNET/Workspace/issues/118) | Paste the link of a skill (skills.rest, skills.sh, GitHub), see what it is, install it at your own risk |
+<!-- votes:start -->
+| Idea | 👍 | 👎 | What it would do |
+|---|---|---|---|
+| [Skills from the internet](https://github.com/GFGMNET/Workspace/issues/118) | – | – | Paste the link of a skill (skills.rest, skills.sh, GitHub), see what it is, install it at your own risk |
+
+*The numbers are filled in once a day.*
+<!-- votes:end -->
 
 Good to know:
 - Only votes on the **first post** of an idea count.
