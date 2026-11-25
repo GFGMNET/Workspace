@@ -1,8 +1,19 @@
 # Vote for features
 
-Ideas that are **not planned yet**. Show what you would like to see: open an idea and click **👍** (yes, please) or **👎** (not needed) on its first post. You need a free GitHub account; each person counts once, and you can change your vote any time.
+Ideas that are **not planned yet**. Show what you would like to see by voting **👍** (yes, please) or **👎** (not needed). Each person counts once, and you can change your vote any time.
 
 **[→ All ideas, most wanted first](https://github.com/GFGMNET/Workspace/issues?q=is%3Aissue+is%3Aopen+label%3Avote+sort%3Areactions-%2B1-desc)**
+
+## How to vote
+
+1. Sign in to GitHub (a free account is enough).
+2. Open an idea from the list below.
+3. Under the **first text** of the idea (its description), at the bottom left, click the small **smiley icon** ☺ (with a **+**).
+4. Choose **👍** (yes, please) or **👎** (not needed). Done — your vote shows as a number next to the icon.
+
+To take a vote back, click your 👍 or 👎 again. In the GitHub app on a phone: press and hold the first text, or tap **…**, then pick 👍 or 👎.
+
+## The ideas
 
 | Idea | What it would do |
 |---|---|
