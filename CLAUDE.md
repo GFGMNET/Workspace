@@ -113,6 +113,8 @@ done as planned, stop and ask the maintainer — no new design on your own.
 A plan that is not **Ready 2 Deploy** when its version is due is skipped: it moves to a later version (decided 2026-11-19).
 Release timing: 1.0 on 27 Nov 2026; then 1.0.1 with everything else: complete beta → 5 test days → release, or once 5 days later
 if a bug is reported in the test days (decided 2026-11-25; the daily "release train" of 2026-11-23 is switched off).
+The README as it should look after the next release is kept in `docs/readme-next/README.md`; the release copies it over `README.md`
+(decided 2026-11-25) — keep it current with every change of that release.
 Wiki pages of a version that is not out yet go into `docs/wiki-next/vX.Y.Z/` (not `docs/wiki/`, which is published on every push);
 the release of that version moves them into `docs/wiki/` (see `docs/wiki-next/README.md`).
 MCPs (decided 2026-11-20): named after the program they use (Blender, Unity, Unreal); use the existing solution if possible;
