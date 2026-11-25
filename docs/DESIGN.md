@@ -329,6 +329,11 @@ Screens (from the accepted mockup, issue #2):
 Live installations never use git; they are updated from **GitHub Releases** (#26).
 
 - **Weekly check:** the server asks `https://api.github.com/repos/GFGMNET/Workspace/releases/latest` (public, no login, nothing sent about the client) at most once a week, and the UI shows the result. The last check, the latest release, *skip* and *later* are stored in `data/.workspace.json`. Turn checking off with `updates: check: false` in `data/settings.yaml`; `updates: repo:` points to another repository.
+- **Versions (1.0 and later, decided 2026-11-25):** a normal version (1.0.0, 1.0.1) is released by the rule in
+  [RELEASE-WORKFLOW](RELEASE-WORKFLOW.md); a serious bug gets an **urgent fix version with four numbers** (1.0.0.1, 1.0.1.1 —
+  [URGENT-FIX-WORKFLOW](URGENT-FIX-WORKFLOW.md)). The update check compares **all four numbers** (`updater.rs` `parse_v`, #123),
+  so 1.0.0.1 is newer than 1.0.0 and 1.0.1 is newer than every 1.0.0.x. Test betas are GitHub **pre-releases**, which
+  `releases/latest` never returns, so installed apps never get them; the betas for 1.0.1 are numbered 0.9.2.N.
 - **Banner:** *Version X is available* · **What's new** (the release notes) · **Update now** · **Later** (a week) · **Skip this version**. The sidebar shows the version and a dot when an update is waiting; *v… · Updates* opens the same dialog with *Check now*.
 - **Update now:**
   1. downloads the release zip that fits the installation (`pickAsset`: Windows/Linux package for the desktop app, the plain zip for Node.js)
@@ -427,7 +432,9 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 | Build workflows | supply chain | Dependabot (`.github/dependabot.yml`) for GitHub Actions. |
 | Node.js / browser (start.bat, start.sh) | the user's | not shipped; the user keeps them current. |
 
-**Reporting:** `SECURITY.md` — private reports through GitHub (*Security → Report a vulnerability*). Only the latest release gets fixes.
+**Reporting:** `SECURITY.md` — private reports through GitHub (*Security → Report a vulnerability*, switched on). Only the latest release gets fixes.
+Labels (2026-11-25): `security` only for a real security problem (one issue per problem); the automatic message of the Rust
+security check gets `security-check`. Flow: [SECURITY-WORKFLOW](SECURITY-WORKFLOW.md); public list: wiki *Known security issues*.
 
 **Not done yet:** signed updates and a code-signed exe (#49, #31). A first attempt (a signing key on the maintainer's PC, scripts to sign each release) was removed again on 2026-11-16 as too cumbersome; the new plan is [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).
 
@@ -443,6 +450,25 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 | `docs/REQUIREMENTS.md` | everyone: every requirement with status and issue | repo + wiki *Requirements* |
 
 The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and turns the three documents above into wiki pages (links and screenshots rewritten). The workflow `.github/workflows/wiki.yml` runs it on every push to `main` that touches `docs/` and pushes the result to the wiki. Edit the files in `docs/`, never in the wiki itself. One-time setup: the first wiki page must be created on GitHub once, because GitHub only creates the wiki repository then.
+
+**Wiki pages filled in automatically (2026-11-25).** The wiki workflow also runs once a day and fills tables on the built
+pages only (never on `main`; the copies in `docs/` keep a placeholder row that says so):
+
+| Wiki page | Filled by | From |
+|---|---|---|
+| Vote for features | `tools/vote-counts.js` (`<!-- votes:start/end -->`) | open issues with label `vote` created by GFGMNET, 👍/👎 on the first post |
+| Known bugs | `tools/issue-list.js` (`<!-- list:start/end -->`) | all issues with label `bug` (open / fixed with milestone / closed) |
+| Known hiccups | `tools/issue-list.js` | all issues with label `hiccup` |
+| Known security issues | `tools/issue-list.js` | all issues with label `security` (fixed / open — being fixed / not fixed) |
+
+**Issues from users:** the form *New idea* (`.github/ISSUE_TEMPLATE/new-idea.yml`: short name, what it should do, why, "I checked
+the idea list") gives the label `idea`; normal issues stay possible. The maintainer decides bug or hiccup and sets the label.
+
+**Workflows as flowcharts** (Mermaid, `docs/*-WORKFLOW.md`): ideas → vote (`IDEAS-`), new feature (`FEATURE-`), MCP (`MCP-`),
+release (`RELEASE-`, 1.0.1 and later), bug (`BUG-`), urgent fix (`URGENT-FIX-`), pull request (`PR-`), security finding (`SECURITY-`).
+
+**Pages for coming versions** wait in `docs/wiki-next/` (1.0) and `docs/wiki-next/vX.Y.Z/` (e.g. the 1.0.1 FAQ with LM Studio);
+the release of that version moves them into `docs/wiki/`. The README after the next release is `docs/readme-next/README.md`.
 
 ## 7d. YAML
 
@@ -586,12 +612,14 @@ app/public    unchanged screens, served by pw-server
   Merge keys, anchors and several documents behave as in 0.x (YAML corpus 33/33).
 - The page is loaded from `http://localhost` inside WebView2/WebKitGTK; the VS Code tab (iframe, WebSockets), Mermaid, drag & drop
   and paste work.
-- Linux: WebKitGTK 4.1 must be installed (most desktops have it); `workspace-server` has no such need.
+- Linux: WebKitGTK 4.1 must be installed (most desktops have it); `workspace-server` has no such need. Both binaries are built on
+  Ubuntu 24.04 and need **glibc 2.39 or newer** (Ubuntu 24.04, Mint 22, Debian 13, Fedora 40, RHEL 10, up-to-date Arch …;
+  not Ubuntu 22.04 / Debian 12) — kept as it is (maintainer, 2026-11-25), listed in the FAQ with the check `ldd --version`.
 - Windows 10 is not supported (decided 2026-11-18, #73); Windows 11 always has WebView2.
 
 **Security work that comes with it**
 - rustls instead of OpenSSL, minimal crate features ✅. `cargo-deny` checks vulnerabilities, licences and sources on every change
-  and every Monday (`.github/workflows/rust-security.yml`, `rust/deny.toml`; a weekly finding opens an issue) ✅; `rust/Cargo.lock` is
+  and every Monday (`.github/workflows/rust-security.yml`, `rust/deny.toml`; a weekly finding opens an issue with the label `security-check`) ✅; `rust/Cargo.lock` is
   committed and builds use `--locked` ✅ (#72). Weekly check like 7g, for crates.
 - **Trusted releases:** Windows programs are signed with the project's own certificate ([plans/SIGNING.md](plans/SIGNING.md)):
   `signing/` holds the certificate with its key (no password), the public part and the fingerprint; `build-rust.yml` signs with it; the updater (`updater.rs` `check_signature`, 0.x `updater.js`) accepts only that fingerprint and an
