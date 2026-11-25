@@ -1,5 +1,10 @@
 # FAQ
 
+> **Use at your own risk.** Workspace is free software, provided "as is" without any warranty (MIT License).
+> **You are responsible for your data and its backups** — not the app and not its maintainer. Back up your `data` folder regularly and before every update: [[Backup]].
+
+## Basics
+
 **Do I need a database or a server?**
 No. The program runs a small local app on your PC (`localhost`), and everything is files in `data/`.
 
@@ -12,9 +17,6 @@ No, except for the Claude chat, the first start of the in-app VS Code, MCP serve
 **How do I get new versions?**
 The app tells you: once a week it checks GitHub and shows *Version X is available* with an **Update now** button. See [[Data and Updates|Data-and-Updates]].
 
-**Windows says "Windows protected your PC" when I start the exe**
-Workspace is signed with the project's own certificate, which Windows doesn't know yet. Trust it once and the warning is gone: [[Signing certificate|Signing-certificate]]. Or click **More info → Run anyway**.
-
 **Does it run on Linux?**
 Yes (x64). Download `workspace-v…-linux-x64.zip`, unzip it, and run `./workspace`. On a server without a desktop, run `./workspace-server` instead (no window). ARM computers (e.g. a Raspberry Pi) are not supported.
 
@@ -25,6 +27,11 @@ The download is a desktop app that uses your system's browser engine. To use you
 
 **I still have the old app (0.x)**
 It is deprecated. See [[Moving to 1.0|Moving-to-1.0]].
+
+## Starting the app
+
+**Windows says "Windows protected your PC" when I start the exe**
+Workspace is signed with the project's own certificate, which Windows doesn't know yet. Trust it once and the warning is gone: [[Signing certificate|Signing-certificate]]. Or click **More info → Run anyway**.
 
 **The app doesn't start**
 Go through these in order:
@@ -37,6 +44,8 @@ Go through these in order:
 **"Port 4321 is already in use"**
 The workspace is already running. Open http://localhost:4321, or start a second one with a port number: `Workspace.exe 4322`.
 
+## Chat & VS Code
+
 **The chat says "Claude CLI not found"**
 Install Claude CLI and run `claude` once in a terminal to sign in. If it's installed somewhere unusual, set `CLAUDE_COMMAND` to its full path.
 
@@ -46,6 +55,8 @@ The `code` command isn't on the PATH. Reinstall VS Code with *Add to PATH*, or s
 **The VS Code tab stays blank**
 VS Code needs internet the first time it starts (it downloads its web part once). If it says *VS Code is not installed*, install it from the link shown.
 
+## Files & YAML
+
 **Which YAML can I use?**
 Full YAML 1.2: anchors and aliases (`&name` / `*name`), merge keys (`<<: *name`), block text (`|`, `>`), flow lists `[a, b]`, comments, and several documents separated by `---`. Dates like `2026-11-18` and words like `yes` stay text. A file with an indentation mistake still opens, but shows a warning: fix it so it's standard YAML.
 
@@ -54,6 +65,8 @@ It has a YAML error; the message names the line. A common cause is indentation: 
 
 **I deleted something by mistake**
 Look in `.trash` inside the project folder. Nothing is really deleted by the app.
+
+## Help & feedback
 
 **Where do I report a bug or suggest a feature?**
 At [Issues](https://github.com/GFGMNET/Workspace/issues).
