@@ -26,4 +26,5 @@ To take a vote back, click your 👍 or 👎 again. In the GitHub app on a phone
 Good to know:
 - Only votes on the **first post** of an idea count.
 - New ideas on this list come from the maintainer. Votes help decide what is planned next — they never change a release date.
+- **Have a new idea?** Check the list above first, then use the form [New idea](https://github.com/GFGMNET/Workspace/issues/new?template=new-idea.yml). The maintainer reads it and may put it up for a vote.
 - Found a bug? That is a normal issue with the label **bug**, not a vote.
