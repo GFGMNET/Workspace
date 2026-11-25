@@ -1,0 +1,68 @@
+name: Check for duplicate ideas
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: write
+
+jobs:
+  check-duplicates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const WATCH_LABEL = 'idea';  // label to check
+            const THRESHOLD = 0.4;       // 0–1, higher = stricter
+
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+            if (!labels.includes(WATCH_LABEL)) return;
+            // Only react when *this* label was added (avoid repeat runs)
+            if (context.payload.action === 'labeled' &&
+                context.payload.label.name !== WATCH_LABEL) return;
+
+            const words = s => new Set((s.toLowerCase().match(/[a-z0-9]{3,}/g)) || []);
+            const similarity = (a, b) => {
+              const inter = [...a].filter(w => b.has(w)).length;
+              const union = new Set([...a, ...b]).size;
+              return union ? inter / union : 0;
+            };
+
+            const others = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: WATCH_LABEL,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const mine = words(issue.title);
+            const matches = others
+              .filter(o => o.number !== issue.number && !o.pull_request)
+              .map(o => ({ o, score: similarity(mine, words(o.title)) }))
+              .filter(m => m.score >= THRESHOLD)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 5);
+
+            if (!matches.length) return;
+
+            const list = matches
+              .map(m => `- #${m.o.number} ${m.o.title} (${Math.round(m.score * 100)}% similar)`)
+              .join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `👀 This idea might already exist:\n\n${list}\n\nPlease check these before we continue.`,
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ['possible-duplicate'],
+            });
