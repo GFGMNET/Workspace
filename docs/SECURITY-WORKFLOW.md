@@ -14,7 +14,11 @@ flowchart TD
    G --> H{"Clean?"}
    H -->|No| C
    H -->|Yes| I["Issue closed; release notes: Security"]
-   I --> J([End])
+   I --> R{"Is the affected version already released?"}
+   R -->|Yes| U["Urgent fix version as soon as possible<br/>(e.g. 1.0.1 → 1.0.1.1) — URGENT-FIX-WORKFLOW"]
+   R -->|No| V["Goes out with the open version"]
+   U --> J([End])
+   V --> J
 ```
 
 Never release with a failing security check.

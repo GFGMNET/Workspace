@@ -462,7 +462,7 @@ pages only (never on `main`; the copies in `docs/` keep a placeholder row that s
 | Known security issues | `tools/issue-list.js` | all issues with label `security` (fixed / open — being fixed / not fixed) |
 
 **Issues from users:** the form *New idea* (`.github/ISSUE_TEMPLATE/new-idea.yml`: short name, what it should do, why, "I checked
-the idea list") gives the label `idea`; normal issues stay possible. The maintainer decides bug or hiccup and sets the label.
+the idea list") gives the label `idea`; normal issues stay possible. The maintainer decides bug or hiccup and sets the label. `duplicate-check.yml` compares a new idea with open ideas and votes, and a bug (when the label `bug` is set) with all bugs, by the words of the title (prefixes like "Idea:" ignored, 40 % alike); it comments the matches and adds `possible-duplicate`.
 
 **Workflows as flowcharts** (Mermaid, `docs/*-WORKFLOW.md`): ideas → vote (`IDEAS-`), new feature (`FEATURE-`), MCP (`MCP-`),
 release (`RELEASE-`, 1.0.1 and later), bug (`BUG-`), urgent fix (`URGENT-FIX-`), pull request (`PR-`), security finding (`SECURITY-`).

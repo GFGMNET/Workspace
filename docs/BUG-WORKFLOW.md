@@ -5,10 +5,14 @@ Open bugs: [label bug](https://github.com/GFGMNET/Workspace/issues?q=is%3Aissue+
 ```mermaid
 flowchart TD
    A["Someone reports a bug (issue)"] --> B{"Maintainer decides: bug or hiccup?"}
+   B -->|A wish, not a bug| W["Close it: please use the form New idea (IDEAS-WORKFLOW)"]
+   B -->|Already known| X["Close it with: Already known: #number"]
+   W --> L
+   X --> L
    B -->|Unclear| C["Ask the reporter on the issue"]
    C --> B
    B -->|Hiccup| D["Maintainer sets the label hiccup and closes it<br/>— listed on the wiki page Known hiccups; never delays a release"]
-   B -->|Bug| E["Maintainer sets the label bug"]
+   B -->|Bug| E["Maintainer sets the label bug<br/>→ duplicate check (automatic) comments similar bugs"]
    F{"When was it reported?"}
    E --> S{"Serious? (maintainer decides)"}
    S -->|Yes| U["Urgent fix: see URGENT-FIX-WORKFLOW"]
