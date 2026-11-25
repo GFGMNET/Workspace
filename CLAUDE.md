@@ -69,6 +69,10 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   OpenGame's long instructions in time on a normal PC. Alternatives looked at: OpenGameBuilder (fixed game types, 5% royalty),
   Genex Desktop (no Windows). Don't offer again unless the maintainer brings it up.
 
+- Skills from the internet (paste a skills.rest / skills.sh / GitHub link → info → install at your own risk): **later, not planned**
+  (2026-11-25, "nice to have"). Checked and feasible (`docs/plans/checks/skills-online-check.js`, 18/18 on Windows + Linux); the plan
+  draft had 6 open points (button, warning text, same name, size limit, keep the source, keys → Secrets). Only when he asks for it.
+
 - **Security gate (decided 2026-11-24):** before every release (1.0 and each version after it) and when a version is built, the
   security checks run and must be clean: "Rust security check" (rust-security.yml, cargo-deny: known vulnerabilities in the
   1.0 app's libraries) and CodeQL (code scan). A finding is fixed first, like a bug (Rust library: Actions "Rust lock update"

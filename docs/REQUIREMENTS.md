@@ -52,6 +52,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B26 | Dashboard on the Overview: blocks per project (what + number or list + simple filter) | 📋 planned for 1.0.5 — docs/plans/DASHBOARD.md | #115 |
 | B27 | Feature requests from users | ❓ paused for a review (2026-11-23) | |
 | B28 | More layouts for text features: journal, book (ebook, full screen), notes (sticky notes), board, table (edit in place), blog | 📋 planned for 1.0.1 — docs/plans/LAYOUTS.md | #116 |
+| B29 | Skills from the internet: paste a link (skills.rest, skills.sh, GitHub), see the info, install at your own risk | 💤 later (2026-11-25) — checked OK, not planned yet | |
 
 ## Working with projects
 
