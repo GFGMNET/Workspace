@@ -19,7 +19,7 @@
 - [[Vote for features|Vote-for-features]]
 - [[Known bugs|Known-bugs]]
 - [[Known hiccups|Known-hiccups]]
-- [[Security fixes|Security-fixes]]
+- [[Known security issues|Known-security-issues]]
 - [[Requirements]]
 
 **Feature reference**

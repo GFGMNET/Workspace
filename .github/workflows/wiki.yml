@@ -7,7 +7,7 @@ on:
     branches: [main]
     paths: ['docs/**', 'tools/build-wiki.js', 'tools/vote-counts.js', 'tools/issue-list.js', '.github/workflows/wiki.yml']
   workflow_dispatch:
-  # once a day, so the vote counts on "Vote for features" and the lists (hiccups, bugs, security fixes) stay current (maintainer, 2026-11-25)
+  # once a day, so the vote counts on "Vote for features" and the lists (hiccups, bugs, security issues) stay current (maintainer, 2026-11-25)
   schedule:
     - cron: '17 4 * * *'
 
@@ -32,13 +32,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: '[ -f build/wiki/Vote-for-features.md ] && node tools/vote-counts.js build/wiki/Vote-for-features.md || echo "no vote page"'
-      - name: Lists on "Known hiccups", "Known bugs", "Security fixes"
+      - name: Lists on "Known hiccups", "Known bugs", "Known security issues"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node tools/issue-list.js build/wiki/Known-hiccups.md hiccup all
           node tools/issue-list.js build/wiki/Known-bugs.md bug all
-          node tools/issue-list.js build/wiki/Security-fixes.md security closed
+          node tools/issue-list.js build/wiki/Known-security-issues.md security all
       - name: Push to the wiki
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}

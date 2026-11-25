@@ -1,7 +1,9 @@
-# Security fixes
+# Known security issues
 
-Security problems that were **fixed**. Open ones are not listed here on purpose, so nobody can misuse them before the fix is out.
+All known security issues and their status: **fixed** (with the version), **open — being fixed**, or **not fixed** (the issue says why, e.g. the app doesn't use the weak part).
 Security holes are closed as soon as possible, with an urgent fix version if needed.
+
+**[→ All security issues on GitHub](https://github.com/GFGMNET/Workspace/issues?q=is%3Aissue+label%3Asecurity)**
 
 ## The list
 

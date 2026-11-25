@@ -1,5 +1,5 @@
 // Fills the table of a wiki page with the GitHub issues of one label (maintainer, 2026-11-25):
-// "Known hiccups" (label hiccup), "Known bugs" (label bug), "Security" (label security, only closed = fixed ones).
+// "Known hiccups" (label hiccup), "Known bugs" (label bug), "Known security issues" (label security).
 // Issues from anyone, newest first, written between <!-- list:start --> and <!-- list:end -->. Runs in the "Publish wiki"
 // workflow (daily and on every wiki update) on the built wiki page only — it never changes the app's code.
 // Usage: node tools/issue-list.js <page.md> <label> [all|closed]   (env GITHUB_TOKEN, GITHUB_REPOSITORY)
@@ -27,7 +27,11 @@ function summary(body) {
     all = all.concat(got.filter(i => !i.pull_request)); if (got.length < 100) break;
   }
   const day = new Date().toISOString().slice(0, 10);
-  const status = i => i.state === 'open' ? 'open' : (label === 'hiccup' || i.state_reason !== 'completed' ? 'closed' : 'fixed') + (i.milestone && label !== 'hiccup' ? ' (' + i.milestone.title + ')' : '');
+  const ms = i => i.milestone ? ' (' + i.milestone.title + ')' : '';
+  const status = i => label === 'hiccup' ? i.state
+    : i.state === 'open' ? (label === 'security' ? 'open — being fixed' : 'open')
+    : i.state_reason === 'completed' ? 'fixed' + ms(i)
+    : (label === 'security' ? 'not fixed — see the issue for why' : 'closed');
   const rows = all.map(i => `| [${i.title.replace(/\|/g, '/')}](${i.html_url}) | ${i.created_at.slice(0, 10)} | ${status(i)} | ${summary(i.body)} |`);
   const table = ['| Issue | Reported | Status | What happened |', '|---|---|---|---|', ...(rows.length ? rows : ['| — | | | Nothing listed right now. |']), '', `*As of ${day} — updated once a day, newest first.*`].join('\n');
   const s = fs.readFileSync(file, 'utf8');
