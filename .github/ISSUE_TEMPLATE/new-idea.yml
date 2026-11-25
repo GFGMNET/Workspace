@@ -1,6 +1,7 @@
 name: New idea
 description: Suggest a new idea for Workspace. The maintainer reads it and may put it up for a vote.
 title: "Idea: "
+labels: ["idea"]
 body:
   - type: input
     id: name
