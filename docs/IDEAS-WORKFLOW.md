@@ -1,27 +1,16 @@
-# How ideas become a vote (for the maintainer)
+# How ideas become a vote
 
-Decided 2026-11-25. Only ideas **you** create with the label `vote` appear on the wiki page
-[Vote for features](https://github.com/GFGMNET/Workspace/wiki/Vote-for-features).
+Form: [New idea](https://github.com/GFGMNET/Workspace/issues/new?template=new-idea.yml)
 
-## Someone else has an idea
-
-1. **Someone opens an issue** with the form *New idea* (title `Idea: …`: short name, what it should do, why it makes sense, tick box "I checked the idea list") or a normal issue. Form ideas get the label `idea` (list: issues with label `idea`). It never appears on the vote page — only your ideas do.
-2. **Unclear what they mean?** Ask on their issue (chat, files, meetings …?). Claude can draft the reply for you; nothing is posted without your OK.
-3. **Clear and you like it:** open a **new** issue yourself — title `Vote: …`, label `vote`, a short "What it would do".
-   Write in it: *Idea from #NN (thanks @name)*.
-4. **Close their issue** with a note: *Now up for a vote: #MM*.
-
-## Your own idea
-
-Open an issue: title `Vote: …`, label `vote`, a section **What it would do** (its first sentence is shown in the table).
-Or ask Claude to write it.
-
-## Take an idea off the list
-
-**Close** its issue — *Close as completed* (it gets planned) or *Close as not planned*. The votes are kept if you reopen it.
-
-## Good to know
-
-- The 👍 / 👎 numbers on the wiki page are updated once a day (and with every wiki update). Ask Claude to update them right away.
-- Only votes on the **first post** count. Votes never move a release date.
-- Bugs are normal issues with the label `bug`, never a vote.
+```mermaid
+flowchart TD
+   A["Form creates an idea (label: idea)"] --> B{"Is the request clear?"}
+   B -->|No| D["Ask the user on the idea issue"]
+   D -->|User answers| B
+   B -->|Yes| C["Idea check: duplicate? spam? already on the vote list?"]
+   C --> E{"Good idea?"}
+   E -->|Yes| F["New issue 'Vote: …' with label vote<br/>text: Idea from #number (thanks @user)<br/>close the idea issue with comment: Now up for a vote: #number"]
+   E -->|No| G["Close the idea issue as not planned<br/>comment: This will not be added. Thanks @user for the idea!"]
+   F --> H([End])
+   G --> H
+```
