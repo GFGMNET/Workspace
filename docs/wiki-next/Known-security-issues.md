@@ -10,7 +10,7 @@ Security holes are closed as soon as possible, with an urgent fix version if nee
 <!-- list:start -->
 | Issue | Reported | Status | What happened |
 |---|---|---|---|
-| — | | | The list is filled in once a day. |
+| — | | | This is the copy in the project — the list is filled in only on the wiki: https://github.com/GFGMNET/Workspace/wiki/Known-security-issues |
 <!-- list:end -->
 
 Good to know:

@@ -10,7 +10,7 @@ Before you report something, look here first: maybe it is already known.
 <!-- list:start -->
 | Hiccup | Reported | Status | What happened |
 |---|---|---|---|
-| — | | | The list is filled in once a day. |
+| — | | | This is the copy in the project — the list is filled in only on the wiki: https://github.com/GFGMNET/Workspace/wiki/Known-hiccups |
 <!-- list:end -->
 
 Good to know:
