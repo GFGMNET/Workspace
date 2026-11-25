@@ -14,7 +14,7 @@ You need:
 
 **Windows 11:** download `workspace-v…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest) and unzip it anywhere, for example `C:\Workspace` or a folder in OneDrive. It contains **Workspace.exe**.
 
-**Linux (x64):** download `workspace-v…-linux-x64.zip`, unzip it, and run `./workspace` inside the folder (needs WebKitGTK 4.1, which most desktops have). On a server without a desktop, run `./workspace-server` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
+**Linux (x64):** download `workspace-v…-linux-x64.zip`, unzip it, and run `./workspace` inside the folder (needs Ubuntu 24.04 / Mint 22 / Debian 13 / Fedora 40 or newer, and WebKitGTK 4.1, which most desktops have). On a server without a desktop, run `./workspace-server` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
 
 Coming from the old app (0.x)? See [[Moving to 1.0|Moving-to-1.0]].
 

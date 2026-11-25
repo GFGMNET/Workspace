@@ -6,6 +6,20 @@
 
 ## Basics
 
+### What do I need to run Workspace?
+Supported:
+- **Windows 11**, 64-bit (x64). Nothing else to install — the window engine (WebView2) is part of Windows 11.
+- **Linux**, 64-bit (x64): **Ubuntu 24.04** or newer, **Linux Mint 22** or newer, **Debian 13** or newer, **Fedora 40** or newer
+  (or another Linux with glibc 2.39 or newer). For the window: WebKitGTK 4.1 (most desktops have it).
+
+Not supported:
+- Windows 10 and older
+- macOS
+- ARM computers (e.g. Raspberry Pi, Windows on ARM)
+- Older Linux, e.g. Ubuntu 22.04, Linux Mint 21, Debian 12 — Workspace does not start there, also not `workspace-server`
+
+Optional: internet and the Claude CLI for the chat; VS Code for the VS Code tab.
+
 ### Do I need a database or a server?
 No. The program runs a small local app on your PC (`localhost`), and everything is files in `data/`.
 

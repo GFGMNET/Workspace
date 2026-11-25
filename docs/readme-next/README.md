@@ -16,7 +16,7 @@ Download the zip for your system from the [latest release](https://github.com/GF
 | Linux (x64) | `workspace-v…-linux-x64.zip` | `./workspace` |
 | Linux server without a desktop | the Linux zip | `./workspace-server` (then open http://localhost:4321) |
 
-- **Not supported:** Windows 10, ARM computers (e.g. Raspberry Pi), macOS. Linux needs WebKitGTK 4.1 for the window (most desktops have it).
+- **Not supported:** Windows 10, macOS, ARM computers (e.g. Raspberry Pi), older Linux (e.g. Ubuntu 22.04, Debian 12). Linux needs Ubuntu 24.04 / Mint 22 / Debian 13 / Fedora 40 or newer, and WebKitGTK 4.1 for the window (most desktops have it).
 - **Windows** shows a warning until you trust the project's own signing certificate once — [how to trust it](https://github.com/GFGMNET/Workspace/wiki/Signing-certificate) · [Code signing policy](CODE-SIGNING-POLICY.md).
 - On the first start a `data/` folder is created next to the program for your projects. The home page offers to add the example projects.
 - **Updating:** the app checks GitHub once a week and offers new versions with one click (*Update now*). Before updating, back up your `data/` folder — [Backup](https://github.com/GFGMNET/Workspace/wiki/Backup). By hand: replace everything **except the `data/` folder**.

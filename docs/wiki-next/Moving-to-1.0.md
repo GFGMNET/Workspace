@@ -14,7 +14,7 @@ Older 0.x versions first update to 0.6.3, then to 1.0. Or do it by hand: downloa
 ## Good to know
 - Version 1.0 runs on **Windows 11** and **Linux (x64)**. Windows 10, ARM computers (e.g. Raspberry Pi) and macOS are not supported.
 - The program is **signed** with the project's own certificate "Workspace". Windows warns until you trust the certificate once: [[Signing certificate|Signing-certificate]].
-- Linux needs WebKitGTK 4.1 for the window (most desktops have it). `workspace-server` runs without a window.
+- Linux needs Ubuntu 24.04 / Mint 22 / Debian 13 / Fedora 40 or newer, and WebKitGTK 4.1 for the window (most desktops have it). Older Linux (e.g. Ubuntu 22.04, Debian 12) is not supported. `workspace-server` runs without a window.
 - Secrets: on Windows they are taken over from 0.x; on Linux enter them again once.
 - A reminder can't be clicked; the tray menu lists what is due — click an entry to open it.
 - The X closes the app (it doesn't hide in the tray like 0.x).
