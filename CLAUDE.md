@@ -53,6 +53,9 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   (BUILTIN, VERSION-CONTROL, COMFYUI, FORGEJO, LAYOUTS, BLENDER, UNITY, UNREAL, LMSTUDIO, HELP, GODOT, OPENSCAD, FREECAD, DASHBOARD).
   Building starts on 27 Nov after the 1.0 release (not earlier, his choice), several features per test round; betas in between for him
   and his testers; 1.0.1 is released when everything is built and the beta test is OK — with his OK. The 5-day release train is off.
+  1.0 timing (2026-11-25): pre-flight check on 26 Nov 12:00 (security, tests, bugs — fix what is found); after that a CODE FREEZE:
+  nothing changes on main until 1.0 is out, bugs reported after 26 Nov 12:00 go into 1.0.1. Release 27 Nov 06:00 (out ~06:30);
+  building 1.0.1 starts 27 Nov 07:00 (waits if 1.0 isn't published yet — never push while the release build runs).
   (History: on 2026-11-24 the versions were 1.0.1–1.0.5 every 5 days; rule "rather merge releases than go up in the version number".)
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
