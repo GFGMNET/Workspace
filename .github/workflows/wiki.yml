@@ -1,4 +1,4 @@
-# Publishes the wiki pages from docs/ to the GitHub wiki on every push to main, and once a day (vote counts).
+# Publishes the wiki pages from docs/ to the GitHub wiki on every push to main, when a listed issue changes, and once a day (vote counts).
 # One-time setup: create the first wiki page on GitHub (GitHub creates the wiki repository then).
 name: Publish wiki
 
@@ -7,6 +7,10 @@ on:
     branches: [main]
     paths: ['docs/**', 'tools/build-wiki.js', 'tools/vote-counts.js', 'tools/issue-list.js', '.github/workflows/wiki.yml']
   workflow_dispatch:
+  # an issue with one of the list labels changed → the lists on the wiki follow within a minute (maintainer, 2026-11-25);
+  # votes (👍/👎) have no GitHub event, so their counts stay daily (schedule below)
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
   # once a day, so the vote counts on "Vote for features" and the lists (hiccups, bugs, security issues) stay current (maintainer, 2026-11-25)
   schedule:
     - cron: '17 4 * * *'
@@ -20,6 +24,12 @@ concurrency:
 
 jobs:
   wiki:
+    # for issue events: only when the issue has (or just lost) one of the labels the wiki lists use
+    if: >-
+      github.event_name != 'issues' ||
+      contains(fromJSON('["vote","bug","hiccup","security"]'), github.event.label.name) ||
+      contains(github.event.issue.labels.*.name, 'vote') || contains(github.event.issue.labels.*.name, 'bug') ||
+      contains(github.event.issue.labels.*.name, 'hiccup') || contains(github.event.issue.labels.*.name, 'security')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

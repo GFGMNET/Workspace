@@ -451,7 +451,7 @@ security check gets `security-check`. Flow: [SECURITY-WORKFLOW](SECURITY-WORKFLO
 
 The GitHub wiki is **generated**: `tools/build-wiki.js` copies `docs/wiki/` and turns the three documents above into wiki pages (links and screenshots rewritten). The workflow `.github/workflows/wiki.yml` runs it on every push to `main` that touches `docs/` and pushes the result to the wiki. Edit the files in `docs/`, never in the wiki itself. One-time setup: the first wiki page must be created on GitHub once, because GitHub only creates the wiki repository then.
 
-**Wiki pages filled in automatically (2026-11-25).** The wiki workflow also runs once a day and fills tables on the built
+**Wiki pages filled in automatically (2026-11-25).** The wiki workflow also runs once a day and when an issue with one of the labels below is opened, changed, closed or (un)labelled, and fills tables on the built
 pages only (never on `main`; the copies in `docs/` keep a placeholder row that says so):
 
 | Wiki page | Filled by | From |
