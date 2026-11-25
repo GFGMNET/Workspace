@@ -5,7 +5,7 @@ Releases: [GitHub Releases](https://github.com/GFGMNET/Workspace/releases) · No
 ```mermaid
 flowchart TD
    A["All plans of the version are built"] --> B["Complete beta for the maintainer and testers"]
-   B --> C["5 test days"]
+   B --> C["5 test days — nothing new is added:<br/>a new feature asked for now goes into the next version (1.0.2)"]
    C --> D{"Bug (label bug) in the 5 days?"}
    D -->|No| G["Security gate: Rust security check + CodeQL"]
    D -->|Yes| E["Release moves ONCE by 5 days<br/>and brings all fixes"]
