@@ -2,37 +2,54 @@
 
 Form: [New idea](https://github.com/GFGMNET/Workspace/issues/new?template=new-idea.yml) · Votes: [wiki](https://github.com/GFGMNET/Workspace/wiki/Vote-for-features)
 
+### 1. From idea to vote
+
 ```mermaid
 flowchart TD
  subgraph User
   U1[Sends an idea]
   U2[Answers the question]
-  U3[Votes yes or no]
+ end
+ subgraph Action
+  A1[Duplicate check]
+  A2[Up for a vote]
+  A3[Idea closed: not planned]
  end
  subgraph Maintainer
   M1{Is the idea clear?}
   M2[Asks the user]
   M3{Good idea?}
-  M4[Own idea]
-  M5{Should it come?}
- end
- subgraph Action
-  A1[Duplicate check]
-  A2[Up for a vote, idea closed]
-  A3[Idea closed: not planned]
-  A4[Feature workflow, vote closed]
-  A5[Vote closed: not planned]
  end
  U1 --> A1 --> M1
  M1 -->|No| M2 --> U2 --> M1
  M1 -->|Yes| M3
  M3 -->|Yes| A2
  M3 -->|No| A3
- M4 --> A2
- A2 --> U3 --> M5
- M5 -->|Yes| A4
- M5 -->|No| A5
- M5 -->|Not yet| U3
+```
+
+### 2. From vote to feature
+
+```mermaid
+flowchart TD
+ subgraph Maintainer
+  M0[Own idea]
+  M1{Should it come?}
+  M2[Waits for more votes]
+ end
+ subgraph User
+  U1[Votes yes or no]
+ end
+ subgraph Action
+  A1[Up for a vote]
+  A3[Vote closed: not planned]
+  A2[Feature workflow]
+ end
+ M0 --> A1
+ A1 --> U1 --> M1
+ M1 -->|Yes| A2
+ A2 ~~~ A3
+ M1 -->|No| A3
+ M1 -->|Not yet| M2 --> M1
 ```
 
 **Details (for Claude):**
