@@ -517,7 +517,7 @@ The UI can be rebuilt freely on top of the API in section 7.
 
 ## 9b. Planned features
 
-Order and dates: README "Upcoming changes" (1.0 on 27 Nov 2026, then a new version every 5 days). Each plan follows the maintainer's 8-part format; checks in [plans/checks/](plans/checks/).
+Order and dates: README "Upcoming changes" — 1.0 on 27 Nov 2026, then 1.0.1 with everything else (decided 2026-11-25). Each plan follows the maintainer's 8-part format; checks in [plans/checks/](plans/checks/).
 
 | Version | Feature | Plan | Issue |
 |---|---|---|---|
@@ -529,10 +529,10 @@ Order and dates: README "Upcoming changes" (1.0 on 27 Nov 2026, then a new versi
 | 1.0.1 | ComfyUI tab | [plans/COMFYUI.md](plans/COMFYUI.md) | #93 |
 | 1.0.1 | Forgejo in the Issues tab | [plans/FORGEJO.md](plans/FORGEJO.md) | #96 |
 | 1.0.1 | More layouts for text: journal, book, notes, board, table, blog | [plans/LAYOUTS.md](plans/LAYOUTS.md) | #116 |
-| 1.0.2 | MCPs: Blender, Unity, Unreal Engine | [BLENDER](plans/BLENDER.md), [UNITY](plans/UNITY.md), [UNREAL](plans/UNREAL.md) | #109–#111 |
-| 1.0.3 | LM Studio in the Chat | [plans/LMSTUDIO.md](plans/LMSTUDIO.md) | #94 |
-| 1.0.4 | Help & wiki inside the app | [plans/HELP.md](plans/HELP.md) | #95 |
-| 1.0.5 | MCPs: Godot, OpenSCAD, FreeCAD; Dashboard on the Overview | [GODOT](plans/GODOT.md), [OPENSCAD](plans/OPENSCAD.md), [FREECAD](plans/FREECAD.md), [DASHBOARD](plans/DASHBOARD.md) | #112–#115 |
+| 1.0.1 | MCPs: Blender, Unity, Unreal Engine | [BLENDER](plans/BLENDER.md), [UNITY](plans/UNITY.md), [UNREAL](plans/UNREAL.md) | #109–#111 |
+| 1.0.1 | LM Studio in the Chat | [plans/LMSTUDIO.md](plans/LMSTUDIO.md) | #94 |
+| 1.0.1 | Help & wiki inside the app | [plans/HELP.md](plans/HELP.md) | #95 |
+| 1.0.1 | MCPs: Godot, OpenSCAD, FreeCAD; Dashboard on the Overview | [GODOT](plans/GODOT.md), [OPENSCAD](plans/OPENSCAD.md), [FREECAD](plans/FREECAD.md), [DASHBOARD](plans/DASHBOARD.md) | #112–#115 |
 | later | VS Code tab: focused layout (editor + explorer) | | #62 |
 | — | macOS app | ❌ not planned (2026-11-18) | #56 |
 | — | Feature requests from users | paused for a review (2026-11-23) | |

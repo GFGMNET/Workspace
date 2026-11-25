@@ -48,11 +48,12 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   says so) — if that can't be confirmed, don't present it. Checked and not possible: Azure Trusted Signing (companies only in the EU),
   Sectigo/Comodo (no individual purchase confirmed).
 - 1.0 is called **Workspace** everywhere (window, tray, `Workspace.exe`, `workspace`, `workspace-server`, zips `workspace-v…`); decided 2026-11-18 (#77).
-- Ticketsystem = GLPI 11 only, by entity, in **1.0** (moved from 1.1 on 2026-11-19; osTicket dropped; #59 closes with the 1.0 release). Versions (Git first, then SVN; server by IP + port) in **1.0.1**. VS Code (VSCODE.md) is in **1.0** (decided 2026-11-24; it was already in the betas). 1.0.1 (2 Dec) = built-in features restore/update, Versions (Git/SVN), ComfyUI, Forgejo, 6 text layouts (LAYOUTS.md) — 1.0.1 and 1.0.2 merged by the maintainer 2026-11-24.
-  Version numbers (decided 2026-11-24): rather merge releases than go up in the version number; 1.0.2 = MCPs Blender, Unity, Unreal (was 1.1 and 1.2). 1.0.3 = LM Studio (was 1.2.1), 1.0.4 = Help & wiki in the app (was 1.2.2),
-  1.0.5 = MCPs Godot, OpenSCAD, FreeCAD + Dashboard (1.2.5 and 1.2.6 merged).
-  Dates (agreed 2026-11-24, every 5 days): 1.0.1 = 2 Dec, 1.0.2 = 7 Dec, 1.0.3 = 12 Dec, 1.0.4 = 17 Dec, 1.0.5 = 22 Dec. When each one gets
-  built is still to be agreed with the maintainer (a plan not built in time moves to the next version).
+- Ticketsystem = GLPI 11 only, by entity, in **1.0** (moved from 1.1 on 2026-11-19; osTicket dropped; #59 closes with the 1.0 release). Versions (Git first, then SVN; server by IP + port) in **1.0.1**. VS Code (VSCODE.md) is in **1.0** (decided 2026-11-24; it was already in the betas).
+  **Versions (decided 2026-11-25): only two releases — 1.0 on 27 Nov (the tested version) and 1.0.1 with ALL remaining plans**
+  (BUILTIN, VERSION-CONTROL, COMFYUI, FORGEJO, LAYOUTS, BLENDER, UNITY, UNREAL, LMSTUDIO, HELP, GODOT, OPENSCAD, FREECAD, DASHBOARD).
+  Building starts on 27 Nov after the 1.0 release (not earlier, his choice), several features per test round; betas in between for him
+  and his testers; 1.0.1 is released when everything is built and the beta test is OK — with his OK. The 5-day release train is off.
+  (History: on 2026-11-24 the versions were 1.0.1–1.0.5 every 5 days; rule "rather merge releases than go up in the version number".)
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
@@ -104,9 +105,8 @@ or whose check failed cannot be approved. Checks live in `docs/plans/checks/`. B
 gets the open points and risks, and nothing begins until they have seen them. While building: if a step cannot be
 done as planned, stop and ask the maintainer — no new design on your own.
 A plan that is not **Ready 2 Deploy** when its version is due is skipped: it moves to a later version (decided 2026-11-19).
-Release timing (decided 2026-11-23): 1.0 on 27 Nov 2026; then a new version every 5 days in plan order. If a GitHub issue
-labelled **bug** is reported in those 5 days, the next version moves once by 5 days and brings all fixes together; bugs found in the
-extra days go into the version after. Hiccups (no bug label) never delay a release. A daily scheduled task "Release train" does it.
+Release timing: 1.0 on 27 Nov 2026; then 1.0.1 with everything else, released with the maintainer's OK after the beta test
+(decided 2026-11-25; the earlier 5-day "release train" of 2026-11-23 is switched off).
 Wiki pages of a version that is not out yet go into `docs/wiki-next/vX.Y.Z/` (not `docs/wiki/`, which is published on every push);
 the release of that version moves them into `docs/wiki/` (see `docs/wiki-next/README.md`).
 MCPs (decided 2026-11-20): named after the program they use (Blender, Unity, Unreal); use the existing solution if possible;

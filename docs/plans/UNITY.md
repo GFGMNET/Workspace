@@ -10,7 +10,7 @@ Unity
 
 ## 2) Planned release version
 
-1.0.2 (was 1.1; 1.1 and 1.2 merged into 1.0.2 by the maintainer 2026-11-24)
+1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released when everything is built and the beta test is OK)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -84,5 +84,5 @@ programs:
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
 | 3b | Same place: a note for Claude in the chat — keep the Unity project in the folder `unity/` of the project (decision 10); the app creates the folder. |
 | 4 | **Required** — wiki article "MCP: Unity" (decision 3); Unity is only released with it: what is needed (Unity 2021.3 or newer, the package from `https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main`, Python 3.10+, `uv`), how to connect (install the package, start the server in Window → MCP for Unity, tick Unity in the project settings), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
-| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.0.2.md`. |
-| 6 | No own beta (decision 7): goes out with the release 1.0.2, with your OK. |
+| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.0.1.md`. |
+| 6 | No own beta (decision 7): goes out with the release 1.0.1, with your OK. |

@@ -18,15 +18,11 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 | Version | Planned for | What's new |
 |---|---|---|
 | **1.0** | 27 Nov 2026 | • Workspace in Rust, signed<br>• Ticket tab (GLPI)<br>• Two layouts: menu left or menu top<br>• Tabs button: choose the tabs per project<br>• project.yaml in the gear menu<br>• Issues feature renamed to `issue`<br>• Help & wiki opens again<br>• VS Code tab starts by itself<br>• New wiki order |
-| **1.0.1** | 2 Dec 2026 | • Restore deleted built-in features<br>• New versions of built-in features, projects switch when you want<br>• Version Control tab (Git, SVN)<br>• ComfyUI tab<br>• Forgejo in the Issues tab<br>• 6 new layouts for text: journal, book, sticky notes, board, table, blog |
-| **1.0.2** | 7 Dec 2026 | • MCP: Blender<br>• MCP: Unity<br>• MCP: Unreal Engine |
-| **1.0.3** | 12 Dec 2026 | • LM Studio in the Chat |
-| **1.0.4** | 17 Dec 2026 | • Help & wiki inside the app |
-| **1.0.5** | 22 Dec 2026 | • MCP: Godot<br>• MCP: OpenSCAD<br>• MCP: FreeCAD<br>• Dashboard on the Overview |
+| **1.0.1** | when everything is built and the beta test is OK (building starts 27 Nov) | • Restore and update built-in features<br>• Version Control tab (Git, SVN)<br>• ComfyUI tab<br>• Forgejo in the Issues tab<br>• 6 new layouts for text: journal, book, sticky notes, board, table, blog<br>• MCPs: Blender, Unity, Unreal Engine, Godot, OpenSCAD, FreeCAD<br>• LM Studio in the Chat<br>• Help & wiki inside the app<br>• Dashboard on the Overview |
 
 Details of each feature: [docs/plans/](docs/plans/). MCPs are switched on per project; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program.
 
-**How releases are timed:** 1.0 comes on 27 Nov; after that a new version every 5 days. If a bug is reported in those 5 days, the next version comes 5 days later (only once) and brings the fixes; bugs found in the extra days go into the version after. A plan that is not ready when its version is due moves to a later version.
+**How releases are timed:** 1.0 comes on 27 Nov. Everything else comes together in 1.0.1: it is built from 27 Nov (betas in between for testers) and released when everything is built and the beta test is OK.
 
 ## Start (current version 0.x)
 

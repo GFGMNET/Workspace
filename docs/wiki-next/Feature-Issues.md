@@ -39,7 +39,7 @@ This is the starter definition. Change it under **Features** in the app, or in t
 
 ```yaml
 # Issues of a repository (bugs and ideas). In 1.0: GitHub online (github.com) only — the self-hosted Forgejo
-# comes with 1.0.2 (docs/plans/FORGEJO.md). Set the repository in each project:
+# comes with 1.0.1 (docs/plans/FORGEJO.md). Set the repository in each project:
 #   issue: { repo: owner/name }
 # Private repositories need a token in data/settings.yaml:  github: { token: ... }
 # Older projects that say "feature: github_issue" or "feature: github" still work (aliases).

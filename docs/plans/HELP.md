@@ -8,7 +8,7 @@ Help & wiki inside the app
 
 ## 2) Planned release version
 
-1.0.4 (was 1.2.2; renumbered by the maintainer 2026-11-24: rather merge releases than go up in the version number)
+1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released when everything is built and the beta test is OK)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -46,7 +46,7 @@ None (all answered 2026-11-23).
 | id | decision |
 |---|---|
 | 1 | Both combined: a full help page in the app and a help panel at the side of each tab. |
-| 2 | Version 1.0.4. |
+| 2 | Version 1.0.1. |
 | 3 | The GitHub wiki stays. |
 | 4 | (i): hover shows the short info line as today, a click opens the help panel. |
 | 5 | Only for the PC (Windows, Linux) — no tablet or phone. |
@@ -91,4 +91,4 @@ Nothing to set — the help needs no setting.
 | 3 | "Help & wiki" in the menu opens the help page in the app (decision 1). |
 | 4 | (i) on every tab: hover shows the info line, a click opens the panel with the tab's page, or the message when there is none; **Open in Help & wiki** (decisions 4, 8). |
 | 5 | Automatic tests: every link and picture of the help is found; the page and the panel open. |
-| 6 | Docs: wiki Home (help is built into the app), DESIGN.md, REQUIREMENTS.md, release notes of 1.0.4. |
+| 6 | Docs: wiki Home (help is built into the app), DESIGN.md, REQUIREMENTS.md, release notes of 1.0.1. |

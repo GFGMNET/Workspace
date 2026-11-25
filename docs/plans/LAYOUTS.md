@@ -8,7 +8,7 @@ More layouts for text
 
 ## 2) Planned release version
 
-1.0.1 — 2 Dec 2026 (maintainer: "as soon as possible")
+1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released when everything is built and the beta test is OK)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -73,7 +73,7 @@ None.
 
 | id | risk | what happens |
 |---|---|---|
-| 1 | 1.0.1 is very full (built-in features, Version Control, ComfyUI, Forgejo and these six layouts). | Whatever isn't finished by 2 Dec moves to 1.0.2 by itself (release rule). |
+| 1 | 1.0.1 holds all remaining plans (decided 2026-11-25). | It is released only when everything is built and the beta test is OK; several features are tested per round. |
 | 2 | Full screen was checked in the browser engines of Windows and Linux, not in the finished app window. | The maintainer tests it once in the beta. |
 | 3 | "Board" and "Kanban" look alike. | Kanban stays for records (tables), Board is for text pages; the wiki explains the difference. |
 

@@ -8,7 +8,7 @@ ComfyUI
 
 ## 2) Planned release version
 
-1.0.1 — 2 Dec 2026 (1.0.1 and 1.0.2 merged into 1.0.1 by the maintainer 2026-11-24)
+1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released when everything is built and the beta test is OK)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -119,4 +119,4 @@ comfyui:
 | 6 | Gallery added later: earlier results moved into KI_Pictures once (decision 14). |
 | 7 | The Gallery shows and plays video and audio (decision 12). |
 | 8 | Automatic tests against a fake ComfyUI (contract tests). Before the release: the plan check again against the newest ComfyUI, and with a long video (risks 1, 4). |
-| 9 | Wiki page "ComfyUI" with *What you need* on top (ComfyUI installed and running, its address, **Export (API)**, network note), the Gallery page, DESIGN.md, REQUIREMENTS.md, the release notes of 1.0.2. |
+| 9 | Wiki page "ComfyUI" with *What you need* on top (ComfyUI installed and running, its address, **Export (API)**, network note), the Gallery page, DESIGN.md, REQUIREMENTS.md, the release notes of 1.0.1. |

@@ -44,7 +44,7 @@ Every starter feature has its own page with all its settings, examples and what 
 | Diagrams | diagram | [[Feature-Diagrams]] |
 | Contacts | table | [[Feature-Contacts]] |
 | Devices | table | [[Feature-Devices]] |
-| Issues (`issue`) | issues (github.com; Forgejo from 1.0.2) | [[Feature-Issues]] |
+| Issues (`issue`) | issues (github.com; Forgejo from 1.0.1) | [[Feature-Issues]] |
 | Ticket (`ticketsystem`) | tickets (GLPI 11) | [[Feature-Ticket]] |
 
 ## Three ways to add one
@@ -94,7 +94,7 @@ tasks:
   below. It can't bring its own screen or program code.
 - **No connections to other programs or services.** A feature you make yourself only works with the files in the
   project. It can't connect to Home Assistant, a database, a shop or any other service. Only the connections built into
-  the app talk to other servers: **Issues** (GitHub; Forgejo from 1.0.2) and **Ticket** (GLPI) — later also ComfyUI.
+  the app talk to other servers: **Issues** (GitHub; Forgejo from 1.0.1) and **Ticket** (GLPI) — later also ComfyUI.
   A new connection needs a new version of the app.
 - **Layout and storage must fit together** (e.g. *kanban* only with *records*). The app refuses a wrong combination and
   says which layouts fit.

@@ -8,7 +8,7 @@ Dashboard
 
 ## 2) Planned release version
 
-1.0.5 (was 1.2.6; 1.2.5 and 1.2.6 merged into 1.0.5, renumbered by the maintainer 2026-11-24: rather merge releases than go up in the version number)
+1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released when everything is built and the beta test is OK)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -51,7 +51,7 @@ None (all answered 2026-11-20).
 
 | id | risk | suggestion |
 |---|---|---|
-| 1 | A project that already has its own feature called `dashboard` would lose that tab (decision 10). None of the starter features or examples is called so. | A project that already has its own feature called `dashboard` would clash with the new dashboard. | Mention it in the release notes of 1.0.5. |
+| 1 | A project that already has its own feature called `dashboard` would lose that tab (decision 10). None of the starter features or examples is called so. | A project that already has its own feature called `dashboard` would clash with the new dashboard. | Mention it in the release notes of 1.0.1. |
 
 ## 8) Detail workflow
 
@@ -100,4 +100,4 @@ dashboard:
 | 5 | Save writes `dashboard:` into `project.yaml` (decision 6); no `dashboard:` = empty dashboard (decision 5). |
 | 6 | Tab name stays "Overview" (decision 7); `overview: false` still hides it (decision 8). |
 | 7 | Contract test: `dashboard:` is kept and not a feature. |
-| 8 | Docs: DESIGN.md, REQUIREMENTS.md, wiki page of the Overview, release notes `docs/releases/v1.0.5.md` (risk 1). |
+| 8 | Docs: DESIGN.md, REQUIREMENTS.md, wiki page of the Overview, release notes `docs/releases/v1.0.1.md` (risk 1). |

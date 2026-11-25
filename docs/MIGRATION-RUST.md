@@ -223,8 +223,7 @@ answers (`workspace-server mcp`). How it was done:
 Decided 2026-11-16: these features are built in the Rust version, not in 0.x.
 
 All of them are in Rust; the full list with versions and dates is the README table "Upcoming changes" and [DESIGN.md §9b](DESIGN.md).
-Short: 1.0 Ticket tab + VS Code opens by itself · 1.0.1 built-in features restore/update, Versions (Git/SVN), ComfyUI, Forgejo, 6 text layouts ·
-1.0.2 MCPs Blender, Unity, Unreal · 1.0.3 LM Studio · 1.0.4 Help & wiki in the app · 1.0.5 MCPs Godot, OpenSCAD, FreeCAD + Dashboard.
+Short: 1.0 Ticket tab + VS Code opens by itself · 1.0.1 everything else (built-in features, Versions, ComfyUI, Forgejo, 6 text layouts, MCPs, LM Studio, Help & wiki in the app, Dashboard).
 
 ## 6. Testing
 

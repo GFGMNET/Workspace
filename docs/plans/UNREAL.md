@@ -10,7 +10,7 @@ Unreal
 
 ## 2) Planned release version
 
-1.0.2 (was 1.2; 1.1 and 1.2 merged into 1.0.2 by the maintainer 2026-11-24)
+1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released when everything is built and the beta test is OK)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -85,5 +85,5 @@ programs:
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config` (like the project's `.mcp.json` today). |
 | 3b | Same place: a note for Claude in the chat — keep the Unreal project in the folder `unreal/` of the project (decision 10); the app creates the folder. |
 | 4 | **Required** — wiki article "MCP: Unreal" (decision 3); Unreal is only released with it: what is needed (Unreal Engine 5.8 or newer with the Unreal MCP plugin, decision 8), how to connect (Edit → Plugins → Unreal MCP on, tick Unreal in the project settings), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
-| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.0.2.md`. |
-| 6 | No own beta (decision 7): goes out with the release 1.0.2, with your OK. |
+| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.0.1.md`. |
+| 6 | No own beta (decision 7): goes out with the release 1.0.1, with your OK. |

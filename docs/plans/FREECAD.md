@@ -10,7 +10,7 @@ FreeCAD
 
 ## 2) Planned release version
 
-1.0.5 (was 1.2.6; 1.2.5 and 1.2.6 merged into 1.0.5, renumbered by the maintainer 2026-11-24: rather merge releases than go up in the version number)
+1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released when everything is built and the beta test is OK)
 
 ## 3) Feasible? Checked per function, with the result
 
@@ -87,5 +87,5 @@ programs:
 | 3 | `rust/crates/pw-server/src/chat.rs`: when a chat starts the Claude CLI, the known MCPs of the project are added to `--mcp-config`. |
 | 3b | Same place: a note for Claude in the chat — keep the FreeCAD files (`.FCStd`) and exports in the folder `freecad/` of the project (decision 10); the app creates the folder. |
 | 4 | **Required** — wiki article "MCP: FreeCAD" (decision 3); FreeCAD is only released with it: what is needed (FreeCAD, Python 3.11+, `pip install freecad-robust-mcp`, the Robust MCP Bridge workbench), how to connect (pair once with `freecad-mcp --pair-bridge`, in FreeCAD: Robust MCP Bridge → Start MCP Bridge, tick FreeCAD in the project settings), what to write in the chat. Done when: the article is in `docs/wiki/` and linked in the sidebar. |
-| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.0.5.md`. |
-| 6 | No own beta (decision 7): goes out with the release 1.0.5, with your OK. |
+| 5 | Docs: DESIGN.md, REQUIREMENTS.md (→ wiki "Requirements"), release notes `docs/releases/v1.0.1.md`. |
+| 6 | No own beta (decision 7): goes out with the release 1.0.1, with your OK. |

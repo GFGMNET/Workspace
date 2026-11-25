@@ -44,12 +44,12 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | B18 | Choose per project which tabs are shown (`hide_tabs:` in project.yaml); project.yaml opened from the gear menu | ✅ in 1.0 | #87, #89 |
 | B19 | Two layouts to switch between: menu left, or menu on top with the projects in a drop-down and the features on the left (collapsible); one toggle button each for the layout and for light / dark / auto; menu left with more than 4 projects shows them in a drop-down | ✅ in 1.0 | #90, #101, #102 |
 | B20 | ComfyUI tab (no Claude): workflows, prompt boxes found by the app, run, results in the project and the Gallery (video and audio too) | 📋 planned for 1.0.1 — docs/plans/COMFYUI.md | #93 |
-| B21 | Chat with LM Studio (`engine: lmstudio`, url, model): local model, same rights as Claude, no Claude CLI needed | 📋 planned for 1.0.3 — docs/plans/LMSTUDIO.md | #94 |
-| B22 | Help & wiki inside the app (page + panel beside each tab), works without internet | 📋 planned for 1.0.4 — docs/plans/HELP.md | #95 |
+| B21 | Chat with LM Studio (`engine: lmstudio`, url, model): local model, same rights as Claude, no Claude CLI needed | 📋 planned for 1.0.1 — docs/plans/LMSTUDIO.md | #94 |
+| B22 | Help & wiki inside the app (page + panel beside each tab), works without internet | 📋 planned for 1.0.1 — docs/plans/HELP.md | #95 |
 | B23 | Self-hosted bug tracker: Forgejo in the issues feature (`engine: forgejo`, url, token as secret) | 📋 planned for 1.0.1 — docs/plans/FORGEJO.md | #96 |
 | B24 | Built-in features: restore deleted ones (tick which), `version:` in the feature file, update keeps the old one as "(deprecated)", "Use the new version" per tab | 📋 planned for 1.0.1 — docs/plans/BUILTIN.md | #100 |
-| B25 | MCPs per program, switched on per project with `programs:` — Blender, Unity, Unreal Engine (1.0.2); Godot, OpenSCAD, FreeCAD (1.0.5); each with its wiki article, results saved in the project | 📋 planned for 1.0.2 / 1.0.5 — docs/plans/ | #109–#114 |
-| B26 | Dashboard on the Overview: blocks per project (what + number or list + simple filter) | 📋 planned for 1.0.5 — docs/plans/DASHBOARD.md | #115 |
+| B25 | MCPs per program, switched on per project with `programs:` — Blender, Unity, Unreal Engine, Godot, OpenSCAD, FreeCAD (1.0.1); each with its wiki article, results saved in the project | 📋 planned for 1.0.1 — docs/plans/ | #109–#114 |
+| B26 | Dashboard on the Overview: blocks per project (what + number or list + simple filter) | 📋 planned for 1.0.1 — docs/plans/DASHBOARD.md | #115 |
 | B27 | Feature requests from users | ❓ paused for a review (2026-11-23) | |
 | B28 | More layouts for text features: journal, book (ebook, full screen), notes (sticky notes), board, table (edit in place), blog | 📋 planned for 1.0.1 — docs/plans/LAYOUTS.md | #116 |
 | B29 | Skills from the internet: paste a link (skills.rest, skills.sh, GitHub), see the info, install at your own risk | 💤 later (2026-11-25) — checked OK, not planned yet | |
