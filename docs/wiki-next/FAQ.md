@@ -10,7 +10,8 @@
 Supported:
 - **Windows 11**, 64-bit (x64). Nothing else to install — the window engine (WebView2) is part of Windows 11.
 - **Linux**, 64-bit (x64): **Ubuntu 24.04** or newer, **Linux Mint 22** or newer, **Debian 13** or newer, **Fedora 40** or newer
-  (or another Linux with glibc 2.39 or newer). For the window: WebKitGTK 4.1 (most desktops have it).
+  — and Linux that is always kept up to date, like **Arch Linux**, **Manjaro**, **EndeavourOS** or **openSUSE Tumbleweed**
+  (any Linux with glibc 2.39 or newer works). For the window: WebKitGTK 4.1 (most desktops have it).
 
 Not supported:
 - Windows 10 and older
