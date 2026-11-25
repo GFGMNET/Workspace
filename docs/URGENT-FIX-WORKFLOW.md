@@ -24,13 +24,25 @@ flowchart TD
    G --> M
 ```
 
+
 ```mermaid
 flowchart TD
  subgraph User
-  BUG[Bug Reported after Release]
+  BUG[Report an Issue]
  end
  subgraph Maintainer
-  TEST[Test]
+  RM[The Maintainer review the Issue]
+  WIF{What Kind of Issue}
  end
- BUG --> TEST
+ subgraph Maintainer
+  SEC[Secruity Issue]
+  DEA[Serious Issue]
+  BUN[Bug]
+  HIC[Hiccup]
+ end
+ 
+ BUG --> RM
+ RM -- > WIF
+ WIF --> SEC
+ WIF --> DEA
 ```
