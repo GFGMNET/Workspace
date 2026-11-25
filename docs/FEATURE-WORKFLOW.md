@@ -17,6 +17,9 @@ flowchart TD
    G -->|No| F
    G -->|Yes| H["Maintainer approves: Ready 2 Deploy"]
    H --> K["Into the open version: Claude builds it + automatic tests"]
+   H -->|Maintainer changes the plan| CH["No longer Ready 2 Deploy:<br/>new part checked, open points and risks again"]
+   CH --> C
+   CH -.->|Version closed before the new OK| NO["Not in this release — Claude warns"]
    K --> L{"Can it be built as planned?"}
    L -->|No| M["Stop and ask the maintainer"]
    M --> K
