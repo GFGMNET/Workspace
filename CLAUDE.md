@@ -68,6 +68,7 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   List: wiki page `Vote-for-features` (in docs/wiki and docs/wiki-next) + README link; sorted by 👍. Votes never move a release.
   First idea: #118 Skills from the internet. The counts are written into the wiki page once a day by the "Publish wiki" workflow
   (`tools/vote-counts.js`, only on the built wiki page — never on main). Only ideas created by GFGMNET are listed (filter, 2026-11-25).
+  Workflow for ideas from others (ask → new vote issue by him → close theirs with a link): `docs/IDEAS-WORKFLOW.md` — remind him of it.
 - Feature requests from users (idea channel): **not cancelled — paused for review** (2026-11-23). Before going on, the whole workflow
   must be reviewed so it is not wonky and has no parts that can't be done. Latest idea (his): the user links his GitHub account in the app,
   sends "Request a new feature", it is saved on GitHub (repo `Workspace-requests`) and nothing happens until he approves; overview in the app
