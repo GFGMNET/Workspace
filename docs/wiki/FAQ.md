@@ -29,6 +29,14 @@ v0.5 can't keep the file permissions Electron needs when it updates itself. Down
 **Do I need start.bat?**
 Not with the Windows app: **ProjectWorkspace.exe** replaces it. `start.bat` / `start.sh` are for running the program with Node.js, e.g. from a git clone while developing, or on macOS and Linux.
 
+**The app doesn't start**
+Go through these in order:
+1. Windows says *"Windows protected your PC"*: see the question above.
+2. *"Port 4321 is already in use"*: see the question below.
+3. Linux: the window needs WebKitGTK 4.1. Install it, or start with `./workspace --browser`.
+4. No window opens: start it with `--browser` and open http://localhost:4321.
+5. Still nothing: report a bug on GitHub and write which system you use (Windows 11 or Linux) and what you see.
+
 **"Port 4321 is already in use"**
 The workspace is already running. Open http://localhost:4321, or start a second one with `node app/server.js 4322`.
 

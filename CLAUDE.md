@@ -63,6 +63,9 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
+- **Bugs and urgent fixes (decided 2026-11-25):** the maintainer alone decides bug or hiccup (he sets the label) and whether a bug is
+  serious. Security holes are most likely serious; lost data is the user's responsibility (wiki Backup); "doesn't start" → FAQ first.
+  A serious bug gets an urgent fix version with four digits (1.0.1 → 1.0.1.1; 1.0 → 1.0.0.1). Flowcharts for all workflows: `docs/*-WORKFLOW.md`.
 - **Vote for features (decided 2026-11-25):** unplanned ideas are GitHub issues with the label `vote`, created only by the maintainer
   (or by Claude when he asks); users vote 👍/👎 on the first post (comments stay possible — locking would switch votes off too).
   List: wiki page `Vote-for-features` (in docs/wiki and docs/wiki-next) + README link; sorted by 👍. Votes never move a release.

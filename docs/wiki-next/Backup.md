@@ -1,5 +1,7 @@
 # Backup
 
+> **You are responsible for your data.** Workspace does not back up your data, and neither the app nor its maintainer can get lost data back. Back up your `data` folder regularly, and always before an update.
+
 Everything that is yours lives in the **`data`** folder next to the program (next to `Workspace.exe` on Windows, `workspace` on Linux). The program itself can be downloaded again at any time, so **back up `data/`, and nothing else is needed.**
 
 ## What to back up

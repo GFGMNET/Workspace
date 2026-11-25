@@ -4,12 +4,15 @@ Open bugs: [label bug](https://github.com/GFGMNET/Workspace/issues?q=is%3Aissue+
 
 ```mermaid
 flowchart TD
-   A["Someone reports a bug (issue)"] --> B{"Is it a real bug?"}
+   A["Someone reports a bug (issue)"] --> B{"Maintainer decides: bug or hiccup?"}
    B -->|Unclear| C["Ask the reporter on the issue"]
    C --> B
-   B -->|No, a hiccup| D["Close it — hiccups never delay a release"]
-   B -->|Yes| E["Label bug"]
-   E --> F{"When was it reported?"}
+   B -->|Hiccup| D["Close it — hiccups never delay a release"]
+   B -->|Bug| E["Maintainer sets the label bug"]
+   F{"When was it reported?"}
+   E --> S{"Serious? (maintainer decides)"}
+   S -->|Yes| U["Urgent fix: see URGENT-FIX-WORKFLOW"]
+   S -->|No| F
    F -->|While a version is built| G["Fixed in that version"]
    F -->|In the 5 test days| H["Fixed; the release moves ONCE by 5 days"]
    F -->|In the extra days or after the code freeze| I["Goes into the next version"]
@@ -18,5 +21,6 @@ flowchart TD
    I --> J
    J --> K["Release notes: Fixed"]
    D --> L([End])
+   U --> L
    K --> L
 ```
