@@ -24,7 +24,6 @@ flowchart TD
    G --> M
 ```
 
-
 ```mermaid
 flowchart TD
  subgraph User
@@ -42,7 +41,7 @@ flowchart TD
  end
  
  BUG --> RM
- RM -- > WIF
+ RM --> WIF
  WIF --> SEC
  WIF --> DEA
 ```
