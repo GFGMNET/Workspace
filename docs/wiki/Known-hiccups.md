@@ -7,11 +7,11 @@ Before you report something, look here first: maybe it is already known.
 
 ## The list
 
-<!-- hiccups:start -->
+<!-- list:start -->
 | Hiccup | Reported | Status | What happened |
 |---|---|---|---|
 | — | | | The list is filled in once a day. |
-<!-- hiccups:end -->
+<!-- list:end -->
 
 Good to know:
 - The maintainer decides whether a report is a bug or a hiccup. Hiccups never delay a release.
