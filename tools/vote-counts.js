@@ -7,6 +7,8 @@
 const fs = require('fs');
 const file = process.argv[2];
 const repo = process.env.GITHUB_REPOSITORY || 'GFGMNET/Workspace';
+// only ideas created by the maintainer count, even if someone else got the label onto an issue (maintainer, 2026-11-25)
+const OWNERS = (process.env.VOTE_AUTHORS || 'GFGMNET').toLowerCase().split(/[\s,]+/).filter(Boolean);
 const headers = { 'User-Agent': 'workspace-votes', Accept: 'application/vnd.github+json', ...(process.env.GITHUB_TOKEN ? { Authorization: 'Bearer ' + process.env.GITHUB_TOKEN } : {}) };
 
 // one short line from the idea's text: the first sentence under "What it would do" (or "What should it do"), else the first sentence
@@ -25,7 +27,7 @@ function summary(body) {
   for (let page = 1; page < 10; page++) {
     const r = await fetch(`https://api.github.com/repos/${repo}/issues?labels=vote&state=open&per_page=100&page=${page}`, { headers });
     if (!r.ok) throw new Error(`GitHub ${r.status}`);
-    const list = (await r.json()).filter(i => !i.pull_request);
+    const list = (await r.json()).filter(i => !i.pull_request && OWNERS.includes(i.user.login.toLowerCase()));
     all = all.concat(list); if (list.length < 100) break;
   }
   all.sort((a, b) => (b.reactions['+1'] - b.reactions['-1']) - (a.reactions['+1'] - a.reactions['-1']) || b.reactions['+1'] - a.reactions['+1']);

@@ -2,7 +2,7 @@
 
 Ideas that are **not planned yet**. Show what you would like to see by voting **👍** (yes, please) or **👎** (not needed). Each person counts once, and you can change your vote any time.
 
-**[→ All ideas, most wanted first](https://github.com/GFGMNET/Workspace/issues?q=is%3Aissue+is%3Aopen+label%3Avote+sort%3Areactions-%2B1-desc)**
+**[→ All ideas, most wanted first](https://github.com/GFGMNET/Workspace/issues?q=is%3Aissue+is%3Aopen+label%3Avote+author%3AGFGMNET+sort%3Areactions-%2B1-desc)**
 
 ## How to vote
 
