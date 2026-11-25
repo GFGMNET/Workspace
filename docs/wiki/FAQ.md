@@ -59,4 +59,4 @@ It has a YAML error; the message names the line. A common cause is indentation: 
 Look in `.trash` inside the project folder. Nothing is really deleted by the app.
 
 **Where do I report a bug or suggest a feature?**
-At [Issues](https://github.com/GFGMNET/Workspace/issues).
+Bugs: look at [[Known bugs|Known-bugs]] and [[Known hiccups|Known-hiccups]] first, then open an [issue](https://github.com/GFGMNET/Workspace/issues/new). Ideas: [[Vote for features|Vote-for-features]] or the form [New idea](https://github.com/GFGMNET/Workspace/issues/new?template=new-idea.yml). Security problems: report them privately (Security tab → Report a vulnerability).
