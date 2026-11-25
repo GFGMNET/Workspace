@@ -76,10 +76,12 @@ Go through these in order:
 ### "Port 4321 is already in use"
 The workspace is already running. Open http://localhost:4321, or start a second one with a port number: `Workspace.exe 4322` on Windows, `./workspace 4322` on Linux.
 
-## Chat & VS Code
+## Chat
 
 ### The chat says "Claude CLI not found"
 Install Claude CLI and run `claude` once in a terminal to sign in. If it's installed somewhere unusual, set `CLAUDE_COMMAND` to its full path.
+
+## VS Code
 
 ### The VS Code button does nothing
 The `code` command isn't on the PATH. Reinstall VS Code with *Add to PATH*, or set `VSCODE_COMMAND`.
