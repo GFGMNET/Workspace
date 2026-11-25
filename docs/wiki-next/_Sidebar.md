@@ -2,6 +2,7 @@
 
 - [[Home]]
 - [[Getting Started|Getting-Started]]
+- [[Vote for features|Vote-for-features]]
 
 **Features**
 
@@ -43,7 +44,6 @@
 - [[Backup]]
 - [[Import and Export|Import-and-Export]]
 - [[FAQ]]
-- [[Vote for features|Vote-for-features]]
 - [[Requirements]]
 
 **Known issues**
