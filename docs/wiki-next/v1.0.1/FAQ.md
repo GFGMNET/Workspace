@@ -180,6 +180,25 @@ Full YAML 1.2: anchors and aliases (`&name` / `*name`), merge keys (`<<: *name`)
 It has a YAML error; the message names the line. A common cause is indentation: list items need a `-` and the same number of spaces.
 
 
+### Can I put a project on Git?
+Yes. A project is a normal folder (`data/projects/<name>/`). Open the project's **VS Code tab** (Source Control on the left) or a terminal in the project folder, set up Git, commit and push. Only one project folder — never the whole `data` folder.
+
+Your secrets are never in the project folder (only placeholders like `${PW_SECRET_…}`). But leave out your chats and deleted items: save this as `.gitignore` in the project folder:
+
+```gitignore
+# Workspace project — what should not go to Git
+chats/                        # your Claude conversations
+.trash/                       # deleted items
+.version-control/             # local Git/SVN copy (from 1.0.1)
+.claude/settings.local.json   # personal Claude CLI settings
+# system junk
+Thumbs.db
+desktop.ini
+.DS_Store
+```
+
+Want this file in every new project automatically? [Vote for it](https://github.com/GFGMNET/Workspace/issues/124).
+
 ## Your data
 
 ### Where is my data folder?
