@@ -5,7 +5,7 @@ Decided 2026-11-25. Only ideas **you** create with the label `vote` appear on th
 
 ## Someone else has an idea
 
-1. **Someone opens an issue** (e.g. "I want Teams integrated"). It never appears on the vote page — only your ideas do.
+1. **Someone opens an issue** with the form *New idea* (title `Idea: …`: short name, what it should do, why it makes sense, tick box "I checked the idea list") or a normal issue. It never appears on the vote page — only your ideas do.
 2. **Unclear what they mean?** Ask on their issue (chat, files, meetings …?). Claude can draft the reply for you; nothing is posted without your OK.
 3. **Clear and you like it:** open a **new** issue yourself — title `Vote: …`, label `vote`, a short "What it would do".
    Write in it: *Idea from #NN (thanks @name)*.

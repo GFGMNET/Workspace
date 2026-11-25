@@ -1,0 +1,32 @@
+name: New idea
+description: Suggest a new idea for Workspace. The maintainer reads it and may put it up for a vote.
+title: "Idea: "
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Short name
+      description: A few words, e.g. "Teams integration".
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do?
+      description: Describe what you want the app to do.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does it make sense?
+      description: How would it help you or others?
+    validations:
+      required: true
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Idea list
+      options:
+        - label: I have checked the [idea list](https://github.com/GFGMNET/Workspace/wiki/Vote-for-features) and this idea is not on it yet.
+          required: true
