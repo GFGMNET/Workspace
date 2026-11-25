@@ -44,6 +44,7 @@
 - [[Import and Export|Import-and-Export]]
 - [[FAQ]]
 - [[Vote for features|Vote-for-features]]
+- [[Known hiccups|Known-hiccups]]
 - [[Requirements]]
 
 **Developers**

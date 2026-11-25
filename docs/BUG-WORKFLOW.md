@@ -7,7 +7,7 @@ flowchart TD
    A["Someone reports a bug (issue)"] --> B{"Maintainer decides: bug or hiccup?"}
    B -->|Unclear| C["Ask the reporter on the issue"]
    C --> B
-   B -->|Hiccup| D["Close it — hiccups never delay a release"]
+   B -->|Hiccup| D["Maintainer sets the label hiccup and closes it<br/>— listed on the wiki page Known hiccups; never delays a release"]
    B -->|Bug| E["Maintainer sets the label bug"]
    F{"When was it reported?"}
    E --> S{"Serious? (maintainer decides)"}
