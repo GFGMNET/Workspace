@@ -44,10 +44,13 @@
 - [[Import and Export|Import-and-Export]]
 - [[FAQ]]
 - [[Vote for features|Vote-for-features]]
+- [[Requirements]]
+
+**Known issues**
+
 - [[Known bugs|Known-bugs]]
 - [[Known hiccups|Known-hiccups]]
 - [[Known security issues|Known-security-issues]]
-- [[Requirements]]
 
 **Developers**
 
