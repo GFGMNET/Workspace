@@ -1,6 +1,6 @@
 # Working on Project Workspace (rules for Claude and other agents)
 
-Read this first. The maintainer is not a developer: talk to them in plain words, short, no jargon,
+Read this first (then `docs/HANDOVER.md` for the current state). The maintainer is not a developer: talk to them in plain words, short, no jargon,
 and only ask when a decision is really theirs.
 
 ## What this is
