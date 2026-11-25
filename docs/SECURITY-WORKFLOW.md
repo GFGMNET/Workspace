@@ -1,0 +1,20 @@
+# How a security finding is handled
+
+Checks: [Rust security check](https://github.com/GFGMNET/Workspace/actions/workflows/rust-security.yml) · [CodeQL](https://github.com/GFGMNET/Workspace/security/code-scanning) · Open: [label security](https://github.com/GFGMNET/Workspace/issues?q=is%3Aissue+is%3Aopen+label%3Asecurity)
+
+```mermaid
+flowchart TD
+   A["Finding: Rust security check, CodeQL or a report"] --> B["Issue with label security<br/>(the Rust security check opens one on its own)"]
+   B --> C["Fixed first, like a bug — also during a code freeze"]
+   C --> D{"A Rust library?"}
+   D -->|Yes| E["Actions: Rust lock update with the crate names<br/>→ commit the new Cargo.lock from branch rust-lock-update"]
+   D -->|No| F["Fix the code"]
+   E --> G["Checks run again"]
+   F --> G
+   G --> H{"Clean?"}
+   H -->|No| C
+   H -->|Yes| I["Issue closed; release notes: Security"]
+   I --> J([End])
+```
+
+Never release with a failing security check.
