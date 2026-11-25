@@ -88,7 +88,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 - Full design: [docs/DESIGN.md](docs/DESIGN.md) · the Rust rebuild: [docs/MIGRATION-RUST.md](docs/MIGRATION-RUST.md)
 - Requirements and their status: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
 - Security, reporting a vulnerability: [SECURITY.md](SECURITY.md) · [Code signing policy](CODE-SIGNING-POLICY.md)
-- Bugs: [Issues](https://github.com/GFGMNET/Workspace/issues) (label **bug**) · Ideas not planned yet: **[vote for features](https://github.com/GFGMNET/Workspace/wiki/Vote-for-features)** (👍 / 👎)
+- Bugs: first [Known bugs](https://github.com/GFGMNET/Workspace/wiki/Known-bugs) / [Known hiccups](https://github.com/GFGMNET/Workspace/wiki/Known-hiccups), then [Issues](https://github.com/GFGMNET/Workspace/issues) · Ideas: **[vote for features](https://github.com/GFGMNET/Workspace/wiki/Vote-for-features)** (👍 / 👎) or the form [New idea](https://github.com/GFGMNET/Workspace/issues/new?template=new-idea.yml) · Security problems: privately (Security tab → Report a vulnerability) · [Known security issues](https://github.com/GFGMNET/Workspace/wiki/Known-security-issues)
 - Tests: `npm test` (unit checks), `npm run test:contract` (API contract, run against the Rust version), `npm run test:yaml`
 - Settings (environment variables): `PORT` (default 4321), `CLAUDE_COMMAND` (default `claude`), `VSCODE_COMMAND`
 

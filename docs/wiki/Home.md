@@ -23,6 +23,8 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 ## For developers
 
 - [[Design]]: architecture and rebuild guide
-- [Issues](https://github.com/GFGMNET/Workspace/issues): bugs and ideas
+- Bugs: [[Known bugs|Known-bugs]] and [[Known hiccups|Known-hiccups]] first, then [Issues](https://github.com/GFGMNET/Workspace/issues)
+- Ideas: [[Vote for features|Vote-for-features]] or the form [New idea](https://github.com/GFGMNET/Workspace/issues/new?template=new-idea.yml)
+- Security: [[Known security issues|Known-security-issues]]; report new ones privately (Security tab → Report a vulnerability)
 
 > These pages are generated from `docs/` in the repository. Edit them there, not here, or your changes are overwritten on the next update.
