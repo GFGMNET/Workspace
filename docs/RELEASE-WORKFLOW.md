@@ -1,4 +1,4 @@
-# How a version is released
+# How a version is released (1.0.1 and later)
 
 Releases: [GitHub Releases](https://github.com/GFGMNET/Workspace/releases) · Notes: [docs/releases](releases) ([template](releases/TEMPLATE.md))
 
