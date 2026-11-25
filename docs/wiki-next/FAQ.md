@@ -76,18 +76,68 @@ Go through these in order:
 ### "Port 4321 is already in use"
 The workspace is already running. Open http://localhost:4321, or start a second one with a port number: `Workspace.exe 4322` on Windows, `./workspace 4322` on Linux.
 
+### Can I use another port than 4321?
+Yes. Start it with a port number: `Workspace.exe 4322` (Windows) or `./workspace 4322` (Linux). Then open http://localhost:4322 in a browser if needed.
+
 ## Chat
+
+### What do I need for the chat?
+[Claude CLI](https://docs.claude.com/en/docs/claude-code), installed and signed in once (type `claude` in a terminal), and an internet connection. The chat shows the Claude CLI version, or *Claude CLI not found*.
 
 ### The chat says "Claude CLI not found"
 Install Claude CLI and run `claude` once in a terminal to sign in. If it's installed somewhere unusual, set `CLAUDE_COMMAND` to its full path.
 
+### Can Claude change my files?
+That is set per project, with `permissions:` under `chat:` in `project.yaml`:
+- `ask` (default): Claude asks first — **Allow** · **Always allow in this chat** · **Don't allow**
+- `auto`: Claude may change files directly
+- `read-only`: Claude only reads
+
+Tip: `auto` for a scratch project, `read-only` for client data. More: [[Chat|Feature-Chat]].
+
+### Where are my chats saved, and can I continue them?
+In the project, in the folder `chats/` — one file per conversation. Open an old chat and write on: Claude continues where it stopped.
+
+### Can I leave the chat while Claude is answering? How do I stop it?
+Yes. Go to another page: Claude keeps working. Come back to the chat to see the answer so far and any question it is waiting for. **Stop** stops Claude.
+
+### Can I choose the Claude model?
+Yes, with `model:` under `chat:`, e.g. `model: sonnet`. Without it, the Claude CLI default is used.
+
+### Can Claude manage the whole workspace (create projects and so on)?
+Yes. Register the workspace once in a terminal:
+`claude mcp add project-workspace --scope user -- "C:\Workspace\Workspace.exe" mcp`
+(Linux: `-- /path/to/workspace-server mcp`). Then you can ask Claude e.g. *"create a project Office Move with a wiki, tasks and contacts"*. More: [[Claude]].
+
 ## VS Code
+
+### Do I need VS Code installed?
+Yes — for the **Open in VS Code** button and for the **VS Code tab**. Download: https://code.visualstudio.com
+
+### What is the difference between "Open in VS Code" and the VS Code tab?
+**Open in VS Code** (gear icon → Manage) opens the project in your normal VS Code window. The **VS Code tab** shows VS Code inside the app, opened on the project — with extensions, terminal and Git.
 
 ### The VS Code button does nothing
 The `code` command isn't on the PATH. Reinstall VS Code with *Add to PATH*, or set `VSCODE_COMMAND`.
 
 ### The VS Code tab stays blank
 VS Code needs internet the first time it starts (it downloads its web part once). If it says *VS Code is not installed*, install it from the link shown.
+
+### The VS Code tab is slow the first time
+The first start downloads VS Code's web part once (needs internet, about 10–40 seconds). After that it starts in a few seconds.
+
+### "VS Code did not start" or a black window
+1. Wait a moment — the tab says *VS Code is starting…* while it starts.
+2. Switch to another tab and back to the VS Code tab.
+3. Still nothing: close Workspace completely (tray → Quit) and start it again.
+4. Another program may use port 8740. Close it, or change the port in `data/settings.yaml` (`ide:` → `port:`).
+5. Still not working: report a bug ([[Known bugs|Known-bugs]] first).
+
+### Can others reach my VS Code tab?
+No. VS Code runs only on your own computer (`127.0.0.1`) with a secret access token, and the app shows it through its own address. Other computers and other websites can't reach it.
+
+### Can I use code-server instead of VS Code?
+Yes, or OpenVSCode Server. Change `ide:` in `data/settings.yaml` — the example is on [[VS Code and Explorer|VS-Code-and-Explorer]].
 
 ## Files & YAML
 
@@ -100,11 +150,24 @@ It has a YAML error; the message names the line. A common cause is indentation: 
 
 ## Your data
 
+### Where is my data folder?
+Next to the program: the folder `data` next to `Workspace.exe` (Windows) or `workspace` (Linux). Everything that is yours is in there.
+
 ### Who is responsible for my data?
 You are — not the app and not its maintainer. Everything is in your `data` folder: back it up regularly and before every update. How: [[Backup]].
 
 ### I deleted something by mistake
 Look in `.trash` inside the project folder. Nothing is really deleted by the app.
+
+### How do I move Workspace to another PC?
+1. Back up and copy your `data` folder ([[Backup]]).
+2. On the new PC, download Workspace, unzip it and put your `data` folder next to the program.
+3. Start it. **Secrets** can't be read on another PC: under **Secrets** click *Remove all secrets* and enter them again.
+
+### How do I uninstall Workspace?
+1. Back up your `data` folder if you want to keep it.
+2. If you turned on **Start with Windows** in the tray menu, turn it off.
+3. Quit Workspace (tray → Quit) and delete its folder. Nothing else is installed on your PC.
 
 ## Help & feedback
 
