@@ -18,11 +18,11 @@ The app is being rebuilt in Rust. It uses the browser engine of your system inst
 | Version | Planned for | What's new |
 |---|---|---|
 | **1.0** | 27 Nov 2026 | • Workspace in Rust, signed<br>• Ticket tab (GLPI)<br>• Two layouts: menu left or menu top<br>• Tabs button: choose the tabs per project<br>• project.yaml in the gear menu<br>• Issues feature renamed to `issue`<br>• Help & wiki opens again<br>• VS Code tab starts by itself<br>• New wiki order |
-| **1.0.1** | when everything is built and the beta test is OK (building starts 27 Nov) | • Restore and update built-in features<br>• Version Control tab (Git, SVN)<br>• ComfyUI tab<br>• Forgejo in the Issues tab<br>• 6 new layouts for text: journal, book, sticky notes, board, table, blog<br>• MCPs: Blender, Unity, Unreal Engine, Godot, OpenSCAD, FreeCAD<br>• LM Studio in the Chat<br>• Help & wiki inside the app<br>• Dashboard on the Overview |
+| **1.0.1** | 5 days after the complete beta (building starts 27 Nov) | • Restore and update built-in features<br>• Version Control tab (Git, SVN)<br>• ComfyUI tab<br>• Forgejo in the Issues tab<br>• 6 new layouts for text: journal, book, sticky notes, board, table, blog<br>• MCPs: Blender, Unity, Unreal Engine, Godot, OpenSCAD, FreeCAD<br>• LM Studio in the Chat<br>• Help & wiki inside the app<br>• Dashboard on the Overview |
 
 Details of each feature: [docs/plans/](docs/plans/). MCPs are switched on per project; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program.
 
-**How releases are timed:** 1.0 comes on 27 Nov. Everything else comes together in 1.0.1: it is built from 27 Nov (betas in between for testers) and released when everything is built and the beta test is OK.
+**How releases are timed:** 1.0 comes on 27 Nov. Everything else comes together in 1.0.1: it is built from 27 Nov (betas in between for testers). When everything is built, a complete beta starts 5 test days; without a bug report 1.0.1 comes on day 5. If a bug is reported in those days, it comes 5 days later (only once) with all fixes; bugs found in the extra days go into the next version.
 
 ## Start (current version 0.x)
 

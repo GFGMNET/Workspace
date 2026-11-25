@@ -52,7 +52,10 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   **Versions (decided 2026-11-25): only two releases — 1.0 on 27 Nov (the tested version) and 1.0.1 with ALL remaining plans**
   (BUILTIN, VERSION-CONTROL, COMFYUI, FORGEJO, LAYOUTS, BLENDER, UNITY, UNREAL, LMSTUDIO, HELP, GODOT, OPENSCAD, FREECAD, DASHBOARD).
   Building starts on 27 Nov after the 1.0 release (not earlier, his choice), several features per test round; betas in between for him
-  and his testers; 1.0.1 is released when everything is built and the beta test is OK — with his OK. The 5-day release train is off.
+  and his testers. **1.0.1 release rule (2026-11-25):** when everything is built, a complete 1.0.1 beta starts 5 test days; no bug
+  (label `bug`) in those 5 days → 1.0.1 is released on day 5; a bug in those 5 days → the release moves ONCE by 5 days and brings all fixes;
+  bugs found in the extra days go into the next version; hiccups never delay. When the complete beta is out, Claude sets a one-time
+  scheduled task (cloud) for day 5 that applies this rule (security gate included). The old daily 5-day release train stays off.
   1.0 timing (2026-11-25): pre-flight check on 26 Nov 12:00 (security, tests, bugs — fix what is found); after that a CODE FREEZE:
   nothing changes on main until 1.0 is out, bugs reported after 26 Nov 12:00 go into 1.0.1. Release 27 Nov 06:00 (out ~06:30);
   building 1.0.1 starts 27 Nov 07:00 (waits if 1.0 isn't published yet — never push while the release build runs).
@@ -108,8 +111,8 @@ or whose check failed cannot be approved. Checks live in `docs/plans/checks/`. B
 gets the open points and risks, and nothing begins until they have seen them. While building: if a step cannot be
 done as planned, stop and ask the maintainer — no new design on your own.
 A plan that is not **Ready 2 Deploy** when its version is due is skipped: it moves to a later version (decided 2026-11-19).
-Release timing: 1.0 on 27 Nov 2026; then 1.0.1 with everything else, released with the maintainer's OK after the beta test
-(decided 2026-11-25; the earlier 5-day "release train" of 2026-11-23 is switched off).
+Release timing: 1.0 on 27 Nov 2026; then 1.0.1 with everything else: complete beta → 5 test days → release, or once 5 days later
+if a bug is reported in the test days (decided 2026-11-25; the daily "release train" of 2026-11-23 is switched off).
 Wiki pages of a version that is not out yet go into `docs/wiki-next/vX.Y.Z/` (not `docs/wiki/`, which is published on every push);
 the release of that version moves them into `docs/wiki/` (see `docs/wiki-next/README.md`).
 MCPs (decided 2026-11-20): named after the program they use (Blender, Unity, Unreal); use the existing solution if possible;
