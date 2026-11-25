@@ -33,7 +33,7 @@ function summary(body) {
     : i.state_reason === 'completed' ? 'fixed' + ms(i)
     : (label === 'security' ? 'not fixed — see the issue for why' : 'closed');
   const rows = all.map(i => `| [${i.title.replace(/\|/g, '/')}](${i.html_url}) | ${i.created_at.slice(0, 10)} | ${status(i)} | ${summary(i.body)} |`);
-  const table = ['| Issue | Reported | Status | What happened |', '|---|---|---|---|', ...(rows.length ? rows : ['| — | | | Nothing listed right now. |']), '', `*As of ${day} — updated once a day, newest first.*`].join('\n');
+  const table = ['| Issue | Reported | Status | What happened |', '|---|---|---|---|', ...(rows.length ? rows : ['| — | | | Nothing listed right now. |']), '', `*As of ${day} — updated when an issue changes and once a day, newest first.*`].join('\n');
   const s = fs.readFileSync(file, 'utf8');
   const m = s.match(/<!-- list:start -->[\s\S]*?<!-- list:end -->/);
   if (!m) throw new Error('markers <!-- list:start --> / <!-- list:end --> not found in ' + file);
