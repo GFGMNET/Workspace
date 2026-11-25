@@ -4,15 +4,17 @@ Bugs: [BUG-WORKFLOW](BUG-WORKFLOW.md) · Backup: [wiki Backup](https://github.co
 
 ```mermaid
 flowchart TD
-   A["Bug reported after a release"] --> B{"Serious? Only the maintainer decides"}
+   A["Bug reported after a release"] --> B{"What kind of problem?"}
    B --> C["Security hole in a released version:<br/>always an urgent fix, as soon as possible"]
    B --> D["Data lost: the user is responsible for his data<br/>(wiki Backup) — not the app, not the maintainer"]
    B --> E["App doesn't start: first check the FAQ"]
-   C --> H{"Serious?"}
-   D --> F
+   B --> O["Another bug"]
+   C --> H["Claude fixes only that"]
+   D --> F{"Serious? Only the maintainer decides"}
    E --> F
+   O --> F
    F -->|No| G["Normal bug: next version (BUG-WORKFLOW)"]
-   F -->|Yes| H["Claude fixes only that"]
+   F -->|Yes| H
    H --> I["Fix version with four digits:<br/>1.0.1 → 1.0.1.1, 1.0.1.2 … (1.0 → 1.0.0.1)"]
    I --> J["Security gate: Rust security check + CodeQL clean"]
    J --> K["Maintainer tests it — as long as the fix needs"]

@@ -4,7 +4,7 @@ Form: [New idea](https://github.com/GFGMNET/Workspace/issues/new?template=new-id
 
 ```mermaid
 flowchart TD
-   A["Form creates an idea (label: idea)"] --> DC
+   A["Form creates an idea (label: idea)"] --> DC["Duplicate check (automatic): similar ideas or votes?<br/>→ comment + label possible-duplicate"]
    A2["Idea as a normal issue:<br/>maintainer sets the label idea"] --> DC
    O["Maintainer's own idea:<br/>he opens a Vote: … issue himself"] --> V["Duplicate check (automatic): similar ideas or votes?<br/>→ comment + label possible-duplicate"]
    DC --> B{"Is the request clear?"}
