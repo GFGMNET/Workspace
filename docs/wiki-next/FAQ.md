@@ -9,9 +9,21 @@
 ### What do I need to run Workspace?
 Supported:
 - **Windows 11**, 64-bit (x64). Nothing else to install — the window engine (WebView2) is part of Windows 11.
-- **Linux**, 64-bit (x64): **Ubuntu 24.04** or newer, **Linux Mint 22** or newer, **Debian 13** or newer, **Fedora 40** or newer
-  — and Linux that is always kept up to date, like **Arch Linux**, **Manjaro**, **EndeavourOS** or **openSUSE Tumbleweed**
-  (any Linux with glibc 2.39 or newer works). For the window: WebKitGTK 4.1 (most desktops have it).
+- **Linux**, 64-bit (x64), with glibc **2.39 or newer**. For the window: WebKitGTK 4.1 (most desktops have it). For example:
+
+  | Linux | Works from |
+  |---|---|
+  | Ubuntu and its flavours (Kubuntu, Xubuntu, Lubuntu, Ubuntu MATE …) | 24.04 |
+  | Linux Mint | 22 (LMDE: 7) |
+  | Pop!_OS | 24.04 |
+  | elementary OS | 8 |
+  | Zorin OS | 18 |
+  | Debian | 13 |
+  | Fedora | 40 |
+  | Red Hat Enterprise Linux, Rocky Linux, AlmaLinux | 10 |
+  | Arch Linux, Manjaro, EndeavourOS, openSUSE Tumbleweed, Kali (always kept up to date) | current version |
+
+  Not in the list? Open a terminal and type `ldd --version`. If the first line shows **2.39** or a higher number, Workspace works.
 
 Not supported:
 - Windows 10 and older
