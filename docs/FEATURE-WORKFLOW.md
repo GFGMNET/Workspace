@@ -4,31 +4,31 @@ Plans: [docs/plans](plans) · Checks: [docs/plans/checks](plans/checks)
 
 ```mermaid
 flowchart TD
-   A["Maintainer names the feature and its functions"] --> U{"New feature or upgrade<br/>of an existing one?"}
-   U -->|New: a new tab or function| B["Claude writes the plan (8 parts)"]
-   U -->|Upgrade: extends an existing feature| V["Own short plan 'Feature: upgrade'<br/>(e.g. Version Control: write and push),<br/>refers to the existing plan — only the new functions"]
-   V --> C
-   B --> C["Check every function (docs/plans/checks)"]
-   C --> D{"All checks OK?"}
-   D -->|No| E["Maintainer decides: change the function or drop it"]
-   E --> B
-   D -->|Yes| F["Maintainer sees the open points and risks"]
-   F --> G{"Open points answered?"}
-   G -->|No| F
-   G -->|Yes| H["Maintainer approves: Ready 2 Deploy"]
-   H --> K["Into the open version: Claude builds it + automatic tests"]
-   H -->|Maintainer changes the plan| CH["No longer Ready 2 Deploy:<br/>new part checked, open points and risks again"]
-   CH --> C
-   CH -.->|Version closed before the new OK| NO["Not in this release — Claude warns"]
-   K --> L{"Can it be built as planned?"}
-   L -->|No| M["Stop and ask the maintainer"]
-   M --> K
-   L -->|Yes| N["Docs: wiki-next, readme-next, release notes (new → New, upgrade → New/Changed);<br/>built-in feature upgraded → its version: number goes up"]
-   N --> O["Beta: maintainer and testers test"]
-   O --> P{"Bug found?"}
-   P -->|Yes| Q["Fix it, next beta"]
-   Q --> O
-   P -->|No| R["Security gate: Rust security check + CodeQL clean"]
-   R --> S["Release (RELEASE-WORKFLOW)"]
-   S --> T([End])
+ subgraph Maintainer
+  M1[Names a feature or an upgrade]
+  M2[Sees open points and risks]
+  M3[Approves: Ready 2 Deploy]
+  M4[Changes the plan]
+  M5[Decides: change or drop]
+ end
+ subgraph Action
+  A1[Plan]
+  A2{All checks OK?}
+  A3[Built into the open version]
+  A4{Built as planned?}
+  A5[Stop and ask the maintainer]
+  A6[Docs and release notes]
+  A7[Release workflow]
+ end
+ M1 --> A1 --> A2
+ A2 -->|No| M5 --> A1
+ A2 -->|Yes| M2 --> M3 --> A3 --> A4
+ A4 -->|No| A5 --> M2
+ A4 -->|Yes| A6 --> A7
+ M3 --> M4 --> A1
 ```
+
+**Details (for Claude):**
+- Plan: 8 parts (CLAUDE.md); an upgrade gets its own short plan "<Feature>: <upgrade>" that refers to the existing plan.
+- Every function is checked (`docs/plans/checks/`). A changed plan loses Ready 2 Deploy until the new part is checked and approved again.
+- Docs: wiki in `docs/wiki-next/vX.Y.Z/`, `docs/readme-next/README.md`, `docs/releases/vX.Y.Z.md`; a built-in feature's `version:` goes up.

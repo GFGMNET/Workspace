@@ -464,7 +464,7 @@ pages only (never on `main`; the copies in `docs/` keep a placeholder row that s
 **Issues from users:** the form *New idea* (`.github/ISSUE_TEMPLATE/new-idea.yml`: short name, what it should do, why, "I checked
 the idea list") gives the label `idea`; normal issues stay possible. The maintainer decides bug or hiccup and sets the label. `duplicate-check.yml` compares a new idea with open ideas and votes, and a bug (when the label `bug` is set) with all bugs, by the words of the title (prefixes like "Idea:" ignored, 40 % alike); it comments the matches and adds `possible-duplicate`.
 
-**Workflows as flowcharts** (Mermaid, `docs/*-WORKFLOW.md`): ideas → vote (`IDEAS-`), new feature (`FEATURE-`), MCP (`MCP-`),
+**Workflows as flowcharts** (Mermaid, `docs/*-WORKFLOW.md`, lanes User / Maintainer / Action, details as text under each chart; start: `ISSUE-WORKFLOW.md`): issues (`ISSUE-`), ideas → vote (`IDEAS-`), new feature (`FEATURE-`), MCP (`MCP-`),
 release (`RELEASE-`, 1.0.1 and later), bug (`BUG-`), urgent fix (`URGENT-FIX-`), pull request (`PR-`), security finding (`SECURITY-`).
 
 **Pages for coming versions** wait in `docs/wiki-next/` (1.0) and `docs/wiki-next/vX.Y.Z/` (e.g. the 1.0.1 FAQ with LM Studio);

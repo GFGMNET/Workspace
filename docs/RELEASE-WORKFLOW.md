@@ -4,23 +4,33 @@ Releases: [GitHub Releases](https://github.com/GFGMNET/Workspace/releases) · No
 
 ```mermaid
 flowchart TD
-   Z["Maintainer asks for a feature"] --> Y["Plan + checks (FEATURE-WORKFLOW)"]
-   Y --> X["Ready 2 Deploy"]
-   X --> A["Built into the open version<br/>until the maintainer says: close 1.0.x<br/>(later: closes by itself after a fixed number of days)"]
-   A --> CL["Maintainer: close 1.0.x — plans not Ready 2 Deploy stay out;<br/>Claude warns: these are NOT in this release (list)"]
-   CL --> B["Complete beta for the maintainer and testers<br/>— only now the release date is set (day 5)"]
-   B --> C["5 test days — nothing new is added:<br/>a new feature asked for now goes into the next version"]
-   C --> D{"Bug (label bug) in the 5 days?"}
-   D -->|No| G["Security gate: Rust security check + CodeQL"]
-   D -->|Yes| E["Release moves ONCE by 5 days<br/>and brings all fixes"]
-   E --> F["Bugs found in the extra days<br/>go into the next version"]
-   F --> G
-   G --> H{"Clean?"}
-   H -->|No| I["Fix it first, like a bug"]
-   I --> G
-   H -->|Yes| J["Release: README from readme-next,<br/>wiki from wiki-next, release notes, milestone closed"]
-   J --> K([End])
+ subgraph Maintainer
+  M1[Asks for features]
+  M2[Closes the version]
+ end
+ subgraph User
+  U1[Testers test 5 days]
+ end
+ subgraph Action
+  A1[Ready features go into the open version]
+  A2[Warning: what is not in it]
+  A3[Complete beta - release date set]
+  A4{Bug in the 5 days?}
+  A5[Release moves once by 5 days]
+  A6{Security check clean?}
+  A7[Fix it first]
+  A8[Release]
+ end
+ M1 --> A1 --> M2 --> A2 --> A3 --> U1 --> A4
+ A4 -->|No| A6
+ A4 -->|Yes| A5 --> A6
+ A6 -->|No| A7 --> A6
+ A6 -->|Yes| A8
 ```
 
-No release date is fixed in advance: as quick and as safe as possible — the date is set when the complete beta is out.
-Hiccups never delay a release. The day-5 step runs as a scheduled task that Claude sets when the complete beta is out.
+**Details (for Claude):**
+- No release date in advance: the date is set when the complete beta is out (day 5, or once 5 days later). The day-5 step runs as a scheduled task.
+- For now the maintainer closes a version ("close 1.0.x"); later it may close by itself after a fixed number of days.
+- Not Ready 2 Deploy when the version closes → not in it, with a warning; it goes into the next version once ready.
+- Nothing new in the test days; bugs in the extra days → next version; hiccups never delay.
+- Release: README from `docs/readme-next/`, wiki from `docs/wiki-next/`, release notes, milestone closed.

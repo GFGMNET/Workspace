@@ -1,36 +1,25 @@
 # How a serious bug is fixed (urgent fix)
 
-Bugs: [BUG-WORKFLOW](BUG-WORKFLOW.md) · Backup: [wiki Backup](https://github.com/GFGMNET/Workspace/wiki/Backup) · [FAQ](https://github.com/GFGMNET/Workspace/wiki/FAQ)
-
+Start: [ISSUE-WORKFLOW](ISSUE-WORKFLOW.md)
 
 ```mermaid
 flowchart TD
- subgraph User
-  BUG[Report an Issue]
- end
  subgraph Maintainer
-  RM[The Maintainer review the Issue]
-  WIF{What Kind of Issue}
-  SEC[Secruity Issue]
-  DEA[Serious Issue]
-  BUN[Bug]
-  HIC[Hiccup]
+  M1[Serious bug or security issue in a released version]
+  M2[Tests the fix]
+  M3[OK to release]
  end
  subgraph Action
-  ADL[Hiccup Workflow]
-  ASW[Secruity Wokflow]
-  ABW[BUG Workflow]
+  A1[Fix only that]
+  A2[Fix version with four numbers]
+  A3[Security check]
+  A4[Release]
+  A5[Fix also in the next version]
  end
- 
- BUG --> RM
- RM --> WIF
- WIF --> SEC
- WIF --> DEA
- WIF --> BUN
- WIF --> HIC
- HIC --> ADL
- BUN --> ABW
- DEA --> ABW
- SEC --> ASW
- 
+ M1 --> A1 --> A2 --> A3 --> M2 --> M3 --> A4 --> A5
 ```
+
+**Details (for Claude):**
+- Only the maintainer decides what is serious. A security issue in a released version is always an urgent fix, as soon as possible. Lost data is the user's responsibility (wiki *Backup*); "doesn't start" → FAQ first.
+- Version numbers: 1.0 → 1.0.0.1, 1.0.1 → 1.0.1.1, 1.0.1.2 … The app compares all four numbers (#123).
+- Security check = Rust security check + CodeQL, both clean. He tests as long as the fix needs. The next normal version keeps its date.
