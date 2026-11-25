@@ -9,11 +9,13 @@ const file = process.argv[2];
 const repo = process.env.GITHUB_REPOSITORY || 'GFGMNET/Workspace';
 const headers = { 'User-Agent': 'workspace-votes', Accept: 'application/vnd.github+json', ...(process.env.GITHUB_TOKEN ? { Authorization: 'Bearer ' + process.env.GITHUB_TOKEN } : {}) };
 
-// one short line from the idea's text: the first sentence under "What it would do", else the first sentence
+// one short line from the idea's text: the first sentence under "What it would do" (or "What should it do"), else the first sentence
 function summary(body) {
   const t = String(body || '').replace(/\r/g, '');
-  const sec = t.match(/###\s*What it would do\s*\n+([\s\S]*?)(\n###|\n---|$)/i);
-  const text = (sec ? sec[1] : t).replace(/\*\*|__|`/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim();
+  // the text under a heading like "What it would do" / "What should it do" (any level), else the whole text — without headings
+  const sec = t.match(/^#{1,6}\s*what (?:it would|should it|would it|does it) do\b[^\n]*\n+([\s\S]*?)(?=\n#{1,6}\s|\n---|$)/im);
+  const text = (sec ? sec[1] : t).split('\n').filter(l => !/^\s*#{1,6}\s/.test(l) && !/^\s*(---|\*\*\*)\s*$/.test(l)).join(' ')
+    .replace(/\*\*|__|`/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim();
   const s = (text.match(/^(.+?[.!?])(\s|$)/) || [, text])[1];
   return (s.length > 160 ? s.slice(0, 157) + '…' : s).replace(/\|/g, '/');
 }
