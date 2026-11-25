@@ -6,7 +6,7 @@ Releases: [GitHub Releases](https://github.com/GFGMNET/Workspace/releases) · No
 flowchart TD
    Z["Maintainer asks for a feature"] --> Y["Plan + checks (FEATURE-WORKFLOW)"]
    Y --> X["Ready 2 Deploy"]
-   X --> A["Built into the next version"]
+   X --> A["Built into the open version<br/>until the maintainer says: close 1.0.x<br/>(later: closes by itself after a fixed number of days)"]
    A --> B["Complete beta for the maintainer and testers<br/>— only now the release date is set (day 5)"]
    B --> C["5 test days — nothing new is added:<br/>a new feature asked for now goes into the next version (1.0.2)"]
    C --> D{"Bug (label bug) in the 5 days?"}
