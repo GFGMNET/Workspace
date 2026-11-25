@@ -63,6 +63,10 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
   The whole data folder is not versioned.
 - Git history inside the app for the tool itself: not wanted (the tool's repo is only for development).
 - The VS Code tab works; a focused layout is a later improvement (#62).
+- **Vote for features (decided 2026-11-25):** unplanned ideas are GitHub issues with the label `vote`, created only by the maintainer
+  (or by Claude when he asks); users vote 👍/👎 on the first post (comments stay possible — locking would switch votes off too).
+  List: wiki page `Vote-for-features` (in docs/wiki and docs/wiki-next) + README link; sorted by 👍. Votes never move a release.
+  First idea: #118 Skills from the internet.
 - Feature requests from users (idea channel): **not cancelled — paused for review** (2026-11-23). Before going on, the whole workflow
   must be reviewed so it is not wonky and has no parts that can't be done. Latest idea (his): the user links his GitHub account in the app,
   sends "Request a new feature", it is saved on GitHub (repo `Workspace-requests`) and nothing happens until he approves; overview in the app

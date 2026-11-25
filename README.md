@@ -106,7 +106,7 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
 - Full design and rebuild guide: [docs/DESIGN.md](docs/DESIGN.md)
 - Requirements and their status: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
 - Security, reporting a vulnerability: [SECURITY.md](SECURITY.md) · [Code signing policy](CODE-SIGNING-POLICY.md)
-- Bugs and ideas: [Issues](https://github.com/GFGMNET/Workspace/issues)
+- Bugs: [Issues](https://github.com/GFGMNET/Workspace/issues) (label **bug**) · Ideas not planned yet: **[vote for features](https://github.com/GFGMNET/Workspace/wiki/Vote-for-features)** (👍 / 👎)
 - Tests: `npm test` (unit checks), `npm run test:contract` (API contract, also run against the Rust version), `npm run test:yaml`
 - Settings (environment variables): `PORT` (default 4321), `WORKSPACE_DIR` (data folder, default `data/`), `CLAUDE_COMMAND` (default `claude`)
 
