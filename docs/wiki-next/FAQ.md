@@ -36,8 +36,14 @@ Optional: internet and the Claude CLI for the chat; VS Code for the VS Code tab.
 ### Do I need a database or a server?
 No. The program runs a small local app on your PC (`localhost`), and everything is files in `data/`.
 
-### Can several people use it?
-Each person runs it on their own PC. You can share the `data` folder (OneDrive, a network drive), but two people editing the same file at the same moment can overwrite each other.
+### Can several people use it? Can we share a folder?
+Each person runs Workspace on their own PC. You **can** put the `data` folder on OneDrive or a network drive and share it, but only like this:
+- **OK:** one person after the other, or each person in a **different project**.
+- **Not OK:** two people in the **same project at the same time**. Whoever saves last wins — the other's changes are lost without a warning. OneDrive may also create conflict copies (e.g. `page-PC-Name.md`) that show up as extra pages.
+- **Secrets** work only for the person who entered them. Others can't read them — each person needs their own (and removing them breaks them for the others).
+- Window size, tray and autostart settings are shared too, so they overwrite each other.
+
+Real teamwork is not built in. Want it? Vote for it: [Working together in a shared folder](https://github.com/GFGMNET/Workspace/issues/122).
 
 ### Does it need internet?
 No, except for the Claude chat, the first start of the in-app VS Code, MCP servers that are online, and the weekly update check (which simply fails quietly when offline).

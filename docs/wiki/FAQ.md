@@ -4,7 +4,7 @@
 No. Node.js runs a small local app on your PC (`localhost`), and everything is files in `data/`.
 
 **Can several people use it?**
-Each person runs it on their own PC. You can share the `data` folder (OneDrive, a network drive), but two people editing the same file at the same moment can overwrite each other.
+Each person runs it on their own PC. You can share the `data` folder (OneDrive, a network drive), but only one after the other or in different projects: two people in the same project at the same time overwrite each other (the last save wins), and secrets work only for the person who entered them. Want real teamwork? [Vote for it](https://github.com/GFGMNET/Workspace/issues/122).
 
 **Does it need internet?**
 No, except for the Claude chat, the first start of the in-app VS Code, MCP servers that are online, and the weekly update check (which simply fails quietly when offline).
