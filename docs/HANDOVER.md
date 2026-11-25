@@ -30,9 +30,9 @@ rules and the maintainer's decisions. This file says **where things stand** and 
 
 | When | What | Who does it |
 |---|---|---|
-| **26 Nov, 12:00** | **Pre-flight check for 1.0** (below). Afterwards **code freeze**: nothing changes on `main` until 1.0 is out (only security fixes). Bugs reported after 12:00 go into 1.0.1. | scheduled task (see "Scheduled tasks") or by hand |
-| **27 Nov, 06:00** | **Release 1.0** (below), out ~06:30 | scheduled task in the cloud, or by hand |
-| **27 Nov, 07:00** | **Start building 1.0.1** (below). Waits if 1.0 isn't out yet; never push while a release build runs | scheduled task or by hand |
+| **26 Nov, 12:00** | **Pre-flight check for 1.0** (below). Afterwards **code freeze**: nothing changes on `main` until 1.0 is out (only security fixes). Bugs reported after 12:00 go into 1.0.1. | **by hand** (scheduled task switched off) |
+| **27 Nov, 06:00** | **Release 1.0** (below), out ~06:30 | **by hand** (scheduled task switched off) |
+| **27 Nov, 07:00** | **Start building 1.0.1** (below). Waits if 1.0 isn't out yet; never push while a release build runs | **by hand** (scheduled task switched off) |
 
 ### Pre-flight check (26 Nov, 12:00)
 
@@ -87,7 +87,7 @@ rules and the maintainer's decisions. This file says **where things stand** and 
 | Release 1.0 — cloud | 27 Nov 06:00 | a new Claude cloud session |
 | Start building 1.0.1 | 27 Nov 07:00 | Claude's chat session |
 
-If another assistant takes over, **switch these off** (or let them run and don't do the same steps twice). Otherwise two assistants could push at the same time. The steps above are the same as in the tasks.
+**All three were switched off on 25 Nov 2026, 20:51** (the maintainer is moving to another assistant). Nothing runs on its own any more: the pre-flight, the release and the start of 1.0.1 must be done by hand, with the steps above.
 
 ## Working environment (Claude's — check what applies to you)
 
