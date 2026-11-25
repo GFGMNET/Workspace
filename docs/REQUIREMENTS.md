@@ -112,6 +112,6 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D25 | Vote for features: wiki page with 👍/👎 per idea (issues with label `vote` by the maintainer), counts filled in daily | ✅ 2026-11-25 | #118, #122 |
 | D26 | Form *New idea* for users (short name, what, why, checked the list) → label `idea` | ✅ 2026-11-25 | |
 | D27 | Wiki lists filled in daily: Known bugs, Known hiccups, Known security issues | ✅ 2026-11-25 | |
-| D28 | Workflows as flowcharts in `docs/*-WORKFLOW.md` (ideas, feature, MCP, release, bug, urgent fix, pull request, security) | ✅ 2026-11-25 | |
+| D28 | Workflows as flowcharts (issues, ideas, feature, MCP, release, bug, urgent fix, pull request, security) | 🔄 the maintainer makes them himself (2026-11-25) | |
 
 ## Open questions

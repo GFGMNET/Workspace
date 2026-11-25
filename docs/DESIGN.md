@@ -329,9 +329,7 @@ Screens (from the accepted mockup, issue #2):
 Live installations never use git; they are updated from **GitHub Releases** (#26).
 
 - **Weekly check:** the server asks `https://api.github.com/repos/GFGMNET/Workspace/releases/latest` (public, no login, nothing sent about the client) at most once a week, and the UI shows the result. The last check, the latest release, *skip* and *later* are stored in `data/.workspace.json`. Turn checking off with `updates: check: false` in `data/settings.yaml`; `updates: repo:` points to another repository.
-- **Versions (1.0 and later, decided 2026-11-25):** a normal version (1.0.0, 1.0.1) is released by the rule in
-  [RELEASE-WORKFLOW](RELEASE-WORKFLOW.md); a serious bug gets an **urgent fix version with four numbers** (1.0.0.1, 1.0.1.1 —
-  [URGENT-FIX-WORKFLOW](URGENT-FIX-WORKFLOW.md)). The update check compares **all four numbers** (`updater.rs` `parse_v`, #123),
+- **Versions (1.0 and later, decided 2026-11-25):** a normal version (1.0.0, 1.0.1) is released by the release rule (CLAUDE.md); a serious bug gets an **urgent fix version with four numbers** (1.0.0.1, 1.0.1.1). The update check compares **all four numbers** (`updater.rs` `parse_v`, #123),
   so 1.0.0.1 is newer than 1.0.0 and 1.0.1 is newer than every 1.0.0.x. Test betas are GitHub **pre-releases**, which
   `releases/latest` never returns, so installed apps never get them; the betas for 1.0.1 are numbered 0.9.2.N.
 - **Banner:** *Version X is available* · **What's new** (the release notes) · **Update now** · **Later** (a week) · **Skip this version**. The sidebar shows the version and a dot when an update is waiting; *v… · Updates* opens the same dialog with *Check now*.
@@ -434,7 +432,7 @@ only the local workspace (sandbox, context isolation, no Node in the page); othe
 
 **Reporting:** `SECURITY.md` — private reports through GitHub (*Security → Report a vulnerability*, switched on). Only the latest release gets fixes.
 Labels (2026-11-25): `security` only for a real security problem (one issue per problem); the automatic message of the Rust
-security check gets `security-check`. Flow: [SECURITY-WORKFLOW](SECURITY-WORKFLOW.md); public list: wiki *Known security issues*.
+security check gets `security-check`. Public list: wiki *Known security issues*.
 
 **Not done yet:** signed updates and a code-signed exe (#49, #31). A first attempt (a signing key on the maintainer's PC, scripts to sign each release) was removed again on 2026-11-16 as too cumbersome; the new plan is [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).
 
@@ -464,8 +462,7 @@ pages only (never on `main`; the copies in `docs/` keep a placeholder row that s
 **Issues from users:** the form *New idea* (`.github/ISSUE_TEMPLATE/new-idea.yml`: short name, what it should do, why, "I checked
 the idea list") gives the label `idea`; normal issues stay possible. The maintainer decides bug or hiccup and sets the label. `duplicate-check.yml` compares a new idea with open ideas and votes, and a bug (when the label `bug` is set) with all bugs, by the words of the title (prefixes like "Idea:" ignored, 40 % alike); it comments the matches and adds `possible-duplicate`.
 
-**Workflows as flowcharts** (Mermaid, `docs/*-WORKFLOW.md`, lanes User / Maintainer / Action, details as text under each chart; start: `ISSUE-WORKFLOW.md`): issues (`ISSUE-`), ideas → vote (`IDEAS-`), new feature (`FEATURE-`), MCP (`MCP-`),
-release (`RELEASE-`, 1.0.1 and later), bug (`BUG-`), urgent fix (`URGENT-FIX-`), pull request (`PR-`), security finding (`SECURITY-`).
+**Workflow flowcharts:** made by the maintainer himself (2026-11-25).
 
 **Pages for coming versions** wait in `docs/wiki-next/` (1.0) and `docs/wiki-next/vX.Y.Z/` (e.g. the 1.0.1 FAQ with LM Studio);
 the release of that version moves them into `docs/wiki/`. The README after the next release is `docs/readme-next/README.md`.
