@@ -35,10 +35,11 @@ fn update_settings(ws: &Workspace) -> Settings {
     Settings { check: u["check"] != false && std::env::var("UPDATE_CHECK").map(|v| v != "0").unwrap_or(true),
         repo: u["repo"].as_str().filter(|r| !r.is_empty()).unwrap_or("GFGMNET/Workspace").to_string() }
 }
-fn parse_v(v: &str) -> [u64; 3] {
+// Four numbers: an urgent fix is 1.0.0.1 / 1.0.1.1 (maintainer's rule 2026-11-25), so the fourth number counts too.
+fn parse_v(v: &str) -> [u64; 4] {
     let v = v.trim_start_matches(['v', 'V']);
-    let mut out = [0u64; 3];
-    for (i, p) in v.split(['.', '+', '-']).take(3).enumerate() { out[i] = p.parse().unwrap_or(0); }
+    let mut out = [0u64; 4];
+    for (i, p) in v.split(['.', '+', '-']).take(4).enumerate() { out[i] = p.parse().unwrap_or(0); }
     out
 }
 pub fn newer(a: &str, b: &str) -> bool { parse_v(a) > parse_v(b) }
@@ -238,6 +239,23 @@ pub fn run_swap(ws: &Workspace, src: &Path) {
         let q = |p: &Path| format!("'{}'", p.to_string_lossy().replace('\'', "'\\''"));
         let script = format!("while kill -0 {pid} 2>/dev/null; do sleep 0.5; done; cp -a {}/. {}/ && rm -rf {}; PW_RESTARTED=1 {} >/dev/null 2>&1 &", q(src), q(&install), q(&unpacked), q(&exe));
         let _ = std::process::Command::new("/bin/sh").args(["-c", &script]).stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).spawn();
+    }
+}
+
+#[cfg(test)]
+mod version_tests {
+    use super::newer;
+    #[test]
+    fn four_numbers() {
+        assert!(newer("1.0.0.1", "1.0.0"));        // urgent fix for 1.0
+        assert!(newer("v1.0.0.2", "1.0.0.1"));
+        assert!(newer("1.0.1", "1.0.0.9"));         // the next version beats every urgent fix
+        assert!(newer("1.0.1.1", "1.0.1"));
+        assert!(newer("1.0.0", "0.9.1.5"));         // beta testers get 1.0
+        assert!(newer("1.0.1", "0.9.2.3"));         // and 1.0.1
+        assert!(!newer("1.0.0", "1.0.0"));
+        assert!(!newer("1.0.0", "1.0.0.1"));
+        assert!(!newer("0.9.1.5", "1.0.0"));
     }
 }
 
