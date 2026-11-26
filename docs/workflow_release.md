@@ -11,10 +11,14 @@ flowchart TD
  subgraph LLM
   CHE[Check]
   DEP[Deploy]
+  DIF[Deploy]
   BET{Between RELEASE}
+  BIT{Between RELEASE}
   ISEC{Is an Security ISSUE}
   WAU[Wait 5 Days Without ERROR]
   DEL[Delay next Release 5 days]
+  TES{In Testing Period}
+  PLAN[Plan new Release]
  end
   
  
@@ -31,9 +35,11 @@ flowchart TD
  VOT --> CHE 
  CHE --> ISEC
  ISEC --> |Yes|BET
- ISEC --> |NO|DEP
- BET --> DEP 
+ BET --> |YES|DEP 
+ BET --> |NO|DIF
  DEP --> DEL
- 
- 
+ ISEC --> |NO|BIT
+ BIT --> |Yes|TES
+ TES --> |YES| DEP
+ TES --> |NO| PLAN
  ```
