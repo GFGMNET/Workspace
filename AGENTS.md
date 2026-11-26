@@ -4,6 +4,7 @@ Read these before you do anything, in this order:
 
 1. **[`CLAUDE.md`](CLAUDE.md)** — the rules and every decision of the maintainer. It applies to any model, not only Claude.
 2. **[`docs/HANDOVER.md`](docs/HANDOVER.md)** — where things stand and what comes next.
+   First open points: **[`docs/NOT-REQUESTED-2026-11-26.md`](docs/NOT-REQUESTED-2026-11-26.md)** — things done without being asked; ask the maintainer about each one.
 3. **[`docs/AGENT-GUIDE.md`](docs/AGENT-GUIDE.md)** — how to build, where things go, what bites, your environment's limits.
 4. **[`docs/LAYOUT-AND-DESIGN.md`](docs/LAYOUT-AND-DESIGN.md)** — the app's look is fixed. Never change the layout; reuse the existing parts.
 5. **[`docs/SKILLS.md`](docs/SKILLS.md)** — step lists for release, security gate, building a feature, writing a plan, checking a pull request

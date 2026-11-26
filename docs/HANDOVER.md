@@ -15,6 +15,11 @@ rules and the maintainer's decisions. Then **[AGENT-GUIDE.md](AGENT-GUIDE.md)** 
 - **Don't change the app's layout.** A previous handover ended with another model rebuilding the whole layout — that was not OK.
   New features reuse the existing look (LAYOUT-AND-DESIGN.md).
 
+## First: things done without being asked
+
+On 26 Nov 2026 Claude did some things beyond the maintainer's steps. They are listed in
+**[NOT-REQUESTED-2026-11-26.md](NOT-REQUESTED-2026-11-26.md)**. Ask him about each point (keep or undo) before other work.
+
 ## Where things stand
 
 | What | State |
