@@ -21,9 +21,9 @@ flowchart TD
  FOR --> CLE
  CLE <--> |NO|ASK
  CLE --> |YES|DES
- DES --> VOT
+ DES --> |YES|VOT
  VOT --> NOT
- ASK --> NOT
+ DES --> |NO|NOT
  
  
  
