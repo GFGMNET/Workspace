@@ -11,7 +11,7 @@ flowchart TD
   BUN[Bug]
   HIC[Hiccup]
   NOR[Is an Idea]
-  KNO[is knowd]
+  KNO[is know]
  end
  subgraph Action
   ADL[Hiccup Workflow]
