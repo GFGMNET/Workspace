@@ -4,7 +4,7 @@
 
 Read these before you do anything, in this order:
 
-1. **[`CLAUDE.md`](CLAUDE.md)** — the rules and every decision of the maintainer. It applies to any model, not only Claude.
+1. **[`CLAUDE.md`](CLAUDE.md)** — the rules and every decision of the maintainer. It applies to any model, not only Claude. Its dates for 26–27 Nov 2026 are history (see HANDOVER.md).
 2. **[`docs/HANDOVER.md`](docs/HANDOVER.md)** — where things stand and what comes next.
    First open points: **[`docs/NOT-REQUESTED-2026-11-26.md`](docs/NOT-REQUESTED-2026-11-26.md)** — things done without being asked; ask the maintainer about each one.
    And **[`docs/FORGOTTEN-2026-11-26.md`](docs/FORGOTTEN-2026-11-26.md)** — what was forgotten or couldn't be finished (GitHub release texts, screenshots, help in the app).

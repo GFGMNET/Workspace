@@ -1,7 +1,7 @@
 # Handover — state on 26 Nov 2026 (Berlin)
 
 For any assistant (Claude or another model) that takes over this project. Read **`CLAUDE.md` first**: it holds all
-rules and the maintainer's decisions. Then **[AGENT-GUIDE.md](AGENT-GUIDE.md)** (how to build, what to consider) and
+rules and the maintainer's decisions (some of its dates are history now — see *Lines in CLAUDE.md that are history now* below). Then **[AGENT-GUIDE.md](AGENT-GUIDE.md)** (how to build, what to consider) and
 **[LAYOUT-AND-DESIGN.md](LAYOUT-AND-DESIGN.md)** (the fixed look). This file says **where things stand** and **what comes next**.
 
 ## The maintainer
