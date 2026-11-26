@@ -232,6 +232,7 @@ const recText = r => Object.values(r.data).map(v => typeof v === 'object' ? JSON
 function openRecordFromHash(ctx, items) { if (ctx.sub) { const r = items.find(x => x.id === ctx.sub); if (r) { recordDialog(ctx, r); history.replaceState(null, '', ctx.href('')); } } }
 
 VIEWS.table = async ctx => {
+  if (ctx.f.def.stores === 'markdown') return VIEWS.mdtable(ctx);   // text pages as a table (plan LAYOUTS)
   const { items } = await api(itemsUrl(ctx)); ctx.records = items;
   const fields = ctx.f.def.fields.filter(f => !['longtext', 'keyvalue'].includes(f.type));
   let sort = { k: ctx.f.def.title_field, dir: 1 };
@@ -783,4 +784,237 @@ VIEWS.issues = async ctx => {
     App.refreshProjects();
   };
   await load();
+};
+
+// ---------- markdown: journal, book, sticky notes, board, table, blog (plan docs/plans/LAYOUTS.md) ----------
+// Dates, chapter, order, color, column and other fields live in a short block at the top of each page (front matter);
+// the page stays normal text. Only the changed line is rewritten.
+const FM_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+function fmMeta(text) { const m = String(text).match(FM_RE); const out = {}; if (!m) return out; for (const l of m[1].split(/\r?\n/)) { const k = l.match(/^([A-Za-z_][\w-]*):\s*(.*)$/); if (k) out[k[1]] = k[2].replace(/\s+#.*$/, '').replace(/^["']|["']$/g, ''); } return out; }
+function fmSet(text, key, value) {
+  const v = /[:#[\]{}"']|^\s|\s$|^$/.test(String(value)) ? JSON.stringify(String(value)) : String(value);
+  const m = String(text).match(FM_RE);
+  if (!m) return `---\n${key}: ${v}\n---\n` + text;
+  const lines = m[1].split(/\r?\n/); const i = lines.findIndex(l => new RegExp(`^${key}:`).test(l));
+  if (i >= 0) lines[i] = `${key}: ${v}`; else lines.push(`${key}: ${v}`);
+  return `---\n${lines.join('\n')}\n---\n` + String(text).slice(m[0].length);
+}
+const metaVal = (it, k) => { const v = (it.meta || {})[k]; return v == null ? '' : Array.isArray(v) ? v.join(', ') : typeof v === 'object' ? JSON.stringify(v) : String(v); };
+async function setPageMeta(ctx, id, changes) {
+  const d = await api(itemsUrl(ctx, '/' + enc(id)));
+  let t = d.content; for (const [k, v] of Object.entries(changes)) t = fmSet(t, k, v);
+  await api(itemsUrl(ctx, '/' + enc(id)), { method: 'PUT', body: { content: t } });
+}
+// a page opened from one of these layouts: back button + the normal page view
+function openPage(ctx, items) {
+  ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><a class="btn sm" href="${ctx.href('')}">${icon('chevl', 14)} All ${esc(ctx.f.def.name.toLowerCase())}</a></div><div class="pane" id="pane"></div>`;
+  return pageView(ctx, $('#pane'), ctx.sub, items);
+}
+// search bar (titles right away, words inside the pages from the search) — search: false hides it
+function layoutBar(ctx, extra = '') {
+  return `<div class="row" style="margin-bottom:14px">${ctx.f.def.search !== false ? `<label class="finput" style="flex:1 1 280px;max-width:420px;margin:0">${icon('search', 14)}<input type="search" data-q placeholder="Search ${esc(ctx.f.def.name.toLowerCase())}" aria-label="Search ${esc(ctx.f.def.name)}"></label>` : ''}${extra}<span class="sp"></span><button class="btn primary" type="button" data-new>${icon('plus', 14)} New ${esc(ctx.f.def.new_item.toLowerCase())}</button></div>`;
+}
+function wireLayoutSearch(ctx, sel) {
+  const q = $('[data-q]', ctx.el); if (!q) return;
+  let hitIds = null, t;
+  const apply = () => { const qq = q.value.trim().toLowerCase(); $$(sel, ctx.el).forEach(r => { r.style.display = !qq || (r.dataset.text || '').includes(qq) || (hitIds && hitIds.has(r.dataset.id)) ? '' : 'none'; }); };
+  q.addEventListener('input', () => { hitIds = null; apply(); clearTimeout(t); t = setTimeout(async () => { const qq = q.value.trim(); if (qq.length > 1) { try { const h = new Set((await api(`/api/search?q=${enc(qq)}&project=${enc(ctx.p.slug)}`)).filter(h => h.feature === ctx.f.key).map(h => h.id)); if (q.value.trim() === qq) { hitIds = h; apply(); } } catch {} } }, 160); });
+}
+const itText = it => (it.title + ' ' + (it.summary || '') + ' ' + (it.tags || []).join(' ')).toLowerCase();
+const pad2 = n => String(n).padStart(2, '0');
+const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+async function newPageWith(ctx, title, top) {
+  const lines = Object.entries(top).filter(([, v]) => v !== '' && v != null).map(([k, v]) => `${k}: ${/[:#]/.test(String(v)) ? JSON.stringify(String(v)) : v}`);
+  const r = await api(itemsUrl(ctx), { body: { title, content: `${lines.length ? `---\n${lines.join('\n')}\n---\n` : ''}# ${title}\n\n` } });
+  App.refreshProjects(); location.hash = ctx.href(r.id, '?edit=1');
+}
+function titleDialog(ctx, extraHtml, onTitle) {
+  modal({ title: `New ${ctx.f.def.new_item.toLowerCase()} · ${ctx.f.def.name}`, ok: 'Create',
+    body: `<div class="field"><label for="nt">Title</label><input id="nt" name="title" required></div>${extraHtml || ''}`,
+    onOk: async f => { const t = f.title.value.trim(); if (!t) throw new Error('Please enter a title'); await onTitle(t, f); } });
+}
+const longDate = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
+
+// Journal: several entries per day, grouped by year and month, newest first; "New" = today's date and time
+VIEWS.journal = async ctx => {
+  const { items } = await api(itemsUrl(ctx));
+  if (ctx.sub) return openPage(ctx, items);
+  const key = it => (metaVal(it, 'date') || new Date(it.modified).toISOString().slice(0, 10)) + ' ' + (metaVal(it, 'time') || '');
+  const sorted = [...items].sort((a, b) => key(b).localeCompare(key(a)));
+  const groups = []; for (const it of sorted) { const ym = key(it).slice(0, 7); let g = groups.find(x => x.ym === ym); if (!g) groups.push(g = { ym, items: [] }); g.items.push(it); }
+  const ymName = ym => { const d = new Date(ym + '-01T00:00:00'); return isNaN(d) ? ym : d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); };
+  ctx.el.innerHTML = layoutBar(ctx) + (items.length ? groups.map(g => `<section class="jgroup"><h3 class="jmonth">${esc(ymName(g.ym))}</h3><div class="card list-rows" style="padding:0">${g.items.map(it => `<a class="lrow" href="${ctx.href(it.id)}" data-id="${esc(it.id)}" data-text="${esc(itText(it))}" style="color:inherit;text-decoration:none;align-items:flex-start">
+      <span class="jdate mono small">${esc(longDate(key(it).slice(0, 10)))}${metaVal(it, 'time') ? '<br>' + esc(metaVal(it, 'time')) : ''}</span>
+      <span style="flex:1;min-width:0"><b>${esc(it.title)}</b><span class="snip" style="display:block">${esc(it.summary || '')}</span></span></a>`).join('')}</div></section>`).join('') : emptyBox(ctx, `No ${ctx.f.def.name.toLowerCase()} yet.`));
+  wireNew(ctx, ctx.el, () => titleDialog(ctx, '', t => { const d = new Date(); return newPageWith(ctx, t, { date: todayIso(), time: `${pad2(d.getHours())}:${pad2(d.getMinutes())}` }); }));
+  wireLayoutSearch(ctx, '.lrow');
+};
+
+// Book (ebook): contents left (can be hidden), one page in the middle, A− / A+, previous / next, progress, full screen
+VIEWS.book = async ctx => {
+  const { items } = await api(itemsUrl(ctx));
+  const ord = it => Number(metaVal(it, 'order')) || 0;
+  const chapterOf = it => metaVal(it, 'chapter') || '';
+  const chapters = [...new Set(items.map(chapterOf))].map(c => ({ c, first: Math.min(...items.filter(i => chapterOf(i) === c).map(ord)) })).sort((a, b) => a.first - b.first || a.c.localeCompare(b.c)).map(x => x.c);
+  const pages = [...items].sort((a, b) => chapters.indexOf(chapterOf(a)) - chapters.indexOf(chapterOf(b)) || ord(a) - ord(b) || a.title.localeCompare(b.title));
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } };
+  const sk = `pw-book-${ctx.p.slug}-${ctx.f.key}`;
+  let size = Number(store(sk + '-size')) || 18, tocHidden = store(sk + '-toc') === '1';
+  const id = ctx.sub || (pages[0] && pages[0].id);
+  const ix = pages.findIndex(p => p.id === id);
+  ctx.el.innerHTML = `<div class="book ${tocHidden ? 'toc-off' : ''}" data-book>
+    <nav class="btoc" aria-label="Contents"><div class="hd"><b>${esc(ctx.f.def.name)}</b><span class="faint small">${pages.length} pages · ${chapters.filter(Boolean).length} chapters</span></div>
+      ${ctx.f.def.search !== false ? `<label class="finput">${icon('search', 14)}<input type="search" data-q placeholder="Search" aria-label="Search ${esc(ctx.f.def.name)}"></label>` : ''}
+      ${chapters.map((c, ci) => `<div class="bch" data-chapter="${esc(c)}">${c ? `<div class="bcht">${ci + 1 - (chapters[0] === '' ? 1 : 0)} ${esc(c)}</div>` : ''}${pages.filter(p => chapterOf(p) === c).map(p => `<a class="bpg ${p.id === id ? 'active' : ''}" href="${ctx.href(p.id)}" draggable="true" data-id="${esc(p.id)}" data-text="${esc(itText(p))}">${esc(p.title)}</a>`).join('')}</div>`).join('')}
+      <div class="row small" style="margin-top:10px;gap:6px"><button class="btn ghost sm" type="button" data-new>${icon('plus', 14)} New page</button></div></nav>
+    <div class="bmain"><div class="bar"><button class="btn sm ghost" type="button" data-toc>☰ Contents</button><span class="faint small" style="flex:1">${ix >= 0 ? esc((chapterOf(pages[ix]) ? chapterOf(pages[ix]) + ' › ' : '') + pages[ix].title) : ''}</span>
+      <button class="btn sm ghost" type="button" data-size="-1" aria-label="Smaller text">A−</button><button class="btn sm ghost" type="button" data-size="1" aria-label="Larger text">A+</button>
+      <button class="btn sm ghost" type="button" data-full aria-label="Full screen">⛶</button><button class="btn sm" type="button" data-edit>${icon('edit', 14)} Edit</button></div>
+      <div class="bpage" data-page style="font-size:${size}px"></div>
+      <div class="bfoot">${ix > 0 ? `<a class="btn sm" href="${ctx.href(pages[ix - 1].id)}">‹ ${esc(pages[ix - 1].title)}</a>` : '<span></span>'}
+        <div class="bprog"><i style="width:${pages.length ? Math.round((ix + 1) / pages.length * 100) : 0}%"></i></div><span class="faint small">Page ${ix + 1} of ${pages.length}</span>
+        ${ix >= 0 && ix < pages.length - 1 ? `<a class="btn sm" href="${ctx.href(pages[ix + 1].id)}">${esc(pages[ix + 1].title)} ›</a>` : '<span></span>'}</div></div></div>`;
+  const book = $('[data-book]', ctx.el), page = $('[data-page]', ctx.el);
+  if (ix >= 0) {
+    const d = await api(itemsUrl(ctx, '/' + enc(id)));
+    const c = chapterOf(pages[ix]);
+    page.innerHTML = `${c ? `<div class="bchap">Chapter ${chapters.filter(Boolean).indexOf(c) + 1} · ${esc(c)}</div>` : ''}<article class="md">${md(d.content, { showFrontMatter: false })}</article>`;
+    hydrateMarkdown(page);
+  } else page.innerHTML = emptyBox(ctx, items.length ? 'Pick a page.' : `No pages yet.`);
+  $('[data-toc]', ctx.el).onclick = () => { tocHidden = !tocHidden; book.classList.toggle('toc-off', tocHidden); store(sk + '-toc', tocHidden ? '1' : '0'); };
+  $$('[data-size]', ctx.el).forEach(b => b.onclick = () => { size = Math.min(30, Math.max(12, size + 2 * Number(b.dataset.size))); page.style.fontSize = size + 'px'; store(sk + '-size', String(size)); });
+  $('[data-full]', ctx.el).onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (book.requestFullscreen) book.requestFullscreen().catch(() => toast('Full screen is not available here')); };
+  $('[data-edit]', ctx.el).onclick = () => { if (ix >= 0) location.hash = ctx.href(id, '?edit=1'); };
+  if (ctx.query.edit && ix >= 0) { ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><a class="btn sm" href="${ctx.href(id)}">${icon('chevl', 14)} Back to the book</a></div><div class="pane" id="pane"></div>`; return pageView(ctx, $('#pane'), id, items); }
+  wireNew(ctx, ctx.el, () => titleDialog(ctx, `<div class="field"><label for="nc">Chapter</label><input id="nc" name="chapter" list="nclist" value="${esc(ix >= 0 ? chapterOf(pages[ix]) : '')}"><datalist id="nclist">${chapters.filter(Boolean).map(c => `<option value="${esc(c)}">`).join('')}</datalist><span class="hint">A new name starts a new chapter.</span></div>`,
+    (t, f) => { const ch = f.chapter.value.trim(); const inCh = items.filter(i => chapterOf(i) === ch); return newPageWith(ctx, t, { chapter: ch, order: (inCh.length ? Math.max(...inCh.map(ord)) : Math.max(0, ...items.map(ord))) + 1 }); }));
+  wireLayoutSearch(ctx, '.bpg');
+  // chapter / page order by drag & drop in the contents (stored as order: and chapter: at the top of the pages)
+  $$('.bpg', ctx.el).forEach(a => {
+    a.ondragstart = e => { e.dataTransfer.setData('text/plain', a.dataset.id); a.classList.add('dragging'); };
+    a.ondragend = () => a.classList.remove('dragging');
+    a.ondragover = e => { e.preventDefault(); a.classList.add('over'); };
+    a.ondragleave = () => a.classList.remove('over');
+    a.ondrop = async e => {
+      e.preventDefault(); a.classList.remove('over');
+      const moved = pages.find(p => p.id === e.dataTransfer.getData('text/plain')); const target = pages.find(p => p.id === a.dataset.id);
+      if (!moved || !target || moved === target) return;
+      const ch = chapterOf(target);
+      const list = pages.filter(p => chapterOf(p) === ch && p !== moved); list.splice(list.indexOf(target), 0, moved);
+      const base = Math.min(...pages.filter(p => chapterOf(p) === ch).map(ord), ord(moved));
+      for (let i = 0; i < list.length; i++) { const p = list[i]; const want = { order: base + i }; if (p === moved && chapterOf(p) !== ch) want.chapter = ch; if (ord(p) !== want.order || want.chapter !== undefined) await setPageMeta(ctx, p.id, want); }
+      App.rerender();
+    };
+  });
+};
+
+// Sticky notes: a color per note (6 colors), in a grid; a click opens the full page
+const NOTE_COLORS = ['yellow', 'green', 'blue', 'pink', 'orange', 'grey'];
+VIEWS.notes = async ctx => {
+  const { items } = await api(itemsUrl(ctx));
+  if (ctx.sub) return openPage(ctx, items);
+  const color = it => NOTE_COLORS.includes(metaVal(it, 'color')) ? metaVal(it, 'color') : 'yellow';
+  ctx.el.innerHTML = layoutBar(ctx) + (items.length ? `<div class="grid notes">${items.map(it => `<div class="card note-${color(it)} snote" data-id="${esc(it.id)}" data-text="${esc(itText(it))}">
+      <a href="${ctx.href(it.id)}" style="color:inherit;text-decoration:none"><h3>${esc(it.title)}</h3><div class="sum">${esc(it.summary || '')}</div></a>
+      <div class="ncolors" role="group" aria-label="Color">${NOTE_COLORS.map(c => `<button type="button" class="ndot note-${c} ${c === color(it) ? 'on' : ''}" data-color="${c}" title="${c}" aria-label="${c}"></button>`).join('')}</div></div>`).join('')}</div>` : emptyBox(ctx, `No ${ctx.f.def.name.toLowerCase()} yet.`));
+  wireNew(ctx, ctx.el, () => titleDialog(ctx, `<div class="field"><label for="ncol">Color</label><select id="ncol" name="color">${NOTE_COLORS.map(c => `<option>${c}</option>`).join('')}</select></div>`, (t, f) => newPageWith(ctx, t, { color: f.color.value })));
+  wireLayoutSearch(ctx, '.snote');
+  $$('[data-color]', ctx.el).forEach(b => b.onclick = async () => { await setPageMeta(ctx, b.closest('.snote').dataset.id, { color: b.dataset.color }); App.rerender(); });
+};
+
+// Board: Kanban for text pages; columns from columns: in the feature file (default Idea / In progress / Done);
+// a page without a column is in the first one; moving a page changes only its status: line
+VIEWS.board = async ctx => {
+  const { items } = await api(itemsUrl(ctx));
+  if (ctx.sub) return openPage(ctx, items);
+  const cols = Array.isArray(ctx.f.def.columns) && ctx.f.def.columns.length ? ctx.f.def.columns.map(String) : ['Idea', 'In progress', 'Done'];
+  const colOf = it => metaVal(it, 'status') || cols[0];
+  const all = [...cols, ...new Set(items.map(colOf).filter(c => !cols.includes(c)))];
+  const inCol = c => items.filter(it => colOf(it) === c);
+  ctx.el.innerHTML = layoutBar(ctx) + `<div class="kanban">${all.map(c => `<section class="kcol" data-col="${esc(c)}" aria-label="${esc(c)}"><div class="hd">${esc(c)} <span class="n">${inCol(c).length}</span></div>
+      ${inCol(c).map(it => `<a class="kitem" draggable="true" href="${ctx.href(it.id)}" data-id="${esc(it.id)}" data-text="${esc(itText(it))}" style="color:inherit;text-decoration:none"><span class="t">${esc(it.title)}</span>${it.summary ? `<span class="faint small">${esc(it.summary)}</span>` : ''}${(it.tags || []).length ? `<span class="chips">${it.tags.map(t => `<span class="chip accent">#${esc(t)}</span>`).join('')}</span>` : ''}</a>`).join('')}
+      <button type="button" class="kadd" data-add="${esc(c)}">+ Add</button></section>`).join('')}</div>
+    <p class="faint small">Each card is a full text page — a click opens it. Drag a card into another column; the column is kept at the top of the page (<span class="mono">status:</span>). Columns come from <span class="mono">columns:</span> in features/${esc(ctx.f.feature)}.yaml.</p>`;
+  wireNew(ctx, ctx.el, () => titleDialog(ctx, '', t => newPageWith(ctx, t, { status: cols[0] })));
+  wireLayoutSearch(ctx, '.kitem');
+  $$('.kitem', ctx.el).forEach(k => { k.ondragstart = e => { e.dataTransfer.setData('text/plain', k.dataset.id); k.classList.add('dragging'); }; k.ondragend = () => k.classList.remove('dragging'); });
+  $$('.kcol', ctx.el).forEach(col => {
+    col.ondragover = e => { e.preventDefault(); col.classList.add('over'); };
+    col.ondragleave = () => col.classList.remove('over');
+    col.ondrop = async e => {
+      e.preventDefault(); col.classList.remove('over');
+      const it = items.find(x => x.id === e.dataTransfer.getData('text/plain')); if (!it || colOf(it) === col.dataset.col) return;
+      await setPageMeta(ctx, it.id, { status: col.dataset.col }); App.rerender();
+    };
+  });
+  $$('[data-add]', ctx.el).forEach(b => b.onclick = () => titleDialog(ctx, '', t => newPageWith(ctx, t, { status: b.dataset.add })));
+};
+
+// Table: the pages as a table — title, tags, last changed, plus every field found at the top of the pages; cells editable in place
+VIEWS.mdtable = async ctx => {
+  const { items } = await api(itemsUrl(ctx));
+  if (ctx.sub) return openPage(ctx, items);
+  const keys = [...new Set(items.flatMap(it => Object.keys(it.meta || {})))].filter(k => !['title', 'tags'].includes(k));
+  let sort = { k: 'title', dir: 1 };
+  const val = (it, k) => k === 'title' ? it.title : k === 'tags' ? (it.tags || []).join(', ') : k === '_mod' ? String(it.modified) : metaVal(it, k);
+  const render = () => {
+    const rows = [...items].sort((a, b) => val(a, sort.k).localeCompare(val(b, sort.k), undefined, { numeric: true }) * sort.dir);
+    const th = (k, label) => `<th scope="col"><button type="button" data-sort="${esc(k)}">${esc(label)}${sort.k === k ? (sort.dir > 0 ? ' ↑' : ' ↓') : ''}</button></th>`;
+    ctx.el.innerHTML = layoutBar(ctx) + (items.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr>${th('title', 'Title')}${th('tags', 'Tags')}${keys.map(k => th(k, k)).join('')}${th('_mod', 'Last changed')}</tr></thead>
+      <tbody>${rows.map(it => `<tr data-id="${esc(it.id)}" data-text="${esc(itText(it) + ' ' + keys.map(k => metaVal(it, k)).join(' ').toLowerCase())}"><td><a href="${ctx.href(it.id)}">${esc(it.title)}</a></td>
+        <td>${(it.tags || []).map(t => `<span class="chip accent">#${esc(t)}</span>`).join(' ')}</td>
+        ${keys.map(k => `<td class="cell-edit" tabindex="0" data-key="${esc(k)}" title="Click to edit">${esc(metaVal(it, k))}</td>`).join('')}<td class="faint small">${esc(ago(it.modified))}</td></tr>`).join('')}</tbody></table></div>
+      <p class="faint small">Click a cell to change it — only that value at the top of the page changes. New columns: add a line like <span class="mono">author: Anna</span> at the top of a page.</p>` : emptyBox(ctx, `No ${ctx.f.def.name.toLowerCase()} yet.`));
+    wireNew(ctx, ctx.el, () => titleDialog(ctx, '', t => newPageWith(ctx, t, {})));
+    wireLayoutSearch(ctx, 'tbody tr');
+    $$('[data-sort]', ctx.el).forEach(b => b.onclick = () => { sort = { k: b.dataset.sort, dir: sort.k === b.dataset.sort ? -sort.dir : 1 }; render(); });
+    $$('.cell-edit', ctx.el).forEach(td => {
+      const start = () => {
+        if (td.querySelector('input')) return;
+        const it = items.find(x => x.id === td.closest('tr').dataset.id); const old = metaVal(it, td.dataset.key);
+        td.innerHTML = `<input value="${esc(old)}" aria-label="${esc(td.dataset.key)}" style="width:100%">`;
+        const inp = $('input', td); inp.focus(); inp.select();
+        const done = async save => {
+          if (!td.contains(inp)) return;
+          const v = inp.value;
+          if (save && v !== old) { try { await setPageMeta(ctx, it.id, { [td.dataset.key]: v }); it.meta = { ...(it.meta || {}), [td.dataset.key]: v }; toast('Saved'); } catch (e) { toast(e.message); } }
+          td.textContent = metaVal(it, td.dataset.key);
+        };
+        inp.onkeydown = e => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
+        inp.onblur = () => done(true);
+      };
+      td.onclick = start; td.onkeydown = e => { if (e.key === 'Enter') start(); };
+    });
+  };
+  render();
+};
+
+// Blog: contents left (each page with its headings down to level 3; a click jumps there), the pages one after another
+// on the right, newest first (by date: at the top, else last changed)
+VIEWS.blog = async ctx => {
+  const { items } = await api(itemsUrl(ctx));
+  if (ctx.sub && ctx.query.edit) return openPage(ctx, items);
+  const when = it => metaVal(it, 'date') || new Date(it.modified).toISOString().slice(0, 10);
+  const sorted = [...items].sort((a, b) => when(b).localeCompare(when(a)) || b.modified - a.modified);
+  const full = await Promise.all(sorted.map(it => api(itemsUrl(ctx, '/' + enc(it.id))).then(d => d.content).catch(() => '')));
+  const slugH = (i, t) => `b${i}-` + String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const heads = full.map(c => [...String(c).replace(FM_RE, '').matchAll(/^(#{2,3})\s+(.+)$/gm)].map(m => ({ level: m[1].length, text: m[2].trim() })));
+  ctx.el.innerHTML = `<div class="blog"><nav class="btoc" aria-label="Contents"><div class="hd"><b>Contents</b></div>
+      ${ctx.f.def.search !== false ? `<label class="finput">${icon('search', 14)}<input type="search" data-q placeholder="Search" aria-label="Search ${esc(ctx.f.def.name)}"></label>` : ''}
+      ${sorted.map((it, i) => `<div class="bentry" data-id="${esc(it.id)}" data-text="${esc(itText(it))}"><a class="bpg" href="#" data-jump="post-${i}">${esc(it.title)}</a>${heads[i].map(h => `<a class="bpg sub l${h.level}" href="#" data-jump="${slugH(i, h.text)}">${esc(h.text)}</a>`).join('')}</div>`).join('')}
+      <div class="row small" style="margin-top:10px"><button class="btn ghost sm" type="button" data-new>${icon('plus', 14)} New page</button></div></nav>
+    <div class="bposts">${sorted.map((it, i) => `<article class="card bpost" id="post-${i}" data-id="${esc(it.id)}"><div class="row"><h2 style="flex:1;margin:0">${esc(it.title)}</h2><a class="btn sm ghost" href="${ctx.href(it.id, '?edit=1')}">${icon('edit', 14)} Edit</a></div>
+        <div class="faint small" style="margin:4px 0 12px">${esc(longDate(when(it)))}${(it.tags || []).map(t => ' · #' + esc(t)).join('')}</div><div class="md" data-post="${i}"></div></article>`).join('') || emptyBox(ctx, `No ${ctx.f.def.name.toLowerCase()} yet.`)}</div></div>`;
+  sorted.forEach((it, i) => {
+    const el = $(`[data-post="${i}"]`, ctx.el);
+    el.innerHTML = md(String(full[i]).replace(FM_RE, '').replace(/^#\s+.+\n+/, ''), { showFrontMatter: false });
+    $$('h2, h3', el).forEach(h => { h.id = slugH(i, h.textContent.trim()); });
+    hydrateMarkdown(el);
+  });
+  $$('[data-jump]', ctx.el).forEach(a => a.onclick = e => { e.preventDefault(); const t = document.getElementById(a.dataset.jump); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  if (ctx.sub) { const i = sorted.findIndex(x => x.id === ctx.sub); const t = document.getElementById('post-' + i); if (t) t.scrollIntoView({ block: 'start' }); }
+  wireNew(ctx, ctx.el, () => titleDialog(ctx, '', t => newPageWith(ctx, t, { date: todayIso() })));
+  const q = $('[data-q]', ctx.el);
+  if (q) wireLayoutSearch(ctx, '.bentry');
+  if (q) q.addEventListener('input', () => setTimeout(() => $$('.bpost', ctx.el).forEach(p => { const e = $(`.bentry[data-id="${CSS.escape(p.dataset.id)}"]`, ctx.el); p.style.display = e && e.style.display === 'none' ? 'none' : ''; }), 400));
 };

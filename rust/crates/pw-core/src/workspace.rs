@@ -13,7 +13,7 @@ pub(crate) const META_KEYS: [&str; 12] = ["name", "description", "icon", "color"
 
 pub fn layouts() -> Value {
     json!({
-        "markdown": ["pages", "cards", "list"], "images": ["grid"], "files": ["files", "code"],
+        "markdown": ["pages", "cards", "list", "journal", "book", "notes", "board", "table", "blog"], "images": ["grid"], "files": ["files", "code"],
         "records": ["table", "list", "cards", "kanban", "calendar", "orgchart", "map"],
         "diagram": ["diagram"], "chat": ["chat"], "github": ["issues"], "glpi": ["tickets"]
     })
@@ -485,7 +485,7 @@ pub(crate) fn list_markdown(p: &Project, def: &Value, dir: &Path) -> Vec<Value> 
             _ => vec![],
         };
         let summary = meta.get("description").and_then(|d| d.as_str()).map(|s| s.to_string()).unwrap_or_else(|| md_summary(&body));
-        out.push(json!({ "id": id, "title": md_title(&meta, &body, &id), "tags": tags, "summary": summary, "modified": mtime_ms(&file), "file": rel(&p.dir, &file) }));
+        out.push(json!({ "id": id, "title": md_title(&meta, &body, &id), "tags": tags, "summary": summary, "modified": mtime_ms(&file), "file": rel(&p.dir, &file), "meta": meta }));
     }
     out.sort_by(|a, b| a["title"].as_str().unwrap_or("").to_lowercase().cmp(&b["title"].as_str().unwrap_or("").to_lowercase()));
     out
