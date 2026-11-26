@@ -19,6 +19,4 @@ CLE <--> |NO|COM
 CLE --> |YES|FIX
 FIX --> |NO|WAU
 FIX --> |YES|REL
-
- 
 ``` 
