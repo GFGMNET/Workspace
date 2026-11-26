@@ -1,6 +1,6 @@
 # Plan: Godot
 
-**Ready 2 Deploy**
+**Released in 1.0.1** (26 Nov 2026) · was **Ready 2 Deploy**
 
 
 

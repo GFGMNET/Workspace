@@ -1,6 +1,6 @@
 # Plan: More layouts for text
 
-**Ready 2 Deploy** (approved by the maintainer 2026-11-24) — issue #116
+**Released in 1.0.1** (26 Nov 2026) · was **Ready 2 Deploy** (approved by the maintainer 2026-11-24) — issue #116
 
 ## 1) Name
 

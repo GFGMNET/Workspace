@@ -1,6 +1,6 @@
 # Plan: Signing with own certificate
 
-**Ready 2 Deploy** · approved by the maintainer 2026-11-19 · **built** (steps 1–7, tests green: https://github.com/GFGMNET/Workspace/actions/runs/44537356102) · next: your test and the OK for 0.9.1
+**Ready 2 Deploy** · approved by the maintainer 2026-11-19 · **built** (steps 1–7, tests green: https://github.com/GFGMNET/Workspace/actions/runs/44537356102) · **released**: signed since 0.9.1, in 1.0.0 (26 Nov 2026)
 
 ## 1) Name
 

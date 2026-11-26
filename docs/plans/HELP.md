@@ -1,6 +1,6 @@
 # Plan: Help & wiki inside the app
 
-**Ready 2 Deploy** (approved by the maintainer 2026-11-23)
+**Released in 1.0.1** (26 Nov 2026) · was **Ready 2 Deploy** (approved by the maintainer 2026-11-23)
 
 ## 1) Name
 

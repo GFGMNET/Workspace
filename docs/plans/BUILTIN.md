@@ -1,6 +1,6 @@
 # Plan: Built-in features: restore and update
 
-**Ready 2 Deploy** (approved by the maintainer 2026-11-23) — issue #100
+**Released in 1.0.1** (26 Nov 2026) · was **Ready 2 Deploy** (approved by the maintainer 2026-11-23) — issue #100
 
 ## 1) Name
 
