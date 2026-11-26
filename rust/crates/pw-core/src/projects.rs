@@ -121,6 +121,34 @@ impl Workspace {
         for k in &keep { let _ = fs::create_dir_all(p.dir.join(k.as_str().unwrap_or(""))); }
         self.sync_project(slug)
     }
+    /// Saves the Overview's dashboard (plan DASHBOARD) as `dashboard:` in project.yaml, keeping comments; an empty list removes it.
+    /// A block: what (a feature key of the project), show (number | list), filter, count, x, y, w (1–4), h (1–3).
+    pub fn set_dashboard(&self, slug: &str, blocks: &Value) -> Result<Project> {
+        let p = self.load_project(slug)?;
+        if let Some(e) = &p.error { return Err(err(400, format!("Fix project.yaml first: {e}"))); }
+        let list = blocks.as_array().ok_or_else(|| err(400, "dashboard must be a list of blocks"))?;
+        let mut out: Vec<Value> = vec![];
+        for b in list {
+            let what = b["what"].as_str().unwrap_or("").trim().to_string();
+            if !p.features.iter().any(|f| f.key == what) { return Err(err(400, format!("\"{what}\" is not a feature of this project"))); }
+            let show = if b["show"] == "list" { "list" } else { "number" };
+            let n = |k: &str, lo: i64, hi: i64, d: i64| -> i64 { b[k].as_i64().or_else(|| b[k].as_str().and_then(|s| s.parse().ok())).unwrap_or(d).clamp(lo, hi) };
+            let mut m = Map::new();
+            m.insert("what".into(), json!(what));
+            m.insert("show".into(), json!(show));
+            if let Some(f) = b["filter"].as_str().map(|s| s.trim()).filter(|s| !s.is_empty()) { m.insert("filter".into(), json!(f)); }
+            if show == "list" { m.insert("count".into(), json!(n("count", 1, 50, 5))); }
+            m.insert("x".into(), json!(n("x", 0, 3, 0)));
+            m.insert("y".into(), json!(n("y", 0, 99, 0)));
+            m.insert("w".into(), json!(n("w", 1, 4, 1)));
+            m.insert("h".into(), json!(n("h", 1, 3, 1)));
+            out.push(Value::Object(m));
+        }
+        let mut data = p.data.clone();
+        if out.is_empty() { data.remove("dashboard"); } else { data.insert("dashboard".into(), Value::Array(out)); }
+        write_text(&p.file, &yaml::update_mapping(&p.yaml, &data))?;
+        self.load_project(slug)
+    }
     /// Removes the key line and its indented block (the content folder stays on disk).
     pub fn remove_feature_from_project(&self, slug: &str, key: &str) -> Result<Project> {
         let p = self.load_project(slug)?;

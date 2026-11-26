@@ -22,6 +22,7 @@ use tokio_stream::StreamExt;
 pub mod chat;
 pub mod github;
 pub mod glpi;
+pub mod help;
 pub mod ide;
 pub mod updater;
 pub mod live;
@@ -76,6 +77,11 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/projects/{p}/features", post(project_add_feature))
         .route("/api/projects/{p}/features/{k}", axum::routing::delete(project_remove_feature))
         .route("/api/projects/{p}/programs", put(project_programs))
+        .route("/api/help", get(|State(ws): S| async move { Json(help::index(&ws)) }))
+        .route("/api/help/page/{name}", get(|State(ws): S, Path(n): Path<String>| async move { help::page(&ws, &n).map(Json).map_err(ApiError::from) }))
+        .route("/api/help/search", get(|State(ws): S, Query(q): Q| async move { Json(help::search(&ws, qs(&q, "q"))) }))
+        .route("/help-img/{file}", get(help_picture))
+        .route("/api/projects/{p}/dashboard", put(project_dashboard))
         .route("/api/projects/{p}/features/{k}/use-new", post(project_use_new))
         .route("/api/builtin-features", get(|State(ws): S| async move { Json(json!(ws.missing_builtins())) }).post(builtin_restore))
         .route("/api/feature-notes", axum::routing::delete(|State(ws): S| async move { ws.clear_feature_notices(); Json(json!({ "ok": true })) }))
@@ -207,6 +213,14 @@ async fn builtin_restore(State(ws): S, b: Bytes) -> ApiResult {
     let keys: Vec<String> = body["keys"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
     Ok(Json(ws.restore_builtins(&keys)?))
 }
+async fn help_picture(State(ws): S, Path(f): Path<String>) -> Response {
+    let file = match workspace::safe_join(&help::pictures_dir(&ws), &f) { Ok(p) if p.is_file() => p, _ => return (StatusCode::NOT_FOUND, "Not found").into_response() };
+    match tokio::fs::read(&file).await {
+        Ok(bytes) => { let mut res = Response::new(Body::from(bytes)); res.headers_mut().insert(header::CONTENT_TYPE, HeaderValue::from_static(mime(&file.to_string_lossy()))); res }
+        Err(_) => (StatusCode::NOT_FOUND, "Not found").into_response(),
+    }
+}
+async fn project_dashboard(State(ws): S, Path(p): Path<String>, b: Bytes) -> ApiResult { let body = body_json(&b)?; Ok(Json(ws.set_dashboard(&p, &body["blocks"])?.view())) }
 async fn project_programs(State(ws): S, Path(p): Path<String>, b: Bytes) -> ApiResult {
     let body = body_json(&b)?;
     let list: Vec<String> = body["programs"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();

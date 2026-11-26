@@ -9,9 +9,10 @@ const App = {
   refreshProjectOnly: async () => { if (S.project) { try { S.project = await api(`/api/projects/${enc(S.project.slug)}`); renderTabs(); } catch {} } },
 };
 // Links into the wiki (help). Starter features have their own page; others go to the overview.
-const WIKI_FEATURE = { wiki: 'Feature-Wiki', knowledge: 'Feature-Knowledge', gallery: 'Feature-Gallery', files: 'Feature-Files', scripts: 'Feature-Scripts', skills: 'Feature-Skills', mcp: 'Feature-MCP', chat: 'Feature-Chat', tasks: 'Feature-Tasks', calendar: 'Feature-Calendar', team: 'Feature-Team', map: 'Feature-Map', diagrams: 'Feature-Diagrams', contacts: 'Feature-Contacts', devices: 'Feature-Devices', github: 'Feature-Issues', github_issue: 'Feature-Issues', issue: 'Feature-Issues' };
+const WIKI_FEATURE = { ticketsystem: 'Feature-Ticket', wiki: 'Feature-Wiki', knowledge: 'Feature-Knowledge', gallery: 'Feature-Gallery', files: 'Feature-Files', scripts: 'Feature-Scripts', skills: 'Feature-Skills', mcp: 'Feature-MCP', chat: 'Feature-Chat', tasks: 'Feature-Tasks', calendar: 'Feature-Calendar', team: 'Feature-Team', map: 'Feature-Map', diagrams: 'Feature-Diagrams', contacts: 'Feature-Contacts', devices: 'Feature-Devices', github: 'Feature-Issues', github_issue: 'Feature-Issues', issue: 'Feature-Issues' };
 const wikiUrl = (page = '') => ((S.info && S.info.wiki) || 'https://github.com/GFGMNET/Workspace/wiki') + (page ? '/' + page : '');
-const helpLink = (page, label = 'Help') => `<a class="help" href="${esc(wikiUrl(page))}" target="_blank" rel="noopener" title="Open the wiki">${icon('book', 13)} ${esc(label)}</a>`;
+// Help & wiki inside the app (plan HELP): the pages come with the program and work without internet
+const helpLink = (page, label = 'Help') => `<a class="help" href="#/help/${enc(page)}" title="Open Help & wiki">${icon('book', 13)} ${esc(label)}</a>`;
 const fdesc = yaml => (String(yaml || '').match(/^#\s?(.+)$/m) || [, ''])[1].replace(/\s*\(.*$/, '');
 const go = h => { if (location.hash === h) route(); else location.hash = h; };
 
@@ -125,6 +126,8 @@ async function route() {
       $('#main').innerHTML = `<div class="wrap"><div class="hero"><div>${menuBtn}<h1>Explorer</h1><p class="muted" style="margin:6px 0 0">All files of the workspace — features and every project.</p></div></div><section id="wsx"></section></div>`;
       fillIcons($('#main'));
       await explorer($('#wsx'), { scope: 'workspace', root: '', title: 'Workspace', sub: parts.slice(1).join('/'), query, href: p => '#/files' + (p ? '/' + p.split('/').map(enc).join('/') : '') });
+    } else if (parts[0] === 'help') {
+      S.project = null; renderSidebar(); await renderHelp(parts.slice(1).join('/'));
     } else if (parts[0] === 'search') {
       S.project = null; renderSidebar(); await renderSearch(parts.slice(1).join('/'));
     } else { S.project = null; renderSidebar(); renderHome(); }
@@ -304,7 +307,8 @@ async function renderProject(tab, sub, query) {
   }
   const over = Object.keys(f.overrides || {}).length ? ` · overridden in project.yaml: ${Object.entries(f.overrides).map(([k, v]) => `<span class="mono">${esc(k)}: ${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join(', ')}` : '';
   // hidden by default: only a small ⓘ in the corner; a click shows where the feature is defined (maintainer's wish, 2026-11-20)
-  $('#fnote').innerHTML = `<details class="finfo"><summary title="Where this feature is defined · Help" aria-label="About this feature">${icon('info', 15)}</summary><div class="note"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} ${f.def.stores === 'github' ? ` · repository <a class="mono" href="https://github.com/${esc(f.def.repo)}" target="_blank" rel="noopener">${esc(f.def.repo || 'not set')}</a>` : ` · folder <span class="mono">${esc(f.def.folder)}/</span>`}${over}<span class="sp"></span>${helpLink(WIKI_FEATURE[f.feature] || 'Features', 'Help')}</div></details>`;
+  $('#fnote').innerHTML = `<div class="finfo"><button type="button" class="finfo-btn" data-help="${esc(WIKI_FEATURE[f.feature] || '')}" aria-label="Help for this tab">${icon('info', 15)}</button><div class="note"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} ${f.def.stores === 'github' ? ` · repository <a class="mono" href="https://github.com/${esc(f.def.repo)}" target="_blank" rel="noopener">${esc(f.def.repo || 'not set')}</a>` : ` · folder <span class="mono">${esc(f.def.folder)}/</span>`}${over}<span class="sp"></span>${helpLink(WIKI_FEATURE[f.feature] || 'Features', 'Help')}</div></div>`;
+  $('#fnote [data-help]').onclick = e => helpPanel(e.currentTarget.dataset.help);
   try { App.index = await api(`/api/projects/${enc(p.slug)}/index`); } catch { App.index = []; }
   // a built-in feature with a new version: this tab keeps the old one until "Use the new version" (plan BUILTIN)
   let el = body;
@@ -349,6 +353,49 @@ async function renderIde(body) {
   $('[data-retry]', body).onclick = () => renderIde(body);
 }
 
+// ---------- Help & wiki in the app (plan HELP) ----------
+// GitHub-style wiki links [[Label|Page]] and [[Page]] become links inside the app
+const helpLinks = text => String(text).replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, l, p) => `[${l}](#/help/${p.trim()})`).replace(/\[\[([^\]|]+)\]\]/g, (_, p) => `[${p}](#/help/${p.trim().replace(/ /g, '-')})`);
+const helpMd = text => md(helpLinks(text), { link: (t, h) => /^#\/help\//.test(h) ? `<a href="${h}">${t}</a>` : `<a href="${h}" target="_blank" rel="noopener">${t}</a>` });
+let HELP_INDEX = null;
+async function renderHelp(name) {
+  if (!HELP_INDEX) HELP_INDEX = await api('/api/help');
+  const page = name || 'Home';
+  const nav = HELP_INDEX.sidebar.split('\n').map(l => {
+    const h = l.match(/^\*\*(.+)\*\*\s*$/); if (h) return `<div class="hnav-h">${esc(h[1])}</div>`;
+    const a = l.match(/^\s*-\s*\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/); if (a) { const target = (a[2] || a[1]).trim().replace(/ /g, '-'); return `<a class="bpg ${target === page ? 'active' : ''}" href="#/help/${enc(target)}">${esc(a[1].trim())}</a>`; }
+    return '';
+  }).join('');
+  $('#main').innerHTML = `<div class="wrap"><div class="hero"><div>${menuBtn}<h1>Help &amp; wiki</h1><p class="muted" style="margin:6px 0 0">Comes with the program — works without internet and matches this version.</p></div>
+      <label class="finput" style="flex:0 1 360px;margin:0">${icon('search', 14)}<input type="search" id="hq" placeholder="Search the help" aria-label="Search the help"></label></div>
+    <div class="blog"><nav class="btoc" aria-label="Help pages">${nav}</nav><div class="card bpost" id="hpage"><div class="faint">Loading…</div></div></div></div>`;
+  fillIcons($('#main'));
+  const show = async n => {
+    const el = $('#hpage');
+    try { const d = await api(`/api/help/page/${enc(n)}`); el.innerHTML = `<article class="md">${helpMd(d.text)}</article>`; hydrateMarkdown(el); }
+    catch { el.innerHTML = `<div class="empty">There is no help page “${esc(n)}”.</div>`; }
+  };
+  await show(page);
+  let t; $('#hq').addEventListener('input', e => { clearTimeout(t); const q = e.target.value.trim(); t = setTimeout(async () => {
+    if (!q) return show(page);
+    const hits = await api(`/api/help/search?q=${enc(q)}`);
+    $('#hpage').innerHTML = `<h2 style="margin-top:0">Search: ${esc(q)}</h2>${hits.map(h => `<a class="lrow" href="#/help/${enc(h.name)}" style="color:inherit;text-decoration:none;flex-direction:column;align-items:flex-start"><b>${esc(h.title)}</b><span class="faint small">${esc(h.snippet)}…</span></a>`).join('') || '<div class="faint">Nothing found.</div>'}`;
+  }, 200); });
+}
+// the help panel at the side of a tab: the tab's help page, or a message when there is none
+async function helpPanel(name) {
+  const old = $('#helppanel'); if (old) old.remove();
+  const el = document.createElement('aside'); el.id = 'helppanel'; el.className = 'helppanel card'; el.setAttribute('aria-label', 'Help');
+  el.innerHTML = `<div class="row" style="margin-bottom:10px"><b style="flex:1">Help</b>${name ? `<a class="btn sm" href="#/help/${enc(name)}">${icon('book', 14)} Open in Help &amp; wiki</a>` : ''}<button class="btn ghost sm" type="button" data-hclose aria-label="Close">✕</button></div><div data-hbody><div class="faint">Loading…</div></div>`;
+  document.body.appendChild(el); fillIcons(el);
+  const close = () => { el.remove(); removeEventListener('hashchange', close); };
+  $('[data-hclose]', el).onclick = close; addEventListener('hashchange', close);
+  const body = $('[data-hbody]', el);
+  if (!name) { body.innerHTML = '<div class="empty">There is no help for this feature yet.</div>'; return; }
+  try { const d = await api(`/api/help/page/${enc(name)}`); body.innerHTML = `<article class="md">${helpMd(d.text)}</article>`; hydrateMarkdown(body); }
+  catch { body.innerHTML = '<div class="empty">There is no help for this feature yet.</div>'; }
+}
+
 async function renderOverview(body) {
   const p = S.project;
   const o = await api(`/api/projects/${enc(p.slug)}/overview`);
@@ -356,7 +403,7 @@ async function renderOverview(body) {
   const rel = d => { const n = Math.round((Date.parse(d + 'T00:00:00') - Date.parse(o.today + 'T00:00:00')) / 864e5); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? `${-n} day${n === -1 ? '' : 's'} overdue` : `in ${n} days`; };
   const link = it => projectHref(it.feature, it.id);
   const listCard = (title, items, row, empty, more = '') => `<div class="card ovcard"><div class="row"><b>${title}</b><span class="sp"></span>${more}</div><div class="ovlist">${items.map(row).join('') || `<div class="faint small" style="padding:6px 0">${empty}</div>`}</div></div>`;
-  body.innerHTML = `
+  body.innerHTML = `<div data-dash></div>
     <div class="ovtiles">${o.tiles.map(t => `<a class="card ovtile" href="${projectHref(t.key)}">${t.missing ? icon('warn', 18) : featureIcon(t, 18)}<span class="n">${t.missing ? '—' : t.stores === 'chat' ? (t.count ? t.count : '') : t.count}</span><span class="l">${esc(t.name)}</span>${t.missing ? '<span class="chip warn">undefined</span>' : ''}</a>`).join('')}</div>
     <div class="ovgrid">
       ${listCard(`Coming up <span class="faint small" style="font-weight:400">· next ${o.days} days</span>`, o.upcoming, it => `<a class="ovrow" href="${link(it)}"><span class="d ${it.overdue ? 'over' : ''}"><b>${esc(day(it.date))}</b><span>${esc(rel(it.date))}</span></span><span class="t">${esc(it.title)}<span>${esc(it.featureName)} · ${esc(it.field)}</span></span></a>`, 'Nothing planned. Dates come from calendar events and date fields like “due”.')}
@@ -364,6 +411,80 @@ async function renderOverview(body) {
       ${listCard('Recently changed', o.recent, it => `<a class="ovrow" href="${link(it)}"><span class="t">${esc(it.title)}<span>${esc(it.featureName)}</span></span><span class="faint small">${esc(ago(it.modified))}</span></a>`, 'Nothing yet.')}
     </div>
     <p class="faint small">This overview is built in. Hide it with <span class="mono">overview: false</span> in project.yaml.</p>`;
+  renderDashboard($('[data-dash]', body), p);
+}
+
+// ---------- dashboard on the Overview (plan DASHBOARD): blocks in a 4-wide grid, saved as dashboard: in project.yaml ----------
+const TICKET_STATES = { 1: 'new', 2: 'in progress', 3: 'in progress', 4: 'pending', 5: 'solved', 6: 'closed' };
+async function dashItems(p, key) {
+  const f = p.features.find(x => x.key === key); if (!f || !f.def) return [];
+  const base = `/api/projects/${enc(p.slug)}/f/${enc(key)}`;
+  if (f.def.stores === 'github') return (await api(`${base}/github?state=all`)).issues.map(i => ({ title: `#${i.number} ${i.title}`, href: projectHref(key), f: { state: i.state, label: i.labels.map(l => l.name), title: i.title } }));
+  if (f.def.stores === 'glpi') return (await api(`${base}/tickets`)).tickets.map(t => ({ title: `#${t.id} ${t.name}`, href: projectHref(key, t.id), f: { status: TICKET_STATES[t.status] || String(t.status), state: t.status >= 5 ? 'closed' : 'open', title: t.name } }));
+  const { items } = await api(`${base}/items`);
+  return items.map(it => ({ title: it.title, href: projectHref(key, it.id), f: { ...(it.meta || {}), ...(it.data || {}), tags: it.tags || [], title: it.title } }));
+}
+// a simple filter: "label = bug", "status = open", "status != done", or one word that must appear (e.g. "open", "pending")
+function dashFilter(items, filter) {
+  const q = String(filter || '').trim(); if (!q) return items;
+  const m = q.match(/^([\w-]+)\s*(!=|=)\s*(.+)$/);
+  const low = v => (Array.isArray(v) ? v : [v]).map(x => String(x == null ? '' : x).toLowerCase());
+  if (m) { const want = m[3].trim().toLowerCase(); return items.filter(it => { const hit = low(it.f[m[1]]).includes(want); return m[2] === '=' ? hit : !hit; }); }
+  const w = q.toLowerCase();
+  return items.filter(it => Object.values(it.f).some(v => low(v).some(x => x === w || x.includes(w))));
+}
+async function renderDashboard(host, p) {
+  let blocks = (Array.isArray(p.meta && p.meta.dashboard) ? p.meta.dashboard : []).map((b, i) => ({ ...b, _id: i }));
+  let editing = false, n = blocks.length;
+  const feats = p.features.filter(f => f.def && !f.missing && f.def.stores !== 'chat');
+  const fname = k => { const f = p.features.find(x => x.key === k); return f && f.def ? f.def.name : k; };
+  const draw = () => {
+    if (!blocks.length && !editing) { host.innerHTML = `<div class="row" style="margin-bottom:10px"><span class="sp"></span><button class="btn sm" type="button" data-dedit>${icon('edit', 14)} Edit</button></div>`; $('[data-dedit]', host).onclick = () => { editing = true; draw(); }; return; }
+    host.innerHTML = `<div class="row" style="margin-bottom:10px"><b>Dashboard</b><span class="sp"></span>${editing ? `<button class="btn sm" type="button" data-dadd>${icon('plus', 14)} Add block</button><button class="btn sm ghost" type="button" data-dcancel>Cancel</button><button class="btn sm primary" type="button" data-dsave>Save</button>` : `<button class="btn sm" type="button" data-dedit>${icon('edit', 14)} Edit</button>`}</div>
+      <div class="dgrid ${editing ? 'editing' : ''}" data-dgrid>${blocks.map(b => `<div class="card dblk" data-id="${b._id}" style="grid-column:span ${b.w || 1};grid-row:span ${b.h || 1}">
+        <div class="row small"><b style="flex:1">${esc(fname(b.what))}</b><span class="faint">${esc(b.filter || '')}</span>${editing ? `<button type="button" class="btn ghost sm" data-ddel="${b._id}" aria-label="Remove block">✕</button>` : ''}</div>
+        <div data-dbody class="${b.show === 'list' ? 'ovlist' : 'dnum'}"><span class="faint small">…</span></div>${editing ? `<span class="drs" data-drs="${b._id}" title="Drag to resize"></span>` : ''}</div>`).join('')}</div>
+      ${editing ? '<p class="faint small">Drag a block onto another one to move it; drag its corner to change the size (1–4 wide, 1–3 high).</p>' : ''}<div style="height:14px"></div>`;
+    blocks.forEach(async b => {
+      const el = $(`.dblk[data-id="${b._id}"] [data-dbody]`, host); if (!el) return;
+      try {
+        const items = dashFilter(await dashItems(p, b.what), b.filter);
+        el.innerHTML = b.show === 'list' ? (items.slice(0, b.count || 5).map(it => `<a class="ovrow" href="${it.href}"><span class="t">${esc(it.title)}</span></a>`).join('') || '<div class="faint small">Nothing.</div>') : `<a href="${projectHref(b.what)}" style="color:inherit;text-decoration:none"><span class="n">${items.length}</span></a>`;
+      } catch (e) { el.innerHTML = `<span class="faint small">${esc(e.message)}</span>`; }
+    });
+    const ed = $('[data-dedit]', host); if (ed) ed.onclick = () => { editing = true; draw(); };
+    if (!editing) return;
+    $('[data-dcancel]', host).onclick = () => { blocks = (Array.isArray(p.meta && p.meta.dashboard) ? p.meta.dashboard : []).map((b, i) => ({ ...b, _id: i })); editing = false; draw(); };
+    $('[data-dsave]', host).onclick = async () => {
+      const out = blocks.map((b, i) => ({ what: b.what, show: b.show, filter: b.filter || '', count: b.count, x: i % 4, y: Math.floor(i / 4), w: b.w || 1, h: b.h || 1 }));
+      try { S.project = await api(`/api/projects/${enc(p.slug)}/dashboard`, { method: 'PUT', body: { blocks: out } }); p = S.project; editing = false; toast('Saved — written to project.yaml'); draw(); } catch (e) { toast(e.message); }
+    };
+    $('[data-dadd]', host).onclick = () => modal({ title: 'Add block', ok: 'Add',
+      body: `<div class="field"><label for="dw">What</label><select id="dw" name="what">${feats.map(f => `<option value="${esc(f.key)}">${esc(f.def.name)}</option>`).join('')}</select></div>
+        <div class="field"><label for="ds">Show as</label><select id="ds" name="show"><option value="number">Number</option><option value="list">List</option></select></div>
+        <div class="field"><label for="df">Filter <span class="faint" style="font-weight:400">(optional)</span></label><input id="df" name="filter" placeholder="e.g. open · label = bug · status = pending"></div>
+        <div class="field"><label for="dc">How many (lists)</label><input id="dc" name="count" type="number" min="1" max="50" value="5"></div>`,
+      onOk: f => { blocks.push({ _id: ++n + 1000, what: f.what.value, show: f.show.value, filter: f.filter.value.trim(), count: Number(f.count.value) || 5, w: f.show.value === 'list' ? 2 : 1, h: f.show.value === 'list' ? 2 : 1 }); draw(); } });
+    $$('[data-ddel]', host).forEach(x => x.onclick = () => { blocks = blocks.filter(b => String(b._id) !== x.dataset.ddel); draw(); });
+    const grid = $('[data-dgrid]', host);
+    grid.onpointerdown = e => {
+      if (e.target.closest('[data-ddel]')) return;
+      const rs = e.target.dataset.drs, blk = e.target.closest('.dblk'); if (!blk) return;
+      const b = blocks.find(x => String(x._id) === (rs || blk.dataset.id)); if (!b) return;
+      const cell = (grid.clientWidth - 30) / 4 + 10, row = 110, x0 = e.clientX, y0 = e.clientY, w0 = b.w || 1, h0 = b.h || 1;
+      e.preventDefault();
+      const move = ev => { if (!rs) return; b.w = Math.max(1, Math.min(4, w0 + Math.round((ev.clientX - x0) / cell))); b.h = Math.max(1, Math.min(3, h0 + Math.round((ev.clientY - y0) / row))); blk.style.gridColumn = `span ${b.w}`; blk.style.gridRow = `span ${b.h}`; };
+      const up = ev => {
+        removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+        if (rs) return draw();
+        const t = document.elementFromPoint(ev.clientX, ev.clientY); const tb = t && t.closest('.dblk');
+        if (tb && tb.dataset.id !== blk.dataset.id) { const from = blocks.indexOf(b), to = blocks.findIndex(x => String(x._id) === tb.dataset.id); blocks.splice(from, 1); blocks.splice(to, 0, b); draw(); }
+      };
+      addEventListener('pointermove', move); addEventListener('pointerup', up);
+    };
+  };
+  blocks.sort((a, b) => (a.y || 0) - (b.y || 0) || (a.x || 0) - (b.x || 0));
+  draw();
 }
 
 function renderProjectYaml(body) {
@@ -775,7 +896,6 @@ function listen() {
   try {
     S.info = await api('/api/info');
     $('#rootPath').textContent = S.info.root; $('#rootPath').title = S.info.root;
-    if (S.info.wiki) $('#navWiki').href = S.info.wiki;
     [S.projects, S.features] = await Promise.all([api('/api/projects'), api('/api/features')]);
     // built-in features got a new version at this start (plan BUILTIN): say so once
     if ((S.info.featureNotes || []).length) { S.info.featureNotes.forEach((n, i) => setTimeout(() => toast(n), i * 2600)); api('/api/feature-notes', { method: 'DELETE' }).catch(() => {}); }

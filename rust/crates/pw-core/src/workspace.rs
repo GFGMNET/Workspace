@@ -9,7 +9,8 @@ use std::time::UNIX_EPOCH;
 pub const STORES: [&str; 8] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi"];
 pub const FIELD_TYPES: [&str; 13] = ["text", "longtext", "number", "date", "datetime", "select", "bool", "url", "email", "tags", "list", "keyvalue", "link"];
 // `programs` (MCPs of programs like Blender) is a project setting, not a feature (plans BLENDER … FREECAD, decision 11)
-pub(crate) const META_KEYS: [&str; 12] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location", "hide_tabs", "programs"];
+// `dashboard` (the Overview's blocks) is a project setting too (plan DASHBOARD, decision 10)
+pub(crate) const META_KEYS: [&str; 13] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location", "hide_tabs", "programs", "dashboard"];
 
 pub fn layouts() -> Value {
     json!({

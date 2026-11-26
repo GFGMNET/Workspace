@@ -81,6 +81,8 @@ jobs:
           mkdir -p $d/app
           cp rust/target/release/workspace rust/target/release/workspace-server $d/
           cp -r app/public app/starter $d/app/
+          # Help & wiki inside the app (plan HELP): the wiki pages and their pictures come with the program
+          node tools/build-wiki.js $d/app/help/pages && mkdir -p $d/app/help/screenshots && cp docs/screenshots/* $d/app/help/screenshots/
           cp LICENSE $d/ 2>/dev/null || true
           (cd dist && zip -qry "workspace-v$v-linux-${{ matrix.arch }}.zip" workspace)
           ls -l dist/*.zip
@@ -141,6 +143,9 @@ jobs:
           Copy-Item rust/target/release/workspace.exe "$d/Workspace.exe"
           Copy-Item rust/target/release/workspace-server.exe $d
           Copy-Item -Recurse app/public, app/starter "$d/app"
+          node tools/build-wiki.js "$d/app/help/pages"
+          New-Item -ItemType Directory -Force "$d/app/help/screenshots" | Out-Null
+          Copy-Item docs/screenshots/* "$d/app/help/screenshots"
           if (Test-Path LICENSE) { Copy-Item LICENSE $d }
           Compress-Archive -Path $d -DestinationPath "dist/workspace-v$v-windows-x64.zip"
           Get-Item dist/*.zip | Select-Object Name, Length
