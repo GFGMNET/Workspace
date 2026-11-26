@@ -14,7 +14,7 @@ flowchart LR
   WAU@{ shape: hourglass, label: "WAIT" }
   REL[RELEAE Workflow]
  end
-
+STA --> CLE
 CLE <--> |NO|COM
 CLE --> |YES|FIX
 FIX --> |NO|WAU
