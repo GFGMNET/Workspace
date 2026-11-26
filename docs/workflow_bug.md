@@ -1,5 +1,5 @@
 ```mermaid
-flowchart LR
+flowchart TB
  subgraph Maintainer
   STA@{ shape: circle, label: "Start" }
   DEA[Serious]
