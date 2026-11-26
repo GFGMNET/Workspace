@@ -306,7 +306,15 @@ async function renderProject(tab, sub, query) {
   // hidden by default: only a small ⓘ in the corner; a click shows where the feature is defined (maintainer's wish, 2026-11-20)
   $('#fnote').innerHTML = `<details class="finfo"><summary title="Where this feature is defined · Help" aria-label="About this feature">${icon('info', 15)}</summary><div class="note"><b>${esc(f.key)}</b> is defined in <a class="mono" href="#/features/${enc(f.feature)}">features/${esc(f.feature)}.yaml</a> → stores ${esc(f.def.stores)} · layout ${esc(f.def.layout)}${f.def.for_claude ? ' · for Claude (' + esc(f.def.for_claude) + ')' : ''} ${f.def.stores === 'github' ? ` · repository <a class="mono" href="https://github.com/${esc(f.def.repo)}" target="_blank" rel="noopener">${esc(f.def.repo || 'not set')}</a>` : ` · folder <span class="mono">${esc(f.def.folder)}/</span>`}${over}<span class="sp"></span>${helpLink(WIKI_FEATURE[f.feature] || 'Features', 'Help')}</div></details>`;
   try { App.index = await api(`/api/projects/${enc(p.slug)}/index`); } catch { App.index = []; }
-  const ctx = { p, f, el: body, sub, query, href: (id, suffix = '') => projectHref(f.key, id, suffix) };
+  // a built-in feature with a new version: this tab keeps the old one until "Use the new version" (plan BUILTIN)
+  let el = body;
+  const base = (f.feature.match(/^(.+)_deprecated(_\d+)?$/) || [])[1];
+  if (base && S.features.some(x => x.key === base)) {
+    body.innerHTML = `<div class="note row" style="margin-bottom:12px;gap:10px">${icon('info', 15)}<span style="flex:1">This tab uses the old version of <b>${esc((S.features.find(x => x.key === base).def || {}).name || base)}</b>. Its own settings stay when you switch.</span><button class="btn sm primary" type="button" data-usenew>Use the new version</button></div><div data-fview></div>`;
+    $('[data-usenew]', body).onclick = async () => { try { S.project = await api(`/api/projects/${enc(p.slug)}/features/${enc(f.key)}/use-new`, { body: {} }); toast('Switched to the new version'); route(); } catch (e) { toast(e.message); } };
+    el = $('[data-fview]', body);
+  }
+  const ctx = { p, f, el, sub, query, href: (id, suffix = '') => projectHref(f.key, id, suffix) };
   const view = VIEWS[f.def.layout] || VIEWS.pages;
   await view(ctx);
   fillIcons(body);
@@ -561,17 +569,31 @@ function layoutSketch(layout) {
   }[layout] || '';
   return `<div class="lay" style="flex-wrap:wrap;align-content:flex-start">${s}</div>`;
 }
+// built-in features the user deleted come back exactly as shipped (plan BUILTIN)
+async function restoreBuiltinDialog() {
+  const missing = await api('/api/builtin-features');
+  if (!missing.length) { modal({ title: 'Restore built-in features', ok: 'Close', cancel: '', body: '<p style="margin:0">All built-in features are there.</p>', onOk: () => {} }); return; }
+  modal({ title: 'Restore built-in features', ok: 'Restore',
+    body: `<p class="muted small" style="margin:0 0 10px">These built-in features were deleted. Tick the ones to get back — they come back exactly as shipped.</p>
+      <div class="checks">${missing.map(m => `<label class="check"><input type="checkbox" value="${esc(m.key)}"><span><b>${esc(m.name)}</b><span class="mono">${esc(m.key)}.yaml</span></span></label>`).join('')}</div>`,
+    onOk: async f => {
+      const keys = [...f.querySelectorAll('input[type=checkbox]:checked')].map(x => x.value);
+      if (!keys.length) throw new Error('Tick at least one');
+      await api('/api/builtin-features', { body: { keys } }); toast(`Restored: ${keys.join(', ')}`); route();
+    } });
+}
 async function renderFeatures(key, query) {
   S.features = await api('/api/features'); renderSidebar();
   const sel = S.features.find(f => f.key === key) || (!('new' in query) && S.features[0]);
   $('#main').innerHTML = `<div class="wrap">
     <div class="hero"><div>${menuBtn}<h1>Features</h1><p class="muted" style="margin:6px 0 0">What each feature means — defined once in <span class="mono">features/</span>, used by any project that lists it in its project.yaml.</p></div>
-      <button class="btn primary" type="button" data-newf>${icon('plus', 14)} New feature</button></div>
+      <div class="row" style="gap:8px"><button class="btn" type="button" data-restoref>${icon('layers', 14)} Restore built-in features</button><button class="btn primary" type="button" data-newf>${icon('plus', 14)} New feature</button></div></div>
     <div class="split" style="grid-template-columns:280px minmax(0,1fr)">
       <div class="ilist">${S.features.map(f => `<a class="fitem ${sel && f.key === sel.key ? 'active' : ''}" href="#/features/${enc(f.key)}"><span class="r1">${featureIcon(f.def, 15)} ${esc(f.def.name)}<span class="mono faint small" style="margin-left:auto;font-weight:400">${esc(f.key)}.yaml</span></span>
         <span class="r2">${f.error ? '<span style="color:var(--err)">⚠ YAML error</span>' : f.warning ? '<span style="color:var(--warn)">⚠ not standard YAML</span>' : `${esc(f.def.stores)} · ${esc(f.def.layout)}${f.def.search ? ' · search' : ''}${f.def.for_claude ? ' · for Claude' : ''}`}</span></a>`).join('')}</div>
       <div id="fpane"></div></div></div>`;
   $('[data-newf]').onclick = () => newFeatureDialog();
+  $('[data-restoref]').onclick = () => restoreBuiltinDialog();
   if ('new' in query) { newFeatureDialog(query.new); if (!sel) { $('#fpane').innerHTML = ''; return; } }
   if (!sel) { $('#fpane').innerHTML = `<div class="card empty">No features yet.</div>`; return; }
   const pane = $('#fpane');
@@ -750,6 +772,8 @@ function listen() {
     $('#rootPath').textContent = S.info.root; $('#rootPath').title = S.info.root;
     if (S.info.wiki) $('#navWiki').href = S.info.wiki;
     [S.projects, S.features] = await Promise.all([api('/api/projects'), api('/api/features')]);
+    // built-in features got a new version at this start (plan BUILTIN): say so once
+    if ((S.info.featureNotes || []).length) { S.info.featureNotes.forEach((n, i) => setTimeout(() => toast(n), i * 2600)); api('/api/feature-notes', { method: 'DELETE' }).catch(() => {}); }
   } catch (e) { $('#main').innerHTML = `<div class="wrap"><div class="err">Cannot reach the workspace server: ${esc(e.message)}</div></div>`; return; }
   fillIcons(document);
   renderSidebar(); route(); listen();

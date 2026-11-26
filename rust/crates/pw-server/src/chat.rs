@@ -718,7 +718,8 @@ async fn lm_turn(dir: PathBuf, def: Value, id: String, mode: String, text: Strin
                     None => Ok(()),
                     Some(false) => Err("Not allowed: this chat can only read (permissions: read-only).".to_string()),
                     Some(true) => {
-                        let ans = tokio::select! { a = request_permission(&turn_id, &token, &json!({ "tool": shown, "input": args })) => a, _ = &mut stop_rx => { stopped = true; break 'turn; } };
+                        let q = json!({ "tool": shown, "input": args });
+                        let ans = tokio::select! { a = request_permission(&turn_id, &token, &q) => a, _ = &mut stop_rx => { stopped = true; break 'turn; } };
                         if ans["allow"] == true { Ok(()) } else { Err(ans["message"].as_str().unwrap_or("Not allowed.").to_string()) }
                     }
                 };

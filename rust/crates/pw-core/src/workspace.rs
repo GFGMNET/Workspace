@@ -227,7 +227,7 @@ impl Workspace {
     pub fn features_dir(&self) -> PathBuf { self.root.join("features") }
     pub fn projects_dir(&self) -> PathBuf { self.root.join("projects") }
     pub fn public_dir(&self) -> PathBuf { self.install.join("app").join("public") }
-    fn starter_dir(&self) -> PathBuf { self.install.join("app").join("starter") }
+    pub(crate) fn starter_dir(&self) -> PathBuf { self.install.join("app").join("starter") }
 
     /// `location:` lets a project's content live in an existing folder; {install}, {data} and ~ work.
     pub fn resolve_location(&self, loc: &str, home: &Path) -> PathBuf {
@@ -268,6 +268,13 @@ impl Workspace {
         }
         installed.sort();
         st.insert("starterFeatures".into(), json!(installed));
+        // built-in features with a new version (plan BUILTIN): the old one is kept as "(deprecated)", projects keep it
+        let updated = self.update_builtins();
+        if !updated.is_empty() {
+            let mut list: Vec<Value> = st.get("featureNotices").and_then(|a| a.as_array()).cloned().unwrap_or_default();
+            for n in &updated { list.push(json!(n)); notes.push(n.clone()); }
+            st.insert("featureNotices".into(), json!(list));
+        }
         st.insert("version".into(), json!(env!("CARGO_PKG_VERSION")));
         let _ = fs::write(&sf, serde_json::to_string_pretty(&st).unwrap() + "\n");
         notes
