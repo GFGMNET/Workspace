@@ -21,6 +21,23 @@ See also: [NOT-REQUESTED-2026-11-26.md](NOT-REQUESTED-2026-11-26.md) — things 
 | 4 | The **help inside the installed 1.0.1 app** doesn't have the documentation fixed after the release: the pages *Dashboard* and *Built-in features*, and the corrected pages (ComfyUI, Version Control, Ticket, Chat, Gallery, Issues, Projects, Features, FAQ, Getting Started). | The help pages are packed into the program when it is built (`build-rust.yml` copies `docs/wiki`). The wiki on GitHub is already correct. | They come with the next version (1.0.2) by themselves — nothing to do, unless he wants an earlier version for it. | |
 | 5 | **No real screenshots** of the tabs and screens that came with 1.0.1: Dashboard, Version Control, ComfyUI, the six text layouts (journal, book, sticky notes, board, table, blog), Help & wiki, "Restore built-in features", "Use the new version", the MCP part of *Manage*, LM Studio in the chat. The wiki pages have text only. | The Rust app can't be built and run in Claude's environment, so it couldn't take pictures. The only pictures are the approved plan drawings in `docs/plans/img/`. | Take screenshots from the real app (on Windows or Linux), save them in `docs/screenshots/`, and add them to the wiki pages like the existing ones (`![Name](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/<file>.png)`). The help in the app shows them too. | |
 
+## The new 1.0.1 screens were never tested in the real app — most important
+
+| # | What | Done? |
+|---|---|---|
+| 6 | **The Dashboard's Edit doesn't work** in the released app (found by the maintainer, 26 Nov 2026, 10:15). Not looked into yet. | |
+| 7 | **None of the new 1.0.1 screens was ever used in the real app** before the release: Dashboard (Edit, Add block, move, resize, Save, Cancel), Version Control, ComfyUI, the six text layouts (journal, book, sticky notes, board, table, blog), Help & wiki (page, search, (i) panel), Restore built-in features, Use the new version, the MCP part of *Manage*, LM Studio in the chat. | |
+
+What *was* tested: the **server side** of each feature (contract tests in `tests/contract/`, green on Windows + Linux), and
+during planning the plan checks in `docs/plans/checks/` — for the Dashboard on a **separate test page**
+(`dashboard-prototype.html`), not on the app's screen. The screens' code (`app/public/app.js`, `views.js`) was only checked by
+`npm test`, which checks that the JavaScript has no syntax errors, nothing more.
+
+**What the next assistant should do (with the maintainer's OK):** test every screen in point 7 in the real app (or with
+browser tests in `tests/ui/` against the Rust server, like `tests/ui/layout.test.js`), fix what fails, and add those tests so
+CI catches it next time. The fixes go into the next version (1.0.2) or, if the maintainer says it's serious, an urgent fix
+version (1.0.1.1).
+
 ## Documentation that was missing and is fixed now (for the record)
 
 Fixed on 26 Nov 2026 after the maintainer pointed it out — nothing to do, but check the same kind of gap for every new feature:

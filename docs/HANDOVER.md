@@ -23,7 +23,7 @@ rules and the maintainer's decisions (some of its dates are history now — see 
 
 On 26 Nov 2026 Claude did some things beyond the maintainer's steps. They are listed in
 **[NOT-REQUESTED-2026-11-26.md](NOT-REQUESTED-2026-11-26.md)**. Ask him about each point (keep or undo) before other work.
-What was forgotten or couldn't be finished (release texts on GitHub, screenshots, help in the installed app) is in
+What was forgotten or couldn't be finished — **above all: the new 1.0.1 screens were never tested in the real app, and the Dashboard's Edit doesn't work** — plus release texts on GitHub, screenshots, help in the installed app, is in
 **[FORGOTTEN-2026-11-26.md](FORGOTTEN-2026-11-26.md)**.
 
 ## Lines in CLAUDE.md that are history now — don't act on them
