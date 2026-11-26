@@ -5,6 +5,7 @@ pub mod files;
 pub mod items;
 pub mod lenient;
 pub mod links;
+pub mod programs;
 pub mod projects;
 pub mod secrets;
 pub mod workspace;

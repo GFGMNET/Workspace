@@ -406,6 +406,15 @@ function addFeatureDialog() {
 }
 
 // ---------- rename / archive / delete ----------
+// examples for the MCP section of "Manage project" (plans BLENDER … FREECAD)
+const PROGRAM_EXAMPLES = {
+  blender: 'e.g. "Build me a Medieval Tavern in Blender, use Low Poly"',
+  unity: 'e.g. "Build me a small medieval village scene in Unity, use Low Poly"',
+  unreal: 'e.g. "Build me a medieval market square in Unreal, use Low Poly"',
+  godot: 'e.g. "Build me a small medieval village level in Godot, use Low Poly"',
+  openscad: 'e.g. "Build me a wall bracket for a 30 mm pipe in OpenSCAD, ready for 3D printing"',
+  freecad: 'e.g. "Build me a mounting plate 80×40 mm with four M4 holes in FreeCAD and export it as STL"',
+};
 function manageProject(p) {
   const m = modal({ title: `Manage “${p.name}”`, ok: 'Rename', cancel: 'Close',
     body: `<div class="field"><label for="mpn">Name</label><input id="mpn" name="name" value="${esc(p.name)}" required></div>
@@ -417,6 +426,8 @@ function manageProject(p) {
         <div class="row" style="gap:6px"><button class="btn sm" type="button" data-mpath>${icon('copy', 14)} Copy path</button><button class="btn sm" type="button" data-mcli>${icon('terminal', 14)} Copy Claude CLI command</button><button class="btn sm" type="button" data-mcode>${icon('terminal', 14)} Open in VS Code</button></div></div>
       <div class="mgsec"><b>Features</b><div class="mgfeat">${p.features.map(f => `<div class="row"><span style="flex:1">${esc(f.def ? f.def.name : f.key)} <span class="mono faint small">${esc(f.key)}</span></span><button class="btn sm ghost danger" type="button" data-rmf="${esc(f.key)}">Remove</button></div>`).join('') || '<span class="faint small">None</span>'}</div>
         <span class="faint small">Removing a feature takes it out of project.yaml; its files stay in the folder.</span></div>
+      ${p.programs ? `<div class="mgsec"><b>MCP</b><span class="muted small">Programs the Claude CLI can work with in this project's chat. The program has to be open on this PC — see the wiki for how to connect it.</span>
+        <div class="checks">${p.programs.map(g => `<label class="check"><input type="checkbox" data-prog="${esc(g.key)}" ${g.on ? 'checked' : ''}><span><b>${esc(g.name)}</b><span>${esc(PROGRAM_EXAMPLES[g.key] || '')}</span></span></label>`).join('')}</div></div>` : ''}
       <div class="mgsec"><b>Template</b><span class="muted small">Start new projects like this one: saves its project.yaml and, if you like, its pages, records and files.</span>
         <div><button class="btn" type="button" data-template>${icon('copy', 14)} Save as template…</button></div></div>
       <div class="mgsec"><b>Archive</b><span class="muted small">Hides the project from the list. Its folder moves to <span class="mono">projects/_archive/</span>; restore it any time from the home page.</span>
@@ -433,6 +444,11 @@ function manageProject(p) {
   $$('[data-rmf]', m.el).forEach(b => b.onclick = async () => {
     if (!confirm(`Remove “${b.dataset.rmf}” from this project? Its files stay in the folder.`)) return;
     S.project = await api(`/api/projects/${enc(p.slug)}/features/${enc(b.dataset.rmf)}`, { method: 'DELETE' }); m.close(); await App.refreshProjects(); go('#/p/' + enc(p.slug)); toast('Feature removed');
+  });
+  $$('[data-prog]', m.el).forEach(b => b.onchange = async () => {
+    const list = $$('[data-prog]', m.el).filter(x => x.checked).map(x => x.dataset.prog);
+    try { S.project = await api(`/api/projects/${enc(p.slug)}/programs`, { method: 'PUT', body: { programs: list } }); toast(b.checked ? 'Switched on — written to project.yaml' : 'Switched off'); }
+    catch (e) { b.checked = !b.checked; toast(e.message); }
   });
   $('[data-myaml]', m.el).onclick = () => { m.close(); go('#/p/' + enc(p.slug) + '/_yaml'); };
   $('[data-template]', m.el).onclick = () => { m.close(); saveTemplateDialog(p); };

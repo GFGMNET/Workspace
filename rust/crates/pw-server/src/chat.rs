@@ -313,6 +313,27 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
             }
         }
     }
+    // programs of the project (`programs:` in project.yaml, e.g. Blender): their MCP servers, and a note where to keep the results
+    let mut prog_file: Option<PathBuf> = None;
+    let (mut servers, mut notes, mut unknown) = (serde_json::Map::new(), Vec::<String>::new(), Vec::<String>::new());
+    for k in pw_core::programs::listed(&p.meta) {
+        match pw_core::programs::find(&k) {
+            Some(pg) => {
+                servers.insert(pg.key.to_string(), (pg.server)());
+                let _ = std::fs::create_dir_all(p.dir.join(pg.key));
+                notes.push(format!("{} (through its MCP server; keep {} in the folder {}/ of this project)", pg.name, pg.keep, pg.key));
+            }
+            None => unknown.push(k),
+        }
+    }
+    if !servers.is_empty() {
+        let pf = std::env::temp_dir().join(format!("pw-programs-{turn_id}.json"));
+        if write_private(&pf, &json!({ "mcpServers": servers }).to_string()).is_ok() { configs.push(pf.to_string_lossy().to_string()); prog_file = Some(pf); }
+    }
+    if !notes.is_empty() { prompt = format!("(Workspace note: in this project you can work with {}.)\n\n{prompt}", notes.join("; ")); }
+    let notice = if unknown.is_empty() { String::new() } else {
+        format!("*Note: {} in `programs:` of project.yaml {} not known and is ignored.*\n\n", unknown.iter().map(|u| format!("\"{u}\"")).collect::<Vec<_>>().join(", "), if unknown.len() == 1 { "is" } else { "are" })
+    };
     if !configs.is_empty() { args.push("--mcp-config".into()); args.extend(configs); }
     let mut all_allowed: Vec<String> = def["allowed_tools"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
     all_allowed.extend(allowed);
@@ -331,6 +352,7 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
                 for (_, (_, s)) in t.pending { let _ = s.send(json!({ "allow": false, "message": "The chat turn ended." })); }
             }
             if let Some(f) = perm_file { let _ = std::fs::remove_file(f); }
+            if let Some(f) = &prog_file { let _ = std::fs::remove_file(f); }
         };
         let mut reply = json!({ "role": "assistant", "text": "", "tools": [], "time": now_iso() });
         let finish = |reply: &mut Value, extra: Value| {
@@ -358,6 +380,7 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
         let mut lines = BufReader::new(child.stdout.take().unwrap()).lines();
         let (mut got_delta, mut finished, mut stopped) = (false, false, false);
         let text_push = |reply: &mut Value, t: &str| { let s = reply["text"].as_str().unwrap_or("").to_string() + t; reply["text"] = json!(s); };
+        if !notice.is_empty() { text_push(&mut reply, &notice); let _ = tx.send(json!({ "type": "text", "delta": notice })); }
         loop {
             let line = tokio::select! {
                 l = lines.next_line() => match l { Ok(Some(l)) => l, _ => break },

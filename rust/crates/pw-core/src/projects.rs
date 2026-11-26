@@ -104,6 +104,23 @@ impl Workspace {
         write_text(&p.file, &format!("{}\n{block}", p.yaml.trim_end()))?;
         self.sync_project(slug)
     }
+    /// Sets `programs:` in project.yaml (the MCPs of programs like Blender; only known names), keeping comments.
+    /// An empty list removes the key. Creates the folder of each program for its results.
+    pub fn set_programs(&self, slug: &str, list: &[String]) -> Result<Project> {
+        let p = self.load_project(slug)?;
+        if let Some(e) = &p.error { return Err(err(400, format!("Fix project.yaml first: {e}"))); }
+        let mut keep: Vec<Value> = vec![];
+        for k in list {
+            let k = k.trim().to_lowercase();
+            if crate::programs::find(&k).is_none() { return Err(err(400, format!("Unknown program \"{k}\""))); }
+            if !keep.contains(&json!(k)) { keep.push(json!(k)); }
+        }
+        let mut data = p.data.clone();
+        if keep.is_empty() { data.remove("programs"); } else { data.insert("programs".into(), Value::Array(keep.clone())); }
+        write_text(&p.file, &yaml::update_mapping(&p.yaml, &data))?;
+        for k in &keep { let _ = fs::create_dir_all(p.dir.join(k.as_str().unwrap_or(""))); }
+        self.sync_project(slug)
+    }
     /// Removes the key line and its indented block (the content folder stays on disk).
     pub fn remove_feature_from_project(&self, slug: &str, key: &str) -> Result<Project> {
         let p = self.load_project(slug)?;

@@ -8,7 +8,8 @@ use std::time::UNIX_EPOCH;
 
 pub const STORES: [&str; 8] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi"];
 pub const FIELD_TYPES: [&str; 13] = ["text", "longtext", "number", "date", "datetime", "select", "bool", "url", "email", "tags", "list", "keyvalue", "link"];
-pub(crate) const META_KEYS: [&str; 11] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location", "hide_tabs"];
+// `programs` (MCPs of programs like Blender) is a project setting, not a feature (plans BLENDER … FREECAD, decision 11)
+pub(crate) const META_KEYS: [&str; 12] = ["name", "description", "icon", "color", "tags", "status", "owner", "created", "overview", "location", "hide_tabs", "programs"];
 
 pub fn layouts() -> Value {
     json!({
@@ -419,7 +420,7 @@ impl Project {
     }
     /// The answer of GET /api/projects/<p> (server.js projectView).
     pub fn view(&self) -> Value {
-        json!({ "slug": self.slug, "name": self.name, "meta": self.meta, "yaml": self.yaml, "error": self.error, "warning": self.warning,
+        json!({ "slug": self.slug, "name": self.name, "meta": self.meta, "programs": crate::programs::for_project(&self.meta), "yaml": self.yaml, "error": self.error, "warning": self.warning,
             "path": self.dir.to_string_lossy(), "external": self.external, "yamlPath": self.file.to_string_lossy(),
             "features": self.features.iter().map(|f| json!({ "key": f.key, "feature": f.feature, "missing": f.missing, "def": f.def, "overrides": f.overrides })).collect::<Vec<_>>() })
     }

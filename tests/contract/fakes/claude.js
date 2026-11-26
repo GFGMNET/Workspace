@@ -16,7 +16,11 @@ let prompt = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', d => { prompt += d; });
 process.stdin.on('end', () => {
-  if (process.env.FAKE_CLAUDE_LOG) fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify({ args, prompt, env: Object.keys(process.env).filter(k => k.startsWith('PW_SECRET_')) }) + '\n');
+  // the MCP servers it was given (--mcp-config <file> …), read now: temporary files are gone after the turn
+  const mcp = {};
+  const at = args.indexOf('--mcp-config');
+  if (at >= 0) for (const f of args.slice(at + 1)) { if (f.startsWith('--')) break; try { Object.assign(mcp, JSON.parse(fs.readFileSync(f, 'utf8')).mcpServers || {}); } catch {} }
+  if (process.env.FAKE_CLAUDE_LOG) fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, JSON.stringify({ args, prompt, mcp, env: Object.keys(process.env).filter(k => k.startsWith('PW_SECRET_')) }) + '\n');
   const sid = args.includes('--resume') ? args[args.indexOf('--resume') + 1] : 'session-1';
   out({ type: 'system', subtype: 'init', session_id: sid, model: 'fake', tools: ['Read', 'Write', 'Bash'] });
   if (prompt.includes('LOGIN')) { out({ type: 'result', is_error: true, result: 'Invalid API key · Please run /login', session_id: sid }); return; }

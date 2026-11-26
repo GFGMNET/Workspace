@@ -75,6 +75,7 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/projects/{p}/yaml", put(project_yaml))
         .route("/api/projects/{p}/features", post(project_add_feature))
         .route("/api/projects/{p}/features/{k}", axum::routing::delete(project_remove_feature))
+        .route("/api/projects/{p}/programs", put(project_programs))
         .route("/api/projects/{p}/overview", get(overview))
         .route("/api/projects/{p}/index", get(index))
         .route("/api/projects/{p}/backlinks", get(backlinks))
@@ -196,6 +197,11 @@ async fn tickets_update(State(ws): S, Path((p, f, id)): Path<(String, String, i6
 async fn tickets_add(State(ws): S, Path((p, f, id, what)): Path<(String, String, i64, String)>, b: Bytes) -> ApiResult {
     if what != "followups" && what != "solution" { return Err(pw_core::workspace::err(404, "Not found").into()); }
     let pr = ws.load_project(&p)?; Ok(Json(glpi::add(&ws, &pr, &f, id, &what, &body_json(&b)?).await?))
+}
+async fn project_programs(State(ws): S, Path(p): Path<String>, b: Bytes) -> ApiResult {
+    let body = body_json(&b)?;
+    let list: Vec<String> = body["programs"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
+    Ok(Json(ws.set_programs(&p, &list)?.view()))
 }
 async fn github_issues(State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q) -> ApiResult {
     let pr = ws.load_project(&p)?;
