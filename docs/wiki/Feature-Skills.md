@@ -2,6 +2,10 @@
 
 Agent skills for Claude: each skill is a `SKILL.md` file that tells Claude how to do a task. Claude CLI loads them automatically when it runs in the project folder (the **Chat** tab, or `claude` in a terminal).
 
+## What you need
+
+- [Claude CLI](https://docs.claude.com/en/docs/claude-code) installed and signed in — skills are used by Claude.
+
 | | |
 |---|---|
 | Stores | `markdown` |

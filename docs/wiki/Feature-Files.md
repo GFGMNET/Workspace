@@ -2,6 +2,10 @@
 
 Any documents — PDF, Office files, archives — in folders, with upload, download and delete.
 
+## What you need
+
+- Nothing extra: works offline, files stay in the project folder.
+
 | | |
 |---|---|
 | Stores | `files` |

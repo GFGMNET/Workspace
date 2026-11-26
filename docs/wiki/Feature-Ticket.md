@@ -4,6 +4,15 @@ The **Ticket** tab shows the tickets of your GLPI 11 server that belong to the p
 create a ticket (**+**, help text *New Ticket*), read it, edit its text, set its state, add follow-ups and a solution.
 From version 1.0 (*Workspace*).
 
+Above the list are four filters: **Open** (GLPI's *New* and *In progress*), **Pending**, **Closed** and **Solved**.
+**Open** is chosen when you open the tab.
+
+## What you need
+
+- Version 1.0 (*Workspace*) or newer.
+- A **GLPI 11** server that the PC can reach, with the REST API switched on.
+- A GLPI **user token** and the **application token** of an API client, saved as secrets (see below).
+
 **Which tickets belong to the project:** the tickets of the GLPI **category with the project's name**. If the category
 doesn't exist yet, the app creates it. A category that is already used for other tickets shows those tickets too.
 

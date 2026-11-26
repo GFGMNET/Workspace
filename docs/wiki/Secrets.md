@@ -36,8 +36,7 @@ github:
 ## How they are kept
 
 - Stored in `data/.secrets.json`, encrypted (AES-256-GCM).
-- **Desktop app:** the key is protected by Windows (or the operating system) for your user. A copied `data` folder doesn't reveal the values. On another computer or user they can't be read: remove them and enter them again (see [[Backup]]).
-- **With Node.js** (start.bat / start.sh): the key is stored next to the secrets. They are still out of your YAML files, but whoever has the `data` folder can read them. The dialog shows which protection is in use.
+- The key is protected for your user: on **Windows** by Windows itself, on **Linux** by the system's key store (Secret Service / keyring). A copied `data` folder doesn't reveal the values. On another computer or user they can't be read: remove them and enter them again (see [[Backup]]).
 - The Explorer, VS Code tab and the workspace MCP server can't open `.secrets.json`.
 
 See also: [[MCP|Feature-MCP]], [[Claude]].

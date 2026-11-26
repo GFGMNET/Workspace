@@ -2,6 +2,10 @@
 
 Network devices as a table — an example of a feature type you invent yourself. Copy it and change the fields for anything you want to keep a list of.
 
+## What you need
+
+- Nothing extra: works offline, devices are files in the project.
+
 | | |
 |---|---|
 | Stores | `records` |

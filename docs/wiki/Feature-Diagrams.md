@@ -2,6 +2,10 @@
 
 Diagrams written as text in [Mermaid](https://mermaid.js.org) — flowcharts, sequences, timelines and more — with a live preview while you type and an SVG download.
 
+## What you need
+
+- Nothing extra: works offline (Mermaid is built in).
+
 ![Diagrams](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/diagram-dark.png)
 
 | | |

@@ -2,6 +2,10 @@
 
 An offline map: upload your own picture — a floor plan, site plan or any map — and place pins on it. Pins can be dragged; no internet needed.
 
+## What you need
+
+- A picture of your map (floor plan, site plan, any image). No internet needed.
+
 ![Map](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/map.png)
 
 | | |

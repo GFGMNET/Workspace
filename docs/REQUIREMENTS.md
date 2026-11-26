@@ -4,6 +4,8 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 
 **Status:** ✅ done · 🚧 in progress · 📋 planned · ❓ to decide · ❌ dropped
 
+
+> **26 Nov 2026:** 1.0.0 released (Rust + Tauri). The old 0.x app (Electron/Node) is deprecated — no more 0.x releases.
 ## Core
 
 | ID | Requirement | Status | Issue |

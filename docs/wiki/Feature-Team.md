@@ -2,6 +2,10 @@
 
 An org chart: people (or roles) as a tree, built from who reports to whom.
 
+## What you need
+
+- Nothing extra: works offline, people are files in the project.
+
 ![Team](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/orgchart.png)
 
 | | |

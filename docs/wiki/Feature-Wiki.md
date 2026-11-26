@@ -2,6 +2,10 @@
 
 Markdown pages with a page list, full-text search and an editor with live preview. Good for documentation, how-tos and notes that link to each other.
 
+## What you need
+
+- Nothing extra: works offline, pages are Markdown files in the project.
+
 ![Wiki](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/wiki.png)
 
 | | |

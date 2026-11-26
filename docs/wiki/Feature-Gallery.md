@@ -2,6 +2,10 @@
 
 Pictures in albums. Albums are shown as cards with a cover, the number of pictures and their date range; pictures open in a full-screen viewer.
 
+## What you need
+
+- Nothing extra: works offline, pictures stay in the project folder.
+
 | | |
 |---|---|
 | Stores | `images` |

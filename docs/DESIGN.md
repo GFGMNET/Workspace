@@ -6,6 +6,9 @@ Status: version 0.4. Requirements and their status: [REQUIREMENTS.md](REQUIREMEN
 
 ---
 
+> **Status (26 Nov 2026):** 1.0.0 is released — the app is the Rust + Tauri version (§10). Text about Electron and the
+> Node server (§7, §7b, §7c, parts of §7g) describes the old 0.x app, which is **deprecated** (last release 0.6.3, no more releases).
+
 ## 1. Goal
 
 One workspace for very different projects. Each project page is built from a YAML file, and there is no database: everything is plain files that can be copied anywhere.
@@ -560,7 +563,7 @@ Order and dates: README "Upcoming changes" — 1.0 on 27 Nov 2026, then 1.0.1 wi
 | — | macOS app | ❌ not planned (2026-11-18) | #56 |
 | — | Feature requests from users | paused for a review (2026-11-23) | |
 
-## 10. Version 1.0: Rust + Tauri (beta, #41)
+## 10. Version 1.0: Rust + Tauri (released 26 Nov 2026, #41)
 
 The detailed plan (inventory, crates, phases with exit criteria, tests, risks, decisions) is in [MIGRATION-RUST.md](MIGRATION-RUST.md); milestone *v1.0 (Rust)*, issues #49–#55.
 

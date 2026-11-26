@@ -1,49 +1,53 @@
 # Desktop app
 
-The Windows and Linux downloads open the workspace in **their own window**. Node.js and the browser engine are included (Electron), so nothing needs to be installed.
+The Windows and Linux downloads open the workspace in **their own window**. They use the browser engine your system already has (WebView2 on Windows 11, WebKitGTK on Linux), so nothing else needs to be installed.
 
 ## Start
 
 | System | Start |
 |---|---|
-| Windows | `ProjectWorkspace.exe` |
-| Linux | `./project-workspace` |
-| Linux server without a desktop | `./project-workspace-server` (no window; open `http://localhost:4321` in a browser) |
+| Windows | `Workspace.exe` |
+| Linux | `./workspace` |
+| Linux server without a desktop | `./workspace-server` (no window; open `http://localhost:4321` in a browser) |
 
 Options: a port number (e.g. `4322`), `--browser` (open a normal browser tab instead of the window), `--hidden` (start in the tray), `--version`.
 
-Starting it a second time just brings the window to the front. If a workspace already runs on the port (e.g. from `start.bat`), the window shows that one.
+Starting it a second time just brings the window to the front.
 
-## Menu
+**The X closes the app.** To keep reminders while you work elsewhere, minimise the window instead.
 
-Press **Alt** if the menu is hidden.
+## Two layouts
 
-- **Workspace → Open in browser:** the same workspace in your normal browser. Both work at the same time.
-- **Workspace → Open data folder:** your `data` folder in Explorer / Files.
-- **View:** reload, zoom, full screen.
-- **Help → Wiki.**
+Switch with the **layout button** in the menu (the small window picture, next to the light/dark button). Each click switches between the two. The app remembers it on this PC.
 
-Links to the wiki, GitHub and other websites open in your normal browser.
+**Light / dark:** the button with the sun, moon or half circle. Each click switches **Light → Dark → Auto** (Auto follows Windows).
+
+- **Menu left** (the classic one): projects and links on the left, the features of a project as tabs along the top. **Collapse** (or Ctrl+B) shrinks the menu to icons. With **more than 4 projects**, the projects are in a **drop-down** at the top of the menu instead of a long list.
+- **Menu top**: the menu is a bar at the top, the projects are in a **drop-down** there, and the features of a project are a list on the left. **« Collapse** at the bottom of that list (or Ctrl+B) shrinks it to icons; **»** opens it again.
+
+In both, **Tabs** (the eye) chooses which features a project shows, and the gear (⚙) next to the project name holds `project.yaml`.
 
 ## Tray, reminders and start with Windows
 
-Right-click the **tray icon** (next to the clock):
+Click the **tray icon** (next to the clock):
 
-- **Keep running in the tray when the window is closed** (on by default; version 0.x only — from 1.0 the X always quits the app). Closing the window hides it, so reminders keep coming. To stop the workspace, choose **Quit** in the tray menu or **Workspace → Quit** (Ctrl+Q). Turned off, closing the window stops the workspace.
-- **Remind me of what is due** (on by default). Every 30 minutes the app checks all projects. It shows a notification for each task or event that is due today or overdue, once per day. Clicking it opens the item.
-- **Start with Windows** (off by default). The workspace starts in the tray when you sign in. If you move the program folder, start it once from the new place.
+- **Open Workspace**
+- **Due today:** the tasks and events due today or overdue, in all projects — click one to open it.
+- **Remind me of what is due** (on by default): every 30 minutes the app checks all projects and shows a notification for what is due today or overdue, once per day.
+- **Start with Windows** (off by default): the workspace starts in the tray when you sign in. If you move the program folder, start it once from the new place.
+- **Open in browser**, **Open data folder**, **Wiki**, **Quit**.
 
 The home page lists **Coming up in all projects**: overdue tasks first, then everything in the next 14 days. Dates come from calendar events and date fields such as `due` (see [[Tasks|Feature-Tasks]], [[Calendar|Feature-Calendar]]).
 
-These settings are kept in `data/.desktop.json`.
+These settings are kept in `data/.desktop.json`, the window size in `data/.window.json`.
 
 ## Linux notes
 
-- The Linux packages can't carry Chromium's root-owned sandbox helper, so the start script runs the window without it. It only ever shows your local workspace. To use the sandbox: `sudo chown root chrome-sandbox && sudo chmod 4755 chrome-sandbox` in the program folder.
+- The window needs WebKitGTK 4.1 (most desktops have it).
 - The tray icon needs a desktop with tray support (on GNOME: the *AppIndicator* extension).
 
 ## Updates
 
-The app checks for updates once a week (see [[Data and Updates|Data-and-Updates]]). After **Update now** it restarts by itself. When a release brings a new browser engine, it is swapped in while the app restarts.
+The app checks for updates once a week (see [[Data and Updates|Data-and-Updates]]). After **Update now** it restarts by itself.
 
 See also: [[Getting Started|Getting-Started]], [[FAQ]].

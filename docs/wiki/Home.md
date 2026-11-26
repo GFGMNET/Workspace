@@ -1,20 +1,38 @@
-# Project Workspace
+# Workspace
 
 One workspace for very different projects. A project's `project.yaml` says **which features** it has, and `features/*.yaml` says **what they mean**. There is no database: everything is plain files. It works with **Claude CLI** and **VS Code**.
 
 ![Workspace home](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/home.png)
 
+**Version 1.0** is here: a new program (Rust), small, signed with the project's own certificate, for **Windows 11** and **Linux (x64)**. Coming from 0.x? See [[Moving to 1.0|Moving-to-1.0]].
+
 ## Start here
 
 - **[[Getting Started|Getting-Started]]**: install, first project, first feature (10 minutes)
-- [[Desktop App|Desktop-App]]: its own window, tray, reminders, start with Windows
+
+## Features
+
+What a project can have. Every feature page starts with **what you need** for it.
+
+- [[All features|Features]]: how features work, all settings, your own feature types
+- [[Wiki|Feature-Wiki]] · [[Knowledge|Feature-Knowledge]] · [[Gallery|Feature-Gallery]] · [[Files|Feature-Files]] · [[Scripts|Feature-Scripts]] · [[Diagrams|Feature-Diagrams]]
+- [[Tasks|Feature-Tasks]] · [[Calendar|Feature-Calendar]] · [[Team|Feature-Team]] · [[Map|Feature-Map]] · [[Contacts|Feature-Contacts]] · [[Devices|Feature-Devices]]
+- [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[Issues|Feature-Issues]] · [[Ticket (GLPI)|Feature-Ticket]]
+
+## MCP
+
+How Claude uses other programs. Every MCP page starts with **what you need** for it.
+
+- [[About MCP|MCP]] · [[MCP connections|Feature-MCP]]
+
+## More
+
 - [[Projects]]: how `project.yaml` works, templates
-- [[Features]]: define your own feature types (all settings), with a **page per feature** (e.g. [[Feature-Wiki]], [[Feature-Tasks]], [[Feature-Chat]])
 - [[Building Blocks|Building-Blocks]]: pages, tables, Kanban, calendar, org chart, map, diagrams, scripts, chat …
-- [[Claude]]: chat, skills, MCP, workspace MCP server
-- [[VS Code and Explorer|VS-Code-and-Explorer]]
+- [[Claude]]: chat, skills, workspace MCP server
+- [[VS Code and Explorer|VS-Code-and-Explorer]] · [[Desktop App|Desktop-App]]: its own window, tray, reminders, start with Windows
 - [[Secrets]]: API keys and passwords, kept encrypted
-- [[Security]]: what protects you, how security updates arrive
+- [[Security]] · [[Signing certificate|Signing-certificate]]: what protects you, how to trust the program
 - [[Data and Updates|Data-and-Updates]]: where your data lives, how to update
 - [[Backup]] · [[Import and Export|Import-and-Export]]: what to back up; bringing files in and out
 - [[FAQ]]

@@ -36,23 +36,13 @@ In a project, open **Manage** (gear icon) → **Copy Claude CLI command**: it co
 
 ## Let Claude manage the workspace
 
-Register the workspace MCP server once:
-
-```
-claude mcp add project-workspace --scope user -- node "C:\Workspace\app\mcp.js"
-```
-
-With the desktop app (no Node.js installed), use the app's own runtime. The home page shows this command with your folder:
-
-```
-claude mcp add project-workspace --scope user -e ELECTRON_RUN_AS_NODE=1 -- "C:\Workspace\ProjectWorkspace.exe" "C:\Workspace\app\mcp.js"
-```
-
-From version 1.0 (Rust) the program is its own MCP server:
+Register the workspace MCP server once — the program is its own MCP server:
 
 ```
 claude mcp add project-workspace --scope user -- "C:\Workspace\Workspace.exe" mcp
 ```
+
+(Linux: `-- /path/to/workspace-server mcp`.)
 
 The name `workspace` is reserved in Claude CLI, so the server is called **project-workspace**.
 

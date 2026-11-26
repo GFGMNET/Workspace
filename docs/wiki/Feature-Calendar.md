@@ -2,6 +2,10 @@
 
 A month view with events (multi-day too), a *coming up* list and events without a date. Click a day to add an event.
 
+## What you need
+
+- Nothing extra: works offline, events are files in the project.
+
 ![Calendar](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/calendar.png)
 
 | | |

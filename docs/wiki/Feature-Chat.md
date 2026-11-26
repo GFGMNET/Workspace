@@ -2,6 +2,11 @@
 
 Chat with Claude CLI inside the project folder. Claude sees the project's files, skills and MCP connections, and — if allowed — creates and changes files; the app shows the changes right away.
 
+## What you need
+
+- [Claude CLI](https://docs.claude.com/en/docs/claude-code) installed and signed in (`claude` works in a terminal).
+- An internet connection for Claude.
+
 ![Chat](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/chat.png)
 
 | | |

@@ -2,6 +2,10 @@
 
 Reference articles shown as **cards** with a short summary and tags, plus search and a tag filter. Click a card to read or edit the article.
 
+## What you need
+
+- Nothing extra: works offline, articles are Markdown files in the project.
+
 | | |
 |---|---|
 | Stores | `markdown` |

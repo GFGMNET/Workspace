@@ -8,26 +8,22 @@ You need:
 
 | What | Why | Where |
 |---|---|---|
-| **Node.js 18 or newer** (LTS) | runs the workspace | https://nodejs.org |
+| **Windows 11** or **Linux (x64)** | runs the workspace | — |
 | Claude CLI *(optional)* | the Chat tab and Claude integration | https://docs.claude.com/en/docs/claude-code |
 | VS Code *(optional)* | the VS Code tab and buttons | https://code.visualstudio.com |
 
-**Easiest on Windows:** download `project-workspace-…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest) and unzip it anywhere, for example `C:\Workspace` or a folder in OneDrive. It contains **ProjectWorkspace.exe**, so you don't need Node.js.
+**Windows 11:** download `workspace-v…-windows-x64.zip` from the [latest release](https://github.com/GFGMNET/Workspace/releases/latest) and unzip it anywhere, for example `C:\Workspace` or a folder in OneDrive. It contains **Workspace.exe**.
 
-**Linux:** download `project-workspace-…-linux-x64.zip` (or `-linux-arm64.zip` for ARM, e.g. a Raspberry Pi — only up to 0.x; 1.0 runs on Windows 11 and Linux x64), unzip it (`unzip project-workspace-…zip`), and run `./project-workspace` inside the folder. Node.js isn't needed there either. On a server without a desktop, run `./project-workspace-server` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
+**Linux (x64):** download `workspace-v…-linux-x64.zip`, unzip it, and run `./workspace` inside the folder (needs glibc 2.39 or newer (e.g. Ubuntu 24.04, Mint 22, Debian 13, Fedora 40, up-to-date Arch — full list in the FAQ), and WebKitGTK 4.1, which most desktops have). On a server without a desktop, run `./workspace-server` and open `http://<server>:4321` from a browser on the same machine. For other machines, see the FAQ.
 
-**Otherwise:** download the other zip of the release (or **Code → Download ZIP**) and install Node.js.
+Coming from the old app (0.x)? See [[Moving to 1.0|Moving-to-1.0]].
 
 ## 2. Start it
 
-- **Windows (app):** double-click `ProjectWorkspace.exe`. The first time, Windows may say *Windows protected your PC*, because the app isn't signed yet (#31). Click **More info → Run anyway**.
-- **Linux (app):** `./project-workspace`. On a server without a desktop: `./project-workspace-server`
-- **Windows (Node.js):** double-click `start.bat`
-- **macOS / Linux:** run `./start.sh`
+- **Windows:** double-click `Workspace.exe`. The first time, Windows may warn, because it doesn't know the project's own certificate yet: trust it once ([[Signing certificate|Signing-certificate]]) or click **More info → Run anyway**.
+- **Linux:** `./workspace`. On a server without a desktop: `./workspace-server`
 
-**The app** opens in its own window. Closing the window stops the workspace. To use it in a browser instead, choose **Workspace → Open in browser** in the menu (press Alt if the menu is hidden), or start the app with `--browser`.
-
-**With Node.js** (start.bat / start.sh) a console window opens and your browser shows **http://localhost:4321**. Keep the console window open while you work; closing it stops the workspace.
+The app opens in its own window. Closing the window (X) stops the workspace. To use it in a browser instead, choose **Open in browser** in the tray menu, or start the app with `--browser`.
 
 On the first start a `data` folder is created next to the program. **All your projects live there.** It's the only folder you need to back up.
 
@@ -70,7 +66,7 @@ layout: pages       # how it looks
 search: true
 ```
 
-Edit a project's YAML in its **project.yaml** tab. Edit the features under **Features** in the sidebar.
+Edit a project's YAML with the gear (⚙) next to the project name → **project.yaml**. Edit the features under **Features** in the sidebar.
 
 ## 5. Add your own feature type
 
@@ -109,21 +105,21 @@ The layouts you can use are:
 5. *Optional:* let Claude manage the whole workspace from any terminal:
 
    ```
-   claude mcp add project-workspace --scope user -- node "C:\Workspace\app\mcp.js"
+   claude mcp add project-workspace --scope user -- "C:\Workspace\Workspace.exe" mcp
    ```
 
-   With the app, the home page shows the exact command for your folder (it starts the server with the app's own runtime: `-e ELECTRON_RUN_AS_NODE=1 -- "C:\Workspace\ProjectWorkspace.exe" "C:\Workspace\app\mcp.js"`).
+   The home page shows the exact command for your folder.
 
 ## 8. Use VS Code
 
 - **VS Code** button in a project, or **Open in VS Code** on a file: opens it in your installed VS Code.
-- **VS Code tab:** the full VS Code inside the app. Click **Start VS Code**; the first start downloads its web part once and needs internet that time.
+- **VS Code tab:** the full VS Code inside the app. It starts by itself when you open the tab; the first start downloads its web part once and needs internet that time.
 - **Explorer tab:** every file of the project, with a built-in code editor.
 - **Scripts feature:** PowerShell, batch, Bash, Python, … with templates.
 
 ## 9. Update to a new version
 
-The workspace checks GitHub **once a week**. When a new version is out, a bar at the top says so: click **What's new** to read about it, then **Update now** (or *Later* / *Skip this version*). It downloads the new version, keeps a backup of the old one in `.update/`, and restarts by itself. Your `data` folder is never touched.
+The workspace checks GitHub **once a week**. When a new version is out, a bar at the top says so: click **What's new** to read about it, then **Update now** (or *Later* / *Skip this version*). It downloads the new version, checks that it is really ours (signature / checksum), keeps a backup of the old one in `.update/`, and restarts by itself. Your `data` folder is never touched.
 
 You can also check any time via **v… · Updates** at the bottom of the sidebar.
 
@@ -133,7 +129,6 @@ Updating by hand works too: download the new version and replace everything **ex
 
 | Problem | Fix |
 |---|---|
-| "Node.js is needed" | Install Node.js LTS, then start again |
 | "Port 4321 is already in use" | The workspace is already running: just open http://localhost:4321 |
 | Chat says *Claude CLI not found* | Install Claude CLI and sign in once with `claude` in a terminal |
 | Chat says to use */login* | Sign in with `claude` in a terminal (`/login`). If you just did, send the message again; if it persists, quit the app (tray → Quit) and start it again |
@@ -141,4 +136,4 @@ Updating by hand works too: download the new version and replace everything **ex
 | VS Code tab stays blank or black | Click **Reload** in the tab, or *Open in new window*. Check that VS Code is installed (`code --version` in a terminal) |
 | Windows says *Windows protected your PC* | The app isn't code-signed yet (#31): **More info → Run anyway** |
 
-More help is in the [wiki](https://github.com/GFGMNET/Workspace/wiki), and you can report problems at [Issues](https://github.com/GFGMNET/Workspace/issues).
+More help is in the [wiki](https://github.com/GFGMNET/Workspace/wiki), and the [FAQ](https://github.com/GFGMNET/Workspace/wiki/FAQ) says where to report bugs, ideas and security problems.

@@ -2,6 +2,11 @@
 
 Script files with a code editor: syntax colours, line numbers, Tab indents, Ctrl+S saves. **+ Script** starts from a template; **Open in VS Code** opens a script in the full VS Code.
 
+## What you need
+
+- Nothing extra for the editor.
+- For **Open in VS Code**: VS Code installed.
+
 | | |
 |---|---|
 | Stores | `files` |

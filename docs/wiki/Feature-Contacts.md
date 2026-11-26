@@ -2,6 +2,10 @@
 
 A simple, sortable and searchable table of contacts. Click a row to edit it.
 
+## What you need
+
+- Nothing extra: works offline, contacts are files in the project.
+
 | | |
 |---|---|
 | Stores | `records` |

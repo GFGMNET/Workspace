@@ -1,9 +1,37 @@
-**Project Workspace**
+**Workspace**
 
 - [[Home]]
 - [[Getting Started|Getting-Started]]
+- [[Vote for features|Vote-for-features]]
+
+**Features**
+
+- [[All features|Features]]
+- [[Wiki|Feature-Wiki]]
+- [[Knowledge|Feature-Knowledge]]
+- [[Gallery|Feature-Gallery]]
+- [[Files|Feature-Files]]
+- [[Scripts|Feature-Scripts]]
+- [[Diagrams|Feature-Diagrams]]
+- [[Tasks|Feature-Tasks]]
+- [[Calendar|Feature-Calendar]]
+- [[Team|Feature-Team]]
+- [[Map|Feature-Map]]
+- [[Contacts|Feature-Contacts]]
+- [[Devices|Feature-Devices]]
+- [[Chat|Feature-Chat]]
+- [[Skills|Feature-Skills]]
+- [[Issues|Feature-Issues]]
+- [[Ticket (GLPI)|Feature-Ticket]]
+
+**MCP**
+
+- [[About MCP|MCP]]
+- [[MCP connections|Feature-MCP]]
+
+**More**
+
 - [[Projects]]
-- [[Features]]
 - [[Building Blocks|Building-Blocks]]
 - [[Claude]]
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
@@ -12,27 +40,17 @@
 - [[Security]]
 - [[Signing certificate|Signing-certificate]]
 - [[Data and Updates|Data-and-Updates]]
-- [[Beta of 1.0|Beta-1.0]]
+- [[Moving to 1.0|Moving-to-1.0]]
 - [[Backup]]
 - [[Import and Export|Import-and-Export]]
 - [[FAQ]]
-- [[Vote for features|Vote-for-features]]
+- [[Requirements]]
+
+**Known issues**
+
 - [[Known bugs|Known-bugs]]
 - [[Known hiccups|Known-hiccups]]
 - [[Known security issues|Known-security-issues]]
-- [[Requirements]]
-
-**Feature reference**
-
-- [[Wiki|Feature-Wiki]] · [[Knowledge|Feature-Knowledge]]
-- [[Gallery|Feature-Gallery]] · [[Files|Feature-Files]]
-- [[Scripts|Feature-Scripts]] · [[Diagrams|Feature-Diagrams]]
-- [[Tasks|Feature-Tasks]] · [[Calendar|Feature-Calendar]]
-- [[Team|Feature-Team]] · [[Map|Feature-Map]]
-- [[Contacts|Feature-Contacts]] · [[Devices|Feature-Devices]]
-- [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[MCP|Feature-MCP]]
-- [[Issues|Feature-Issues]]
-- [[Ticket|Feature-Ticket]]
 
 **Developers**
 

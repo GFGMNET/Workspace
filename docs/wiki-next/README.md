@@ -12,5 +12,5 @@ is **not released yet** wait here, so they don't go online too early (maintainer
 
 Edit wiki text for a coming version here, not in `docs/wiki/`.
 
-Note (2026-11-25): `v1.0.1/FAQ.md` is the 1.0 FAQ plus the LM Studio questions. Until 1.0 is out, a change to `FAQ.md` here
-must also go into `v1.0.1/FAQ.md`.
+Note: `v1.0.1/FAQ.md` is the 1.0 FAQ (now `docs/wiki/FAQ.md`, live since 26 Nov 2026) plus the LM Studio questions.
+A change to `docs/wiki/FAQ.md` must also go into `v1.0.1/FAQ.md` until 1.0.1 is out.

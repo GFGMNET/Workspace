@@ -2,6 +2,10 @@
 
 A Kanban board: cards in columns, dragged from *To do* to *Done*. Open tasks with a due date appear on the project **Overview** (overdue ones in red).
 
+## What you need
+
+- Nothing extra: works offline, tasks are files in the project.
+
 ![Tasks](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/kanban.png)
 
 | | |

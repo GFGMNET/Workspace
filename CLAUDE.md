@@ -38,7 +38,7 @@ A file-based project workspace (no database) with a GUI, Claude CLI integration 
 
 ## Decisions already made (don't ask again)
 
-- 0.x stays on Node/Electron until 1.0 replaces it; 1.0 = Rust + Tauri (go after the prototype, 2026-11-16).
+- **1.0.0 released 2026-11-26.** 0.x (Node/Electron) is deprecated: no more 0.x releases; the 1.0 code freeze is over. 1.0 = Rust + Tauri (go after the prototype, 2026-11-16).
 - 1.0 drops the Node.js package (start.bat/start.sh); screens stay as files on disk; no macOS and no arm64 version (dropped 2026-11-18, #56, #64); Windows 11 only — Windows 10 not supported (#73).
 - Signing: GitHub account is protected (done). Windows software is only released **signed**. SignPath Foundation declined (2026-11-19).
   **Decided 2026-11-19: own (self-made) certificate, stored in the repository (no password) — plan

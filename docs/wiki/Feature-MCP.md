@@ -2,6 +2,11 @@
 
 Connections to MCP servers for Claude. Each connection is a record; the app writes them to `.mcp.json` in the project folder, which Claude CLI loads (Chat tab or `claude` in a terminal).
 
+## What you need
+
+- [Claude CLI](https://docs.claude.com/en/docs/claude-code) installed and signed in — the connections are used by Claude.
+- What each MCP server itself needs (for example Node.js or `uv`, see its own page).
+
 ![MCP](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/mcp.png)
 
 | | |
