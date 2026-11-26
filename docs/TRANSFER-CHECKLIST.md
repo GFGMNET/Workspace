@@ -17,6 +17,12 @@ State 26 Nov 2026. Everything an assistant needs is in the repository; this list
 **Read order:** `AGENTS.md` → `CLAUDE.md` → `docs/HANDOVER.md` → `docs/NOT-REQUESTED-2026-11-26.md` →
 `docs/FORGOTTEN-2026-11-26.md` → `docs/AGENT-GUIDE.md` → `docs/LAYOUT-AND-DESIGN.md` → `docs/SKILLS.md`.
 
+### CLAUDE.md has an old timeline — don't act on it
+
+CLAUDE.md still says: pre-flight check 26 Nov 12:00 with a code freeze, release 1.0 on 27 Nov 06:00, building 1.0.1 from
+27 Nov 07:00. **That is over** — 1.0.0 and 1.0.1 were both released on 26 Nov 2026. Which lines are history and which rules
+still apply: [HANDOVER.md](HANDOVER.md), section *Lines in CLAUDE.md that are history now*.
+
 ### Things named after Claude that apply to you
 
 - **`CLAUDE.md`** holds the maintainer's rules and decisions. It is named for Claude but applies to **any** assistant.
@@ -29,6 +35,24 @@ State 26 Nov 2026. Everything an assistant needs is in the repository; this list
   the WebKitGTK 4.1 development packages); otherwise push and let `rust.yml` build.
 - **Not to remove:** the app itself works with Claude CLI (the Chat tab, skills, MCP, the workspace MCP server). That is a
   feature of the product, not the assistant. Don't remove it because you are another model.
+
+### The maintainer
+
+- He writes in English (often quickly, with typos) and lives in Germany (time zone Europe/Berlin). Answer in plain, short English.
+- He tests betas himself on his Windows PC, with testers of his own.
+- He is upset when things are done that he didn't ask for, and when things are forgotten. Before you say "done", check
+  it yourself against the facts (files, GitHub) — don't leave the checking to him.
+
+### Running a plan's checks
+
+`gh api -X POST repos/GFGMNET/Workspace/actions/workflows/plan-checks.yml/dispatches -f ref=main -f 'inputs[plan]=<name>'`
+— names: all, git-svn, vscode, signing, glpi, dashboard, comfyui, lmstudio, help, forgejo, builtin, layouts, skills, opengame.
+The scripts are in `docs/plans/checks/`. A new plan gets its own check and a new name in that workflow.
+
+### Example projects
+
+`app/starter/examples/` (home-lab, test, test-2, workspace-dev) are added when a user clicks *Add the example projects*.
+*workspace-dev* uses `location: "{install}"` — the app managing its own folder.
 
 ### GitHub things you will see
 

@@ -26,6 +26,27 @@ On 26 Nov 2026 Claude did some things beyond the maintainer's steps. They are li
 What was forgotten or couldn't be finished (release texts on GitHub, screenshots, help in the installed app) is in
 **[FORGOTTEN-2026-11-26.md](FORGOTTEN-2026-11-26.md)**.
 
+## Lines in CLAUDE.md that are history now — don't act on them
+
+`CLAUDE.md` was not changed after 1.0.1 (the maintainer's wish: don't update the rules). Some of its lines describe a timeline
+that is **already over**. They are history, **not tasks**:
+
+| Line in CLAUDE.md | What really happened |
+|---|---|
+| "`rust/` — version 1.0 in Rust + Tauri, **in progress** … Continue where its status table says." | Done. 1.0.0 and 1.0.1 are released; MIGRATION-RUST.md is history. |
+| "`app/` — today's version 0.x: Node.js server …, desktop app (Electron, `app/electron/`)" | The Electron app was removed (#125). `app/public` + `app/starter` are the screens and built-in features of the Rust app; `app/server.js` + `app/lib/` are only the old reference for the contract tests. |
+| "exception: beta pre-releases `v1.0.0-beta.N`" | Betas were numbered 0.9.0.N / 0.9.1.N. For the next version, ask the maintainer how betas are numbered. |
+| "only two releases — 1.0 on 27 Nov … and 1.0.1 with ALL remaining plans … Building starts on 27 Nov" | 1.0.0 **and** 1.0.1 were both released on **26 Nov 2026**, at the maintainer's request, 1.0.1 as a final release **without a beta and without test days**. |
+| "Test betas for 1.0.1 are numbered 0.9.2.N" | No 0.9.2.N beta was made. |
+| "1.0 timing (2026-11-25): pre-flight check on 26 Nov 12:00 … CODE FREEZE … Release 27 Nov 06:00 … building 1.0.1 starts 27 Nov 07:00" | **Over. No pre-flight, no code freeze, no release on 27 Nov.** Nothing is scheduled. |
+| "#59 closes with the 1.0 release" | Closed. |
+| "Release timing: 1.0 on 27 Nov 2026; then 1.0.1 …" (plan section) | Over (see above). |
+| Section "Where the maintainer is needed" (build first, beta test, signing last, versions 0.9.0 / 0.9.1 / 1.0.0) | All done. Signing is in place since 0.9.1. |
+
+**Still valid** for every version from now on: the release rule (complete beta → 5 test days → release, once 5 days later on a
+bug), urgent fixes with four numbers, the security gate, the plan rules, the bug/hiccup rules, the vote rules and everything
+under "Rules". The next open version is **1.0.2**.
+
 ## Where things stand
 
 | What | State |

@@ -463,7 +463,7 @@ security check gets `security-check`. Public list: wiki *Known security issues*.
 | `docs/GETTING-STARTED.md` | new users: install, first project, first feature, Claude, VS Code, updating | repo + wiki *Getting-Started* |
 | `docs/wiki/*.md` | user guide: projects, features (all settings), **a page per starter feature** (`Feature-<Name>.md`: all its options, examples, what it stores), building blocks, Claude, VS Code & Explorer, data & updates, FAQ | GitHub wiki |
 | Help in the app | *Help & wiki* in the sidebar (all wiki pages, offline, with search); the (i) on every feature opens its page in a side panel | `app/help/pages` (from `docs/wiki` at release) |
-| `CLAUDE.md`, `AGENTS.md`, `docs/HANDOVER.md`, `docs/AGENT-GUIDE.md`, `docs/LAYOUT-AND-DESIGN.md`, `docs/SKILLS.md` | AI assistants and new developers: rules, decisions, where things stand, how to build, the fixed look | repo |
+| `CLAUDE.md`, `AGENTS.md`, `docs/HANDOVER.md`, `docs/TRANSFER-CHECKLIST.md`, `docs/NOT-REQUESTED-2026-11-26.md`, `docs/FORGOTTEN-2026-11-26.md`, `docs/AGENT-GUIDE.md`, `docs/LAYOUT-AND-DESIGN.md`, `docs/SKILLS.md` | AI assistants and new developers: rules, decisions, where things stand, how to build, the fixed look | repo |
 | `docs/DESIGN.md` | developers: architecture and rebuild guide | repo + wiki *Design* |
 | `docs/REQUIREMENTS.md` | everyone: every requirement with status and issue | repo + wiki *Requirements* |
 

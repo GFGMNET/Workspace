@@ -12,7 +12,7 @@ released are in `CLAUDE.md` (complete beta → 5 test days → release); follow 
 ## Version numbers
 
 - Normal versions: `1.0.1`, `1.0.2`, … · urgent fixes: four numbers `1.0.1.1` · betas for the next version (pre-releases,
-  never offered to installed apps): ask which numbering the maintainer wants (for 1.0.1 it was `0.9.2.N`).
+  never offered to installed apps): ask which numbering the maintainer wants (for 1.0.1 `0.9.2.N` was planned, but 1.0.1 was released without a beta).
 - The version comes from the workflow input, not from a file (`rust/Cargo.toml` stays as it is; changing it would also
   need a new `Cargo.lock`).
 

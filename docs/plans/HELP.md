@@ -8,7 +8,7 @@ Help & wiki inside the app
 
 ## 2) Planned release version
 
-1.0.1 (all remaining plans in one version — maintainer's decision 2026-11-25; built from 27 Nov, released 5 days after the complete beta, or once 5 days later if a bug is reported in the test days)
+1.0.1 — **released 26 Nov 2026** (at the maintainer's request without a beta). Planned before: all remaining plans in one version (decision 2026-11-25), built from 27 Nov, released 5 days after the complete beta, or once 5 days later if a bug is reported in the test days)
 
 ## 3) Feasible? Checked per function, with the result
 
