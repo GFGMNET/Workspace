@@ -747,13 +747,13 @@ VIEWS.issues = async ctx => {
   let st = { state: def.state || 'open' }; try { Object.assign(st, JSON.parse(sessionStorage.getItem(key) || '{}')); } catch {}
   const save = () => { try { sessionStorage.setItem(key, JSON.stringify(st)); } catch {} };
   const load = async (refresh = false) => {
-    ctx.el.innerHTML = `<div class="empty">Loading issues from GitHub…</div>`;
+    ctx.el.innerHTML = `<div class="empty">Loading issues from ${def.engine === 'forgejo' ? 'Forgejo' : 'GitHub'}…</div>`;
     let data;
     try { data = await api(`/api/projects/${enc(ctx.p.slug)}/f/${enc(ctx.f.key)}/github?state=${st.state}${refresh ? '&refresh=1' : ''}`); }
     catch (e) { ctx.el.innerHTML = `<div class="card" style="max-width:680px"><h2>${icon('warn')} Can't show the issues</h2><p class="muted">${esc(e.message)}</p><button class="btn" type="button" data-retry>Try again</button></div>`; $('[data-retry]', ctx.el).onclick = () => load(true); return; }
     const labels = [...new Map(data.issues.flatMap(i => i.labels).map(l => [l.name, l])).values()].sort((a, b) => a.name.localeCompare(b.name));
     const active = new Set(st.labels || []);
-    const repoUrl = `https://github.com/${def.repo}`;
+    const repoUrl = data.web || `https://github.com/${def.repo}`;   // Forgejo: its own address (plan FORGEJO)
     const chip = l => { const c = /^[0-9a-f]{6}$/i.test(l.color) ? '#' + l.color : '#888'; return `<span class="chip ilabel" style="--lc:${c}">${esc(l.name)}</span>`; };
     ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px">
         <div class="seg" role="group" aria-label="State">${['open', 'closed', 'all'].map(x => `<button type="button" class="${st.state === x ? 'on' : ''}" data-state="${x}">${x[0].toUpperCase() + x.slice(1)}</button>`).join('')}</div>

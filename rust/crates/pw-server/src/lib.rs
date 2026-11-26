@@ -231,6 +231,9 @@ async fn github_issues(State(ws): S, Path((p, f)): Path<(String, String)>, Query
     let feat = pr.feature(&f)?;
     let d = feat.def.clone().unwrap_or(json!({}));
     let state = Some(qs(&q, "state")).filter(|s| !s.is_empty()).map(|s| s.to_string()).or_else(|| d["state"].as_str().map(|s| s.to_string())).unwrap_or_else(|| "open".into());
+    if d["engine"].as_str().map(|e| e.eq_ignore_ascii_case("forgejo")).unwrap_or(false) {
+        return Ok(Json(github::forgejo_issues(&ws, d["url"].as_str().unwrap_or(""), d["repo"].as_str().unwrap_or(""), d["token"].as_str().unwrap_or(""), &state, qs(&q, "refresh") == "1").await?));
+    }
     Ok(Json(github::issues(&ws, d["repo"].as_str().unwrap_or(""), &state, qs(&q, "refresh") == "1").await?))
 }
 

@@ -211,6 +211,9 @@ pub fn normalize_feature(key: &str, raw: &Map<String, Value>) -> Value {
         d.insert("repo".into(), json!(clean_repo(&repo)));
         let st = s(&d, "state").filter(|x| ["open", "closed", "all"].contains(&x.as_str())).unwrap_or_else(|| "open".into());
         d.insert("state".into(), json!(st));
+        // where the issues come from: github (default) or forgejo with url: (plan FORGEJO)
+        let e = s(&d, "engine").map(|e| e.trim().to_lowercase()).filter(|e| e == "forgejo").unwrap_or_else(|| "github".into());
+        d.insert("engine".into(), json!(e));
     }
     Value::Object(d)
 }
