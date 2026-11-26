@@ -15,7 +15,7 @@ flowchart LR
   direction TB
   SET[PRIO]
   PLAN[Scedule the Release]
-  END @{ shape: circle, label: "END" }
+  END@{ shape: circle, label: "END" }
  end
  
  STA --> CLE
