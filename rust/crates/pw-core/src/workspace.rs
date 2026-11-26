@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
-pub const STORES: [&str; 9] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi", "comfyui"];
+pub const STORES: [&str; 10] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi", "comfyui", "vcs"];
 pub const FIELD_TYPES: [&str; 13] = ["text", "longtext", "number", "date", "datetime", "select", "bool", "url", "email", "tags", "list", "keyvalue", "link"];
 // `programs` (MCPs of programs like Blender) is a project setting, not a feature (plans BLENDER … FREECAD, decision 11)
 // `dashboard` (the Overview's blocks) is a project setting too (plan DASHBOARD, decision 10)
@@ -16,13 +16,13 @@ pub fn layouts() -> Value {
     json!({
         "markdown": ["pages", "cards", "list", "journal", "book", "notes", "board", "table", "blog"], "images": ["grid"], "files": ["files", "code"],
         "records": ["table", "list", "cards", "kanban", "calendar", "orgchart", "map"],
-        "diagram": ["diagram"], "chat": ["chat"], "github": ["issues"], "glpi": ["tickets"], "comfyui": ["comfyui"]
+        "diagram": ["diagram"], "chat": ["chat"], "github": ["issues"], "glpi": ["tickets"], "comfyui": ["comfyui"], "vcs": ["vcs"]
     })
 }
 fn default_layout(stores: &str) -> &'static str {
     match stores {
         "images" => "grid", "files" => "files", "records" => "table", "diagram" => "diagram",
-        "chat" => "chat", "github" => "issues", "glpi" => "tickets", "comfyui" => "comfyui", _ => "pages",
+        "chat" => "chat", "github" => "issues", "glpi" => "tickets", "comfyui" => "comfyui", "vcs" => "vcs", _ => "pages",
     }
 }
 
@@ -505,7 +505,7 @@ pub(crate) fn count_items(p: &Project, f: &ProjectFeature) -> usize {
         "records" => entries.iter().filter(|p| ends(p, &[".yaml", ".yml"])).count(),
         "diagram" => entries.iter().filter(|p| ends(p, &[".mmd"])).count(),
         "chat" => entries.iter().filter(|p| ends(p, &[".json"])).count(),
-        "github" => 0,
+        "github" | "vcs" => 0,
         _ => count_files(&dir),
     }
 }

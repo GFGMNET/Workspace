@@ -1,0 +1,17 @@
+# Version Control: read the files and the history of a Git or SVN repository (plan docs/plans/VERSION-CONTROL.md).
+# Set it up in each project's project.yaml, e.g.
+#   version-control:
+#     type: git                      # git or svn
+#     protocol: https                # git: http, https or ssh · svn: svn, http or https
+#     server: 192.168.1.20
+#     port: 3000
+#     path: team/project.git         # git: the repository · svn: the folder that is shown
+#     user: alice
+#     password: ${secret:git-pass}   # http/https/svn: from Settings → Secrets
+#     # key: ${secret:git-key}       # ssh: the private key, from Settings → Secrets
+# The Git copy (list of files + history) is kept in the project folder .version-control/. Read only.
+name: Version Control
+icon: github
+stores: vcs
+layout: vcs
+folder: .version-control

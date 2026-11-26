@@ -26,6 +26,7 @@ pub mod glpi;
 pub mod help;
 pub mod ide;
 pub mod updater;
+pub mod vcs;
 pub mod live;
 pub mod mcp;
 
@@ -78,6 +79,9 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/projects/{p}/features", post(project_add_feature))
         .route("/api/projects/{p}/features/{k}", axum::routing::delete(project_remove_feature))
         .route("/api/projects/{p}/programs", put(project_programs))
+        .route("/api/projects/{p}/f/{f}/vcs/files", get(|State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q| async move { vcs::files(&ws, &p, &f, qs(&q, "refresh") == "1").await.map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/vcs/file", get(|State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q| async move { vcs::file(&ws, &p, &f, qs(&q, "path")).await.map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/vcs/history", get(|State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q| async move { vcs::history(&ws, &p, &f, Some(qs(&q, "path"))).await.map(Json).map_err(ApiError::from) }))
         .route("/api/projects/{p}/f/{f}/comfyui/workflows", get(|State(ws): S, Path((p, f)): Path<(String, String)>| async move { comfyui::workflows(&ws, &p, &f).await.map(Json).map_err(ApiError::from) })
             .post(|State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q, b: Bytes| async move { comfyui::upload(&ws, &p, &f, qs(&q, "filename"), &b).map(Json).map_err(ApiError::from) }))
         .route("/api/projects/{p}/f/{f}/comfyui/workflows/{name}/label", put(|State(ws): S, Path((p, f, n)): Path<(String, String, String)>, b: Bytes| async move {

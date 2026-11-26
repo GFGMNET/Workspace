@@ -1083,3 +1083,40 @@ VIEWS.comfyui = async ctx => {
   $$('[data-rdel]', ctx.el).forEach(b => b.onclick = async () => { if (!confirm('Delete this result? It is moved to the project\'s .trash folder (also from the Gallery).')) return; await api(`${base}/results/delete`, { body: { path: b.dataset.rdel } }); App.rerender(); });
   fillIcons(ctx.el);
 };
+
+// ---------- Version Control (plan docs/plans/VERSION-CONTROL.md): files and history of a Git or SVN repository, read only ----------
+VIEWS.vcs = async ctx => {
+  const base = `/api/projects/${enc(ctx.p.slug)}/f/${enc(ctx.f.key)}/vcs`;
+  const tab = ctx.query.tab === 'history' ? 'history' : 'files';
+  const file = ctx.query.file || '';
+  const bar = (info) => `<div class="row" style="margin-bottom:12px"><div class="seg" role="group" aria-label="View"><button type="button" class="${tab === 'files' ? 'on' : ''}" data-vtab="files" aria-pressed="${tab === 'files'}">Files</button><button type="button" class="${tab === 'history' ? 'on' : ''}" data-vtab="history" aria-pressed="${tab === 'history'}">History</button></div>
+      ${info ? `<span class="chip accent">${esc(info.type)} · ${esc(info.url)}</span>` : ''}<span class="faint small">read only</span><span class="sp"></span><button class="btn sm" type="button" data-refresh>Refresh</button></div>`;
+  const fail = e => { ctx.el.innerHTML = bar(null) + `<div class="card" style="max-width:720px"><h2>${icon('warn')} Can't read the repository</h2><p class="muted">${esc(e.message)}</p><p class="faint small">Settings are in project.yaml under <span class="mono">${esc(ctx.f.key)}:</span> (type, protocol, server, port, path, user, password / key from the Secrets).</p></div>`; fillIcons(ctx.el); wireRefresh(); };
+  const wireRefresh = () => { $$('[data-vtab]', ctx.el).forEach(x => x.onclick = () => { location.hash = ctx.href('', '?tab=' + x.dataset.vtab); }); const b = $('[data-refresh]', ctx.el); if (b) b.onclick = async () => { b.disabled = true; try { await api(`${base}/files?refresh=1`); } catch {} App.rerender(); }; };
+  ctx.el.innerHTML = `<div class="empty">Reading the repository…</div>`;
+  if (tab === 'history') {
+    let h; try { h = await api(`${base}/history?path=${enc(file)}`); } catch (e) { return fail(e); }
+    ctx.el.innerHTML = bar(h) + (file ? `<div class="row" style="margin-bottom:10px"><span>History of <b class="mono">${esc(file)}</b></span><a class="btn sm ghost" href="${ctx.href('', '?tab=history')}">Show all</a><a class="btn sm ghost" href="${ctx.href('', '?tab=files&file=' + enc(file))}">Open the file</a></div>` : '')
+      + `<div class="card list-rows" style="padding:0">${h.history.map(c => `<div class="lrow" style="align-items:flex-start"><span class="mono faint" style="width:90px">${esc(c.short)}</span><span style="flex:1;min-width:0"><b>${esc(c.message)}</b><span class="faint small" style="display:block;overflow-wrap:anywhere">${c.files.slice(0, 12).map(f => `<a href="${ctx.href('', '?tab=files&file=' + enc(f))}">${esc(f)}</a>`).join(', ')}${c.files.length > 12 ? ` … +${c.files.length - 12}` : ''}</span></span><span class="faint" style="width:140px">${esc(c.author)}</span><span class="faint small" style="width:140px;text-align:right">${esc(c.date)}</span></div>`).join('') || '<div class="empty">No history.</div>'}</div>`;
+    wireRefresh(); fillIcons(ctx.el); return;
+  }
+  let d; try { d = await api(`${base}/files`); } catch (e) { return fail(e); }
+  // a tree from the paths
+  const root = {}; for (const f of d.files) { let n = root; const parts = f.split('/'); parts.forEach((x, i) => { n[x] = n[x] || (i === parts.length - 1 ? null : {}); if (i < parts.length - 1) n = n[x] || (n[x] = {}); }); }
+  const open = new Set(file.split('/').slice(0, -1).map((_, i, a) => file.split('/').slice(0, i + 1).join('/')));
+  const tree = (n, pre, depth) => Object.keys(n).sort((a, b) => (n[a] === null) - (n[b] === null) || a.localeCompare(b)).map(k => {
+    const path = pre ? pre + '/' + k : k;
+    if (n[k] === null) return `<a class="it ${path === file ? 'active' : ''}" style="padding-left:${10 + depth * 16}px" href="${ctx.href('', '?tab=files&file=' + enc(path))}">📄 ${esc(k)}</a>`;
+    return `<details ${open.has(path) ? 'open' : ''}><summary class="it" style="padding-left:${10 + depth * 16}px">📁 ${esc(k)}</summary>${tree(n[k], path, depth + 1)}</details>`;
+  }).join('');
+  ctx.el.innerHTML = bar(d) + `<div class="split"><div class="ilist" style="max-height:70vh;overflow:auto">${tree(root, '', 0) || '<div class="faint small" style="padding:8px">No files.</div>'}</div><div class="pane" data-file>${file ? '<div class="empty">Loading…</div>' : '<div class="empty">Pick a file.</div>'}</div></div>`;
+  wireRefresh(); fillIcons(ctx.el);
+  if (!file) return;
+  const pane = $('[data-file]', ctx.el);
+  try {
+    const [f, hist] = await Promise.all([api(`${base}/file?path=${enc(file)}`), api(`${base}/history?path=${enc(file)}`).catch(() => ({ history: [] }))]);
+    const last = hist.history[0];
+    pane.innerHTML = `<div class="bar"><b>${esc(file.split('/').pop())}</b><span class="faint small" style="flex:1">${last ? ` · last change: "${esc(last.message)}" · ${esc(last.author)} · ${esc(last.date)}` : ''}</span><a class="btn sm" href="${ctx.href('', '?tab=history&file=' + enc(file))}">History of this file</a></div>
+      <div class="body">${f.binary ? `<div class="empty">A binary file (${f.size} bytes) — it can't be shown as text.</div>` : `<pre class="code" style="white-space:pre-wrap">${esc(f.text)}</pre>`}</div>`;
+  } catch (e) { pane.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+};
