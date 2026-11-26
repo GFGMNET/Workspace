@@ -1,13 +1,18 @@
 ```mermaid
-flowchart TD
+flowchart LR
  subgraph Maintainer
-  STA[Start]
+  STA@{ shape: circle, label: "Start" }
   DEA[Serious]
   BUG[BUG]
-  KIN[KIND]
+  CLE{Clear}
+  KIN{KIND}
+ end
+ subgraph USER
+  COM[Aks the User]
  end
  
- STA --> KIN
+ STA --> CLE
+ CLE <--> |NO|COM 
  KIN --> DEA
  KIN --> BUG
  
