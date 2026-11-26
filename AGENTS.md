@@ -1,5 +1,7 @@
 # For AI assistants (any model)
 
+**Switching from Claude?** Start with **[`docs/TRANSFER-CHECKLIST.md`](docs/TRANSFER-CHECKLIST.md)**.
+
 Read these before you do anything, in this order:
 
 1. **[`CLAUDE.md`](CLAUDE.md)** — the rules and every decision of the maintainer. It applies to any model, not only Claude.
