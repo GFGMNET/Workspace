@@ -16,6 +16,12 @@ Above the list are four filters: **Open** (GLPI's *New* and *In progress*), **Pe
 **Which tickets belong to the project:** the tickets of the GLPI **category with the project's name**. If the category
 doesn't exist yet, the app creates it. A category that is already used for other tickets shows those tickets too.
 
+| | |
+|---|---|
+| Stores | `glpi` |
+| Layout | `tickets` |
+| Definition | `data/features/ticketsystem.yaml` |
+
 ## Set it up in a project
 
 In the project's `project.yaml`:
@@ -30,6 +36,40 @@ ticket:
 ```
 
 Put both tokens into **Settings → Secrets** under these names. They are never written into the project folder.
+
+## The definition
+
+This is the starter definition. Change it under **Features** in the app, or in the file, and every project that uses it follows.
+
+```yaml
+# Tickets of a GLPI 11 server (plan: docs/plans/TICKETSYSTEM.md). Set it up in each project's project.yaml:
+#   ticket:
+#     feature: ticketsystem
+#     url: https://glpi.example.com
+#     user: hermes
+#     user_token: ${secret:glpi-user-token}   # GLPI user API token, from Settings → Secrets
+#     app_token: ${secret:glpi-app-token}     # app token of GLPI's API client, from Settings → Secrets
+# The project's tickets are the tickets of the GLPI category with the project's name; it is created when missing.
+# What GLPI needs (API client, rights): wiki page "Ticket".
+name: Ticket
+icon: issue
+stores: glpi
+layout: tickets
+```
+
+## Settings
+
+Set per project, under the feature key in `project.yaml`.
+
+| Setting | What it does | Default |
+|---|---|---|
+| `name` | Name shown on the tab | from the key |
+| `icon` | Tab icon: book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal, issue, github, audio, key, layers | by layout |
+| `aliases` | Other keys in project.yaml that mean this feature | none |
+| `url` | The address of the GLPI server | **required** |
+| `user` | The GLPI user name | **required** |
+| `user_token` | The user's API token — as `${secret:name}` | **required** |
+| `app_token` | The API client's application token — as `${secret:name}` | **required** |
 
 ## What GLPI needs
 

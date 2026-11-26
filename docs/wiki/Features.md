@@ -27,7 +27,7 @@ new_item: Task
 
 Every starter feature has its own page with all its settings, examples and what it stores on disk:
 
-**Built-in features** come with the app. If you deleted one, **Features → Restore built-in features** brings it back. When an update brings a new version of a built-in feature, a tab that was set up for the old version shows **Use the new version** — its own settings stay when you switch.
+**Built-in features** come with the app. If you deleted one, **Features → Restore built-in features** brings it back. When an update brings a new version of a built-in feature, a tab that was set up for the old version shows **Use the new version** — its own settings stay when you switch. Details: [[Built-in features|Built-in-features]].
 
 | Feature | Layout | Page |
 |---|---|---|
@@ -118,9 +118,12 @@ tasks:
 | Setting | Values | Default |
 |---|---|---|
 | `name` | display name | the key |
-| `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal | by layout |
+| `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal, issue, github, audio, key, layers | by layout |
 | `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github`, `glpi`, `comfyui`, `vcs` | `markdown` |
 | `repo` | github: `owner/name` of the repository | none |
+| `engine` | github: `github` or `forgejo` · chat: `claude` or `lmstudio` | `github` / `claude` |
+| `url` | address of the other program: comfyui, forgejo, lmstudio, glpi | see the feature's page |
+| `version` | built-in features only: the app raises it when it ships a changed definition — see [[Built-in features|Built-in-features]] | none |
 | `layout` | markdown → `pages`, `cards`, `list`, `journal`, `book`, `notes`, `board`, `table`, `blog` · records → `table`, `list`, `cards`, `kanban`, `calendar`, `orgchart`, `map` · images → `grid` · files → `files`, `code` · diagram → `diagram` · chat → `chat` · github → `issues` · glpi → `tickets` · comfyui → `comfyui` · vcs → `vcs` | first one |
 | `folder` | where the content goes in a project | the key |
 | `search` | `true` / `false` | true for text and records — a search bar in *pages*, *cards* and *list* (titles and words inside the pages); `false` hides it |
@@ -128,7 +131,7 @@ tasks:
 | `aliases` | other keys that mean this feature | none |
 | `fields` | records: list of `name` or `{name, type, label, options, to, multiple}` | `[title]` |
 | `title_field` | records: which field is the title | first field |
-| `columns`, `status_field` | kanban | `[To do, Doing, Done]`, `status` |
+| `columns`, `status_field` | kanban (records) · `columns` also for the *board* layout (pages) | `[To do, Doing, Done]`, `status` · board: `[Idea, In progress, Done]` |
 | `date_field`, `end_field` | calendar | first date field, `end` |
 | `parent_field` | org chart | `reports_to` |
 | `albums` | images: sub folders as albums | `true` |

@@ -64,6 +64,9 @@ Every setting can also be set **for one project only**, under the feature key in
 | `aliases` | Other keys in project.yaml that mean this feature | none |
 | `repo` | The repository, `owner/name` (or its whole github.com address) | **required** |
 | `state` | What to show first: `open`, `closed` or `all` | `open` |
+| `engine` | `github` (github.com) or `forgejo` (your own Forgejo server) | `github` |
+| `url` | Only for `forgejo`: the address of the Forgejo server | **required** for forgejo |
+| `token` | Only for `forgejo`: an access token for private repositories, as `${secret:name}` | none |
 
 ## Private repositories
 

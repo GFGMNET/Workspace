@@ -7,6 +7,7 @@
 **Features**
 
 - [[All features|Features]]
+- [[Built-in features|Built-in-features]]
 - [[Wiki|Feature-Wiki]]
 - [[Knowledge|Feature-Knowledge]]
 - [[Gallery|Feature-Gallery]]

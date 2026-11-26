@@ -37,7 +37,7 @@ updates:
 2. Replace everything **except `data/`**.
 3. Start as usual.
 
-On start, starter features that are new in this version are added. Each one is added only once, so features you changed or deleted are left alone.
+On start, built-in features that are new in this version are added (each one only once). When the new version brings a changed built-in feature, the app updates it and tells you; tabs that still use the old one show **Use the new version**. See [[Built-in features|Built-in-features]].
 
 ## Coming from 0.x
 

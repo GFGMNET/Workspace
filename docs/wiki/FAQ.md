@@ -46,7 +46,7 @@ Each person runs Workspace on their own PC. You **can** put the `data` folder on
 Real teamwork is not built in. Want it? Vote for it: [Working together in a shared folder](https://github.com/GFGMNET/Workspace/issues/122).
 
 ### Does it need internet?
-No, except for the Claude chat, the first start of the in-app VS Code, MCP servers that are online, and the weekly update check (which simply fails quietly when offline).
+No, except for the Claude chat, the first start of the in-app VS Code, MCP servers that are online, the Issues tab with github.com, and the weekly update check (which simply fails quietly when offline). The help (**Help & wiki** in the side bar) works offline. LM Studio, ComfyUI, Forgejo, GLPI and Version Control only need your own network, if they run on another PC.
 
 ### How do I get new versions?
 The app tells you: once a week it checks GitHub and shows *Version X is available* with an **Update now** button. See [[Data and Updates|Data-and-Updates]].
@@ -198,6 +198,20 @@ desktop.ini
 ```
 
 Want this file in every new project automatically? [Vote for it](https://github.com/GFGMNET/Workspace/issues/124).
+
+### Can I see a Git or SVN repository inside the app?
+Yes, read only: the [[Version Control|Feature-Version-Control]] tab shows its files and history. Writing and pushing are not in the app.
+
+## Other programs
+
+### Can Claude work with Blender, Unity, Unreal, Godot, OpenSCAD or FreeCAD?
+Yes, through the MCPs for programs: **Manage → MCP** in the project, tick the program. Each program needs a small add-on first — see [[MCP]] and the page of each program.
+
+### Can I run ComfyUI workflows from the app?
+Yes, with the [[ComfyUI|Feature-ComfyUI]] tab. Save the workflow in ComfyUI with **Workflow → Export (API)**; the normal save format can't be run.
+
+### I deleted a built-in feature. How do I get it back?
+**Features → Restore built-in features**. See [[Built-in features|Built-in-features]].
 
 ## Your data
 

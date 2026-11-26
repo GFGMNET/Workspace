@@ -70,7 +70,7 @@ signing/                     the project's own signing certificate (no password;
 **Program and data are separate.** The GitHub repository is only for developing the tool. A live installation never touches git: a new version is downloaded and replaces everything except `data/`.
 
 - **First start:** `data/` is created and the starter features are copied in. Example projects are only added when you click *Add the example projects* on the empty home page.
-- **Update:** built-in features that are new in that version are added once (tracked in `.workspace.json`). A built-in feature whose `version:` went up is updated; the old file is kept as `<key>-v<old>.yaml` "(deprecated)" for projects that still use it, and their tab shows **Use the new version** (§4b). A built-in feature the client deleted can be brought back with *Features → Restore built-in features*.
+- **Update:** built-in features that are new in that version are added once (tracked in `.workspace.json`). A built-in feature whose `version:` went up is updated; the old file is kept as `<key>_deprecated.yaml` "(deprecated)" for projects that still use it, and their tab shows **Use the new version** (§4b). A built-in feature the client deleted can be brought back with *Features → Restore built-in features*.
 - **Old layout:** v0.1 kept `features/` and `projects/` next to `app/`; these are moved into `data/` automatically on the first start of a newer version.
 
 Set the `WORKSPACE_DIR` environment variable to keep the data somewhere else (for example on a network drive or in OneDrive).
@@ -184,7 +184,7 @@ A feature can combine only the building blocks below. A truly new look (a new bu
 
 The starter features in `app/starter/features/` are the built-in ones. On every start (`ensure()`), `update_builtins()` compares
 their `version:` with the installed one: a higher version replaces `data/features/<key>.yaml`; projects that used the old one
-get `feature: <key>-v<old>` (the old file is kept, its name marked "(deprecated)") and a notice. The screen shows the notices once
+get `feature: <key>_deprecated` (the old file is kept, its name marked "(deprecated)") and a notice. The screen shows the notices once
 as toasts (`featureNotes` in `/api/info`, cleared with `DELETE /api/feature-notes`) and **Use the new version** on such a tab
 (`POST /api/projects/{p}/features/{k}/use-new`, the project's own settings stay). `GET /api/builtin-features` lists the missing
 ones, `POST /api/builtin-features` restores the ticked ones.
@@ -462,7 +462,7 @@ security check gets `security-check`. Public list: wiki *Known security issues*.
 | `README.md` | first look, start, update | repo root |
 | `docs/GETTING-STARTED.md` | new users: install, first project, first feature, Claude, VS Code, updating | repo + wiki *Getting-Started* |
 | `docs/wiki/*.md` | user guide: projects, features (all settings), **a page per starter feature** (`Feature-<Name>.md`: all its options, examples, what it stores), building blocks, Claude, VS Code & Explorer, data & updates, FAQ | GitHub wiki |
-| Help in the app | *Help* in the sidebar (all wiki pages, offline, with search); the (i) on every feature opens its page in a side panel | `app/help/pages` (from `docs/wiki` at release) |
+| Help in the app | *Help & wiki* in the sidebar (all wiki pages, offline, with search); the (i) on every feature opens its page in a side panel | `app/help/pages` (from `docs/wiki` at release) |
 | `CLAUDE.md`, `AGENTS.md`, `docs/HANDOVER.md`, `docs/AGENT-GUIDE.md`, `docs/LAYOUT-AND-DESIGN.md`, `docs/SKILLS.md` | AI assistants and new developers: rules, decisions, where things stand, how to build, the fixed look | repo |
 | `docs/DESIGN.md` | developers: architecture and rebuild guide | repo + wiki *Design* |
 | `docs/REQUIREMENTS.md` | everyone: every requirement with status and issue | repo + wiki *Requirements* |

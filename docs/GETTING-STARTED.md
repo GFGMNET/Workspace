@@ -36,7 +36,7 @@ On the first start a `data` folder is created next to the program. **All your pr
 3. The right side shows the `project.yaml` that will be written. You can edit it there before you create the project.
 4. Click **Create project**.
 
-The project opens on its **Overview**. Every feature you picked is a tab: write a wiki page, add a task to the board, drop some pictures into the gallery.
+The project opens on its **Overview** (click **Edit** there to build its own [dashboard](https://github.com/GFGMNET/Workspace/wiki/Dashboard)). Every feature you picked is a tab: write a wiki page, add a task to the board, drop some pictures into the gallery.
 
 Everything you do is a normal file in `data/projects/<your project>/`. You can also open that folder in Explorer or VS Code and edit files there; the app updates by itself.
 
@@ -80,10 +80,10 @@ Say you want a list of network devices:
 Now add `devices:` to any project, via **+ Feature** in the tab row or in `project.yaml`, and the project gets a sortable, searchable devices table.
 
 The layouts you can use are:
-- **Text:** pages, cards, list
+- **Text:** pages, cards, list, journal, book, sticky notes (`notes`), board, table, blog
 - **Records:** table, list, cards, kanban, calendar, org chart, map (your own image with pins)
 - **Pictures and files:** picture grid, files, code (scripts)
-- **Other:** diagram (Mermaid), chat
+- **Other:** diagram (Mermaid), chat — and the ready-made tabs Issues, Ticket, ComfyUI and Version Control
 
 ## 6. Link things together
 
@@ -136,4 +136,4 @@ Updating by hand works too: download the new version and replace everything **ex
 | VS Code tab stays blank or black | Click **Reload** in the tab, or *Open in new window*. Check that VS Code is installed (`code --version` in a terminal) |
 | Windows says *Windows protected your PC* | The app isn't code-signed yet (#31): **More info → Run anyway** |
 
-More help: **Help** in the app's side bar (all wiki pages, also offline), the [wiki](https://github.com/GFGMNET/Workspace/wiki), and the [FAQ](https://github.com/GFGMNET/Workspace/wiki/FAQ) says where to report bugs, ideas and security problems.
+More help: **Help & wiki** in the app's side bar (all wiki pages, also offline), the [wiki](https://github.com/GFGMNET/Workspace/wiki), and the [FAQ](https://github.com/GFGMNET/Workspace/wiki/FAQ) says where to report bugs, ideas and security problems.

@@ -16,7 +16,7 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 
 What a project can have. Every feature page starts with **what you need** for it.
 
-- [[All features|Features]]: how features work, all settings, your own feature types
+- [[All features|Features]]: how features work, all settings, your own feature types · [[Built-in features|Built-in-features]]: restore and update
 - [[Wiki|Feature-Wiki]] · [[Knowledge|Feature-Knowledge]] · [[Gallery|Feature-Gallery]] · [[Files|Feature-Files]] · [[Scripts|Feature-Scripts]] · [[Diagrams|Feature-Diagrams]]
 - [[Tasks|Feature-Tasks]] · [[Calendar|Feature-Calendar]] · [[Team|Feature-Team]] · [[Map|Feature-Map]] · [[Contacts|Feature-Contacts]] · [[Devices|Feature-Devices]]
 - [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[Issues|Feature-Issues]] · [[Ticket (GLPI)|Feature-Ticket]] · [[ComfyUI|Feature-ComfyUI]] · [[Version Control|Feature-Version-Control]]

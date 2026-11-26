@@ -19,7 +19,16 @@ photos:
   feature: gallery              # use a feature under another name
 overview: false                 # optional: hide the Overview tab
 location: C:\dev\MyRepo         # optional: the content lives in this existing folder
+hide_tabs: [map]                # optional: tabs hidden in this project
+programs: [blender]             # optional: MCP programs for the chat (see MCP)
+dashboard:                      # optional: the blocks on the Overview (see Dashboard)
+  - what: tasks
+    show: number
 ```
+
+`name`, `description`, `icon`, `color`, `tags`, `status`, `owner`, `created`, `overview`, `location`, `hide_tabs`,
+`programs` and `dashboard` are **settings of the project**, not features — they never become tabs. Details:
+[[MCP]] (`programs`), [[Dashboard]] (`dashboard`).
 
 | Value under a key | Meaning |
 |---|---|

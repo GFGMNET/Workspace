@@ -22,6 +22,34 @@ comfyui:
 
 Or click **+ Feature** in the project's tab row, then set the address in `project.yaml`. Without an address the tab says so.
 
+## The definition
+
+This is the starter definition. Change it under **Features** in the app, or in the file, and every project that uses it follows.
+
+```yaml
+# ComfyUI: run the project's workflows (comfyui/workflows/, saved in ComfyUI with Export (API)) and keep the results
+# (plan docs/plans/COMFYUI.md). Set the address of ComfyUI in each project's project.yaml:
+#   comfyui:
+#     url: http://127.0.0.1:8188      # or http://<address in your network>:8188
+# Results go into the Gallery's album KI_Pictures when the project has a Gallery, otherwise into comfyui/results/.
+name: ComfyUI
+icon: image
+stores: comfyui
+layout: comfyui
+```
+
+## Settings
+
+Every setting can also be set **for one project only**, under the feature key in that project's `project.yaml`.
+
+| Setting | What it does | Default |
+|---|---|---|
+| `name` | Name shown on the tab | from the key |
+| `icon` | Tab icon: book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal, issue, github, audio, key, layers | by layout |
+| `aliases` | Other keys in project.yaml that mean this feature | none |
+| `url` | The address of ComfyUI, e.g. `http://127.0.0.1:8188` | **required** |
+| `folder` | Folder inside the project for the workflows (and the results, when there is no Gallery) | `comfyui` |
+
 ## Using it
 
 1. Click **+** to upload a workflow (the API file from ComfyUI) and give it a label: picture, video or audio.

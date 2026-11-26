@@ -30,6 +30,49 @@ version-control:
 
 Or click **+ Feature** in the project's tab row and then fill in the settings in `project.yaml`.
 
+## The definition
+
+This is the starter definition. Change it under **Features** in the app, or in the file, and every project that uses it follows.
+
+```yaml
+# Version Control: read the files and the history of a Git or SVN repository (plan docs/plans/VERSION-CONTROL.md).
+# Set it up in each project's project.yaml, e.g.
+#   version-control:
+#     type: git                      # git or svn
+#     protocol: https                # git: http, https or ssh · svn: svn, http or https
+#     server: 192.168.1.20
+#     port: 3000
+#     path: team/project.git         # git: the repository · svn: the folder that is shown
+#     user: alice
+#     password: ${secret:git-pass}   # http/https/svn: from Settings → Secrets
+#     # key: ${secret:git-key}       # ssh: the private key, from Settings → Secrets
+# The Git copy (list of files + history) is kept in the project folder .version-control/. Read only.
+name: Version Control
+icon: github
+stores: vcs
+layout: vcs
+folder: .version-control
+```
+
+## Settings
+
+Every setting can also be set **for one project only** — the repository settings are always per project, under the feature key in `project.yaml`.
+
+| Setting | What it does | Default |
+|---|---|---|
+| `name` | Name shown on the tab | from the key |
+| `icon` | Tab icon: book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal, issue, github, audio, key, layers | by layout |
+| `aliases` | Other keys in project.yaml that mean this feature | none |
+| `type` | `git` or `svn` | **required** |
+| `protocol` | git: `http`, `https` or `ssh` · svn: `svn`, `http` or `https` | **required** |
+| `server` | name or address of the server (no `/`, no user name) | **required** |
+| `port` | port number | the protocol's own |
+| `path` | git: the repository, e.g. `team/project.git` · svn: the folder that is shown | **required** |
+| `user` | user name (can be `${secret:…}`) | ssh: `git` |
+| `password` | for http, https and svn — always as `${secret:name}` | none |
+| `key` | for ssh: the private key — always as `${secret:name}` | none |
+| `folder` | where the Git copy is kept | `.version-control` |
+
 ## Using it
 
 - **Files**: the folders and files on the left, the chosen file on the right with its last change. **History of this file** shows only the changes of that file.

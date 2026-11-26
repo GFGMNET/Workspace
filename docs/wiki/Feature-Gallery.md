@@ -1,6 +1,6 @@
 # Gallery
 
-Pictures in albums. Albums are shown as cards with a cover, the number of pictures and their date range; pictures open in a full-screen viewer.
+Pictures — and also **videos** and **audio** — in albums. Albums are shown as cards with a cover, the number of pictures and their date range; pictures open in a full-screen viewer.
 
 ## What you need
 
@@ -59,7 +59,9 @@ Every setting can also be set **for one project only**, under the feature key in
 
 ## Adding pictures
 
-**Add pictures**, drag & drop onto the page, or copy files straight into the folder: the gallery shows them right away. In the viewer: ← → to browse, **Del** moves the picture to `.trash`.
+**Add pictures**, drag & drop onto the page, or copy files straight into the folder: the gallery shows them right away.
+
+**Videos and audio** are shown too: videos `.mp4`, `.webm`, `.mov`, `.m4v` and audio `.mp3`, `.flac`, `.wav`, `.ogg`, `.opus`, `.m4a`. A click plays them in the viewer. Results of the [[ComfyUI|Feature-ComfyUI]] tab land in the album **KI_Pictures**. In the viewer: ← → to browse, **Del** moves the picture to `.trash`.
 
 ## On disk
 

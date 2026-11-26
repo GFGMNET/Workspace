@@ -42,7 +42,7 @@ Or click **+ Feature** in the project's tab row.
 This is the starter definition. Change it under **Features** in the app, or in the file, and every project that uses it follows.
 
 ```yaml
-# Chat with Claude CLI (or LM Studio with engine: lmstudio), running inside the project folder.
+# Chat with Claude CLI, running inside the project folder.
 # permissions: ask (Claude asks before changing files) | auto (may edit files) | read-only
 # A project can override any of this, e.g.  chat: { permissions: auto }
 name: Chat
