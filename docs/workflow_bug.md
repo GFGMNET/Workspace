@@ -13,6 +13,7 @@ flowchart LR
  
  STA --> CLE
  CLE <--> |NO|COM 
+ CLE --> |YES|KIN
  KIN --> DEA
  KIN --> BUG
  
