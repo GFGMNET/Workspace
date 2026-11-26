@@ -32,6 +32,7 @@ How Claude uses other programs. Every MCP page starts with **what you need** for
 ## More
 
 - [[Projects]]: how `project.yaml` works, templates
+- [[Dashboard]]: your own blocks on each project's Overview
 - [[Building Blocks|Building-Blocks]]: pages, tables, Kanban, calendar, org chart, map, diagrams, scripts, chat …
 - [[Claude]]: chat, skills, workspace MCP server
 - [[VS Code and Explorer|VS-Code-and-Explorer]] · [[Desktop App|Desktop-App]]: its own window, tray, reminders, start with Windows

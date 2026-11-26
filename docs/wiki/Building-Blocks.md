@@ -43,7 +43,7 @@ A feature is a combination of **what it stores** and **how it looks**. Everythin
 ## Overview
 
 Every project opens on an **Overview** with:
-- its own **dashboard** (click **Edit** to add blocks — see [[Projects]])
+- its own **dashboard** (click **Edit** to add blocks — see [[Dashboard]])
 - a tile per feature with its count
 - *coming up* in the next 30 days (from every date field)
 - open Kanban tasks, with overdue ones in red

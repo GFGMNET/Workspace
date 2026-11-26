@@ -49,6 +49,7 @@
 **More**
 
 - [[Projects]]
+- [[Dashboard]]
 - [[Building Blocks|Building-Blocks]]
 - [[Help inside the app|Help]]
 - [[Claude]]
