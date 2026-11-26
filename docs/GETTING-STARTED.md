@@ -136,4 +136,4 @@ Updating by hand works too: download the new version and replace everything **ex
 | VS Code tab stays blank or black | Click **Reload** in the tab, or *Open in new window*. Check that VS Code is installed (`code --version` in a terminal) |
 | Windows says *Windows protected your PC* | The app isn't code-signed yet (#31): **More info → Run anyway** |
 
-More help is in the [wiki](https://github.com/GFGMNET/Workspace/wiki), and the [FAQ](https://github.com/GFGMNET/Workspace/wiki/FAQ) says where to report bugs, ideas and security problems.
+More help: **Help** in the app's side bar (all wiki pages, also offline), the [wiki](https://github.com/GFGMNET/Workspace/wiki), and the [FAQ](https://github.com/GFGMNET/Workspace/wiki/FAQ) says where to report bugs, ideas and security problems.

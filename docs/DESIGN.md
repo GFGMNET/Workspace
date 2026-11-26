@@ -2,12 +2,13 @@
 
 This document describes what the workspace is, how it is built, and why. It has enough detail to rebuild it from scratch or port it to another stack.
 
-Status: version 0.4. Requirements and their status: [REQUIREMENTS.md](REQUIREMENTS.md). Open work is tracked in [GitHub Issues](https://github.com/GFGMNET/Workspace/issues).
+Status: version **1.0.1** (released 26 Nov 2026). Requirements and their status: [REQUIREMENTS.md](REQUIREMENTS.md). Open work is tracked in [GitHub Issues](https://github.com/GFGMNET/Workspace/issues).
 
 ---
 
-> **Status (26 Nov 2026):** 1.0.0 is released — the app is the Rust + Tauri version (§10). Text about Electron and the
-> Node server (§7, §7b, §7c, parts of §7g) describes the old 0.x app, which is **deprecated** (last release 0.6.3, no more releases).
+> **The app is the Rust + Tauri version** (1.0.0 and 1.0.1, released 26 Nov 2026; §10). The old 0.x app (Node.js + Electron,
+> last release 0.6.3) is **deprecated**. Its Node server (`app/server.js`, `app/lib/`) is still in the repository only as the
+> reference that the contract tests were written against; features from 1.0.1 exist only in Rust.
 
 ## 1. Goal
 
@@ -24,37 +25,22 @@ Principles:
 ## 2. Folder structure
 
 ```
-Workspace/                   ← the program: replaced on update (desktop app: see 7c for the runtime files)
-  ProjectWorkspace.exe …     the desktop app's runtime (Electron), only in the Windows/Linux packages
+Workspace/                   ← the program (the release zip): replaced on update
+  Workspace.exe              Windows: desktop app (Tauri window + tray + server in one program)   Linux: workspace
+  workspace-server(.exe)     the server without a window (for servers), also the MCP server (`workspace-server mcp`)
   app/
-    server.js                local web server + API
-    mcp.js                   MCP server for Claude CLI
-    electron/main.js         desktop app: window, menu, single instance (7c)
-    electron/desktop.js      desktop app: tray, reminders, start with Windows (7c)
-    lib/workspace.js         all file logic (features, projects, items, templates, due, first start)
-    lib/yaml.js              YAML for the app: full YAML 1.2 (bundled "yaml" library in lib/vendor/yaml,
-                             ISC), lenient fallback lib/yaml-lenient.js, comment-preserving record updates
-    lib/chat.js              runs Claude CLI for the chat feature
-    lib/files.js             explorer (file operations inside a project or the data folder)
-    lib/ide.js               in-app VS Code: start/stop and the /ide proxy
-    lib/secrets.js           encrypted secrets (7e)
-    lib/updater.js           weekly update check and install (7b)
-    lib/github.js            GitHub issues feature
-    lib/exif.js              reads the "date taken" from photos
-    public/                  the user interface (HTML/CSS/JS)
+    public/                  the screens (HTML/CSS/JS, no build step) — served by the server
       vendor/                Mermaid (MIT), highlight.js (BSD-3), bundled for offline use
-    starter/features/        starter feature definitions (copied into data/ on first start)
+    starter/features/        built-in feature definitions (copied into data/features, updated by `version:`)
     starter/examples/        example projects (added on request)
-    test/smoke.js            automated checks (npm test)
-  docs/                      this document, requirements, getting started, wiki pages, release notes
-  tools/                     vendor.json (bundled library versions), build helpers
-  start.bat / start.sh       start with Node.js
+    help/pages, help/screenshots   the wiki inside the app (made by the release build from docs/wiki)
+  LICENSE
   data/                      ← the client's data: never replaced, not in git
-    .workspace.json          installed starter features, update state
+    .workspace.json          installed built-in features and their versions, update state, notices
     settings.yaml            workspace settings (in-app VS Code, updates, GitHub token)
     .secrets.json            encrypted secrets (7e)
     .ide-token               random access token for the in-app VS Code
-    .desktop.json  .window.json  .app/   desktop app: tray/reminder settings, window size, Electron's cache
+    .desktop.json  .window.json   desktop app: tray/reminder settings, window size
     features/                what each feature means — one YAML file per feature
     templates/               project templates (7f)
     projects/                one folder per project
@@ -64,13 +50,27 @@ Workspace/                   ← the program: replaced on update (desktop app: s
         <feature folder>/... the content
         .claude/skills/...   written by the skills feature (read by Claude CLI)
         .mcp.json            written by the mcp feature (read by Claude CLI)
+        .version-control/    Git copy of the Version Control tab (file list + history)
+        blender/ unity/ …    what Claude makes with an MCP program (programs:)
         .trash/              deleted items end up here (never really deleted)
+```
+
+The repository (for developing only):
+
+```
+rust/                        the app: crates pw-core, pw-server, pw-app (§10)
+app/public, app/starter      the screens and the built-in features (shipped)
+app/server.js, app/lib/      the old 0.x Node server — reference for the contract tests only
+tests/contract/, tests/yaml-corpus/   the safety net (run against the Rust binaries on GitHub)
+docs/                        this document, requirements, wiki (docs/wiki), plans (docs/plans), release notes
+tools/                       build-wiki.js, vendor.json, yaml helpers, vote/issue list scripts
+signing/                     the project's own signing certificate (no password; plans/SIGNING.md)
 ```
 
 **Program and data are separate.** The GitHub repository is only for developing the tool. A live installation never touches git: a new version is downloaded and replaces everything except `data/`.
 
 - **First start:** `data/` is created and the starter features are copied in. Example projects are only added when you click *Add the example projects* on the empty home page.
-- **Update:** starter features that are new in that version are added. A starter feature is only ever added once (tracked in `.workspace.json`), so features the client changed or deleted are never touched.
+- **Update:** built-in features that are new in that version are added once (tracked in `.workspace.json`). A built-in feature whose `version:` went up is updated; the old file is kept as `<key>-v<old>.yaml` "(deprecated)" for projects that still use it, and their tab shows **Use the new version** (§4b). A built-in feature the client deleted can be brought back with *Features → Restore built-in features*.
 - **Old layout:** v0.1 kept `features/` and `projects/` next to `app/`; these are moved into `data/` automatically on the first start of a newer version.
 
 Set the `WORKSPACE_DIR` environment variable to keep the data somewhere else (for example on a network drive or in OneDrive).
@@ -104,6 +104,9 @@ Rules:
 | Key value | Meaning |
 |---|---|
 | `name`, `description`, `icon`, `color`, `tags`, `status`, `owner`, `created` | Project information, not features |
+| `hide_tabs: [keys]` | Tabs hidden in this project (feature keys, `overview`, `explorer`, `vscode`) |
+| `programs: [blender, …]` | MCP programs switched on for the chat (§6) |
+| `dashboard:` | The Overview's dashboard blocks (§7, screen 2) |
 | `overview: false` | Hides the built-in Overview tab |
 | `location: <folder>` | The project's content lives in an existing folder (e.g. a git clone). `project.yaml` stays in `data/projects/<slug>/`. Absolute paths, `~`, `{install}` (the program folder) and `{data}` work; relative paths are relative to the project's home folder. Feature folders, the Explorer, chat, scripts and the VS Code tab all use this folder, and it is watched for live refresh |
 | a list | Starting items. Each one is created as a file when the project is saved; existing files are never overwritten |
@@ -111,7 +114,7 @@ Rules:
 | empty | Just adds the feature |
 
 - **The folder is the source of truth.** Items that exist on disk appear even if they are not listed in `project.yaml`, so you can drop a `.md` file or a picture into the folder and it shows up.
-- **The app changes `project.yaml` only by appending** (when you add a feature), so comments and formatting stay intact. The exception is removing a feature, which deletes that key's block.
+- **The app keeps comments in `project.yaml`:** adding a feature appends; `programs:`, `dashboard:` and settings are changed with the comment-keeping update (`yaml::update_mapping`); removing a feature deletes that key's block.
 - **An unknown feature key** shows a notice with a button to create that feature.
 
 ## 4. Features: `data/features/<key>.yaml`
@@ -142,9 +145,11 @@ aliases: [todo]          # other keys in project.yaml that mean this feature
 | Setting | Values | Default |
 |---|---|---|
 | `name` | Display name | key, prettified |
-| `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file | by layout |
-| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github` | `markdown` |
-| `repo` | github: `owner/name` (any case of the key; a whole github.com address is accepted too, #84). The starter feature is `issue` (aliases `github_issue`, `github`, #83), github.com only | none |
+| `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal, issue, github | by layout |
+| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github`, `glpi`, `comfyui`, `vcs` | `markdown` |
+| `version` | built-in features only: raised when the app ships a changed definition (§4b) | none |
+| `repo` | github: `owner/name` (any case of the key; a whole github.com address is accepted too, #84). The starter feature is `issue` (aliases `github_issue`, `github`, #83) | none |
+| `engine` | issues: `github` (default) or `forgejo` (+ `url`, `token`); chat: `claude` (default) or `lmstudio` (+ `url`, `model`) | see left |
 | `layout` | see building blocks | first layout of the store |
 | `folder` | where content goes inside a project | the key (skills: `.claude/skills`, chat: `chats`) |
 | `search` | `true` / `false` | true for markdown, records, diagram |
@@ -161,7 +166,9 @@ aliases: [todo]          # other keys in project.yaml that mean this feature
 | `allowed_tools` | chat: tools always allowed, e.g. `[Read, Grep]` | none |
 | `context` | chat: feature keys Claude should look at first | none |
 | `instructions` | chat: extra instructions sent with the first message | none |
-| `model` | chat: Claude model alias | CLI default |
+| `model` | chat: Claude model alias, or the LM Studio model | CLI default |
+| `url` | comfyui: ComfyUI's address · issues (forgejo) · chat (lmstudio, default `http://127.0.0.1:1234`) · glpi | none |
+| `type`, `protocol`, `server`, `port`, `path`, `user`, `password`, `key` | vcs (§5b) | none |
 
 Field types: `text`, `longtext`, `number`, `date`, `datetime`, `select` (with `options`), `bool`, `url`, `email`, `tags`, `list`, `keyvalue`, `link` (with optional `to: <feature>` and `multiple: true`; see section 5a). If no type is given, it is guessed from the name (`due` becomes a date, `email` an email, `notes` a longtext, and so on).
 
@@ -172,6 +179,15 @@ Field types: `text`, `longtext`, `number`, `date`, `datetime`, `select` (with `o
 3. **With Claude:** "add a feature Contacts with name, phone and company as a table" (through the MCP server's `save_feature` tool).
 
 A feature can combine only the building blocks below. A truly new look (a new building block) is an app change.
+
+### 4b. Built-in features (`pw-core::builtin`, plan BUILTIN)
+
+The starter features in `app/starter/features/` are the built-in ones. On every start (`ensure()`), `update_builtins()` compares
+their `version:` with the installed one: a higher version replaces `data/features/<key>.yaml`; projects that used the old one
+get `feature: <key>-v<old>` (the old file is kept, its name marked "(deprecated)") and a notice. The screen shows the notices once
+as toasts (`featureNotes` in `/api/info`, cleared with `DELETE /api/feature-notes`) and **Use the new version** on such a tab
+(`POST /api/projects/{p}/features/{k}/use-new`, the project's own settings stay). `GET /api/builtin-features` lists the missing
+ones, `POST /api/builtin-features` restores the ticked ones.
 
 ## 5. Building blocks (storage × layout)
 
@@ -191,7 +207,19 @@ A feature can combine only the building blocks below. A truly new look (a new bu
 | `map` | records | `<folder>/<id>.yaml` with `x`, `y` in % + `<folder>/_map.<ext>` | Your own image (floor plan, site plan) with draggable pins; works offline |
 | `diagram` | diagram | `<folder>/<id>.mmd` (first line `%% Title`) | Mermaid text with live preview, SVG download |
 | `chat` | chat | `<folder>/<date>-<title>.json` | Chat with Claude CLI inside the project folder (section 6) |
-| `issues` | github | nothing on disk (GitHub API, cached 5 min) | Issues of `repo: owner/name`: open/closed/all, label filter, search, expand to read, *New issue* / *On GitHub*. Public repos need no login; a token in `data/settings.yaml` (`github: token:`) or `GITHUB_TOKEN` for private repos and higher limits |
+| `issues` | github | nothing on disk (GitHub API, cached 5 min) | Issues of `repo: owner/name`: open/closed/all, label filter, search, expand to read, *New issue* / *On GitHub*. Public repos need no login; a token in `data/settings.yaml` (`github: token:`) or `GITHUB_TOKEN` for private repos and higher limits. `engine: forgejo` + `url:` (+ `token:` as a secret) reads a Forgejo server's API (`/api/v1/repos/{repo}/issues?type=issues`; self-made certificates accepted; pull requests left out) |
+| `tickets` | glpi | nothing on disk (GLPI REST API) | Tickets of the project's GLPI category (screen 7a) |
+| `journal` | markdown | `<folder>/<id>.md` with `date:` | Entries grouped by year and month, newest first; **New** = today's date and time |
+| `book` | markdown | as pages, order and chapters in the front matter | Contents (can be hidden), one page, A−/A+, previous/next, full screen; drag pages to reorder |
+| `notes` | markdown | as pages, `color:` in the front matter | Sticky notes in a grid with six colours |
+| `board` | markdown | as pages, `status:` in the front matter | Kanban for pages; `columns:` (default *Idea / In progress / Done*) |
+| `table` | markdown | as pages | Table of title, tags, last change and every front-matter field; edit a cell in place (only that value changes) |
+| `blog` | markdown | as pages, `date:` | Contents with headings on the left, pages one after another, newest first |
+| `comfyui` | comfyui | `<folder>/workflows/*.json` + `labels.json`; results in the Gallery album `KI_Pictures` or `<folder>/results/` | ComfyUI workflows (Export (API) format), a field per text box found (positive / negative), Run / Cancel, results (§5b) |
+| `vcs` | vcs | `.version-control/<key>.git` (bare, blob-less Git copy) | Files and History of a Git or SVN repository, read only (§5b) |
+
+All markdown layouts share helpers in `views.js` (`fmMeta`, `fmSet`, `layoutBar`, `newPageWith`): they read and change only
+single front-matter values, so the page text stays as written. The gallery also lists and plays video and audio (`items::media_kind`).
 
 Records are one YAML file per item, so they are readable, diff-friendly, and easy for Claude to edit.
 
@@ -209,6 +237,20 @@ title: Replace the old switch
 status: Doing
 related: [devices/router, wiki/home]
 ```
+
+### 5b. Tabs that talk to other programs (1.0.1)
+
+- **ComfyUI** (`pw-server::comfyui`): `GET …/comfyui/workflows`, upload (only the API format; otherwise the error names
+  *Export (API)*), `PUT …/workflows/{name}/label`, `POST …/run` (sends the prompt with the changed texts to `url:`),
+  `GET …/run/{id}` (status; downloads each result once through ComfyUI's `/view`), `POST …/run/{id}/cancel`,
+  `GET …/results`, `POST …/results/delete`. `find_fields` detects the text boxes and whether they are positive or negative.
+- **Version Control** (`pw-server::vcs`): settings `type` (git/svn), `protocol` (git: http, https, ssh; svn: svn, http, https),
+  `server`, `port`, `path`, `user`, `password` or `key` (as `${secret:…}`). Git: a bare `--filter=blob:none` clone into
+  `.version-control/<key>.git`, fetched at most once a minute (`?refresh=1` forces it); hooks and fsmonitor off,
+  `protocol.file.allow=never`; the password reaches Git only through a credential helper that reads an environment variable
+  while the command runs; ssh keys go into a short-lived `ssh-agent` on stdin. SVN: `--non-interactive --no-auth-cache
+  --password-from-stdin`. Self-made https certificates are accepted. Error texts have the password masked.
+  Routes `GET …/vcs/files`, `…/vcs/file?path=`, `…/vcs/history?path=`. Nothing is ever written to the repository.
 
 ## 6. Claude CLI integration
 
@@ -244,54 +286,69 @@ The CLI command is `claude` by default. Set `CLAUDE_COMMAND` to use another path
 - The **mcp** feature stores each connection as a record and regenerates `.mcp.json` after every change. A stdio server needs `command` + `args`; a remote server needs `url` (`transport: http|sse`).
 - **Open in Claude CLI** copies `cd <project> && claude`, and the same setup applies in the terminal.
 
-### Workspace MCP server (`app/mcp.js`)
+### MCP programs (`programs:`, `pw-core::programs`, 1.0.1)
 
-This is a stdio JSON-RPC server with no dependencies. Register it once:
+`programs: [blender, unity, unreal, godot, openscad, freecad]` in `project.yaml` (or *Manage → MCP*, `PUT /api/projects/{p}/programs`)
+switches on ready-made MCP servers for the chat. Each turn writes a temporary `--mcp-config` file with those servers
+(Blender `uvx blender-mcp`, Unity `http://localhost:8080/mcp`, Unreal `http://127.0.0.1:8000/mcp`, Godot `uvx godot-ai attach`,
+OpenSCAD `uvx openscad-mcp`, FreeCAD `freecad-mcp` with `FREECAD_MODE=xmlrpc`) and tells Claude in the prompt to save results
+in the project folder named after the program (created by the app). Unknown names give a note in the chat and are ignored.
+Every MCP has a wiki page (`MCP-<Program>.md`) with what it needs and how to connect.
+
+### LM Studio (`engine: lmstudio`, 1.0.1)
+
+The chat can use a local model through LM Studio's OpenAI-style API (`url`, default `http://127.0.0.1:1234`; `model`).
+`chat.rs` `lm_turn` streams the answer and offers the model the app's own tools — read_file, write_file, delete_file
+(to `.trash`), list_files, run_command — shown in the chat like Claude's (Read, Write, Delete, LS, Bash). Permissions work
+like Claude's: `read-only` refuses changes, `auto` allows file changes but asks for commands, `ask` asks for everything that
+changes something. The conversation is kept in the chat file (`lmHistory`). Clear errors when LM Studio is not reachable or
+no model is loaded.
+
+### Workspace MCP server (`workspace-server mcp`)
+
+This is a stdio JSON-RPC server inside the program (`pw-server::mcp`). Register it once (the home page shows the exact command):
 
 ```
-claude mcp add project-workspace --scope user -- node "<path>/app/mcp.js"
-# desktop app: -e ELECTRON_RUN_AS_NODE=1 -- "<folder>/ProjectWorkspace.exe" "<folder>/app/mcp.js"
+claude mcp add project-workspace --scope user -- "<folder>\Workspace.exe" mcp
 ```
 
 Tools: `list_projects`, `get_project`, `create_project`, `update_project_yaml`, `list_features`, `save_feature`, `list_items`, `read_item`, `create_item`, `write_item`, `backlinks`, `search`.
 
 ## 7. The app
 
-### Server (`app/server.js`)
+### Server (`pw-server`, Rust: axum + tokio)
 
-Plain Node `http` with no framework. It binds to `127.0.0.1:4321` (override with `PORT` / `HOST`).
+It binds to `127.0.0.1:4321` (next free port if taken; override with `PORT`). The routes are in `rust/crates/pw-server/src/lib.rs`.
 
 | Route | Purpose |
 |---|---|
-| `GET /api/info` | version, paths, stores, layouts, field types |
+| `GET /api/info` | version, paths, stores, layouts, field types, feature notices |
 | `GET /api/claude` | `claude --version` check |
 | `GET /api/search?q=&project=` | full-text search |
-| `GET/PUT/DELETE /api/features[/<key>]` | feature definitions |
-| `GET/POST /api/projects`, `GET /api/projects/<p>` | projects |
-| `GET /api/projects/<p>/overview` | overview tab data |
-| `GET /api/projects/<p>/index` | every linkable item (pages, records, diagrams) |
-| `GET /api/projects/<p>/backlinks?feature=&id=` | "mentioned in" for one item |
-| `POST /api/examples` | add the example projects |
+| `GET /api/features`, `PUT/DELETE /api/features/<key>` | feature definitions |
+| `GET/POST /api/builtin-features`, `DELETE /api/feature-notes` | restore built-in features, clear the update notices (§4b) |
+| `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/<p>` | projects (PATCH `{name, folder}` = rename) |
 | `PUT /api/projects/<p>/yaml` | save project.yaml (validated) |
-| `PATCH /api/projects/<p>` `{name, folder}` | rename (only the `name:` line changes; `folder: true` also renames `projects/<slug>`) |
-| `POST /api/projects/<p>/archive`, `GET /api/archive`, `POST /api/archive/<slug>/restore` | archive to `projects/_archive/` and restore |
-| `DELETE /api/projects/<p>`, `DELETE /api/archive/<slug>` | delete the project's folder for good (a `location:` content folder is never touched) |
-| `POST/DELETE /api/projects/<p>/features[/<key>]` | add/remove a feature |
-| `GET/POST /api/projects/<p>/f/<feature>/items` | list / create items (`?folder=` for images/files) |
-| `GET/PUT/DELETE …/items/<id>` | read / write / move to trash |
-| `POST …/upload?folder=&filename=[&map=1]` | upload (raw body) |
-| `POST …/trash` | move a file to trash |
-| `POST …/chat` | run one chat turn (server-sent events) |
-| `GET /api/fs/tree`, `GET/PUT /api/fs/file`, `POST /api/fs/mkdir`, `…/rename`, `…/trash`, `…/upload`, `GET /api/fs/raw` (all with `?scope=workspace` or `?scope=p/<project>` and `&path=`) | explorer |
-| `POST /api/fs/vscode?scope=&path=` | open in VS Code (desktop) |
-| `GET /api/ide`, `POST /api/ide/start`, `POST /api/ide/stop`, `GET /api/projects/<p>/ide` | in-app VS Code (status, start, stop, URL for a project) |
-| `GET /api/due?days=` | what is due in all projects (home page, desktop reminders) |
-| `GET /api/templates`, `POST /api/projects/<p>/template`, `DELETE /api/templates/<id>` | project templates; `POST /api/projects` takes `template` |
+| `PUT /api/projects/<p>/programs`, `PUT /api/projects/<p>/dashboard` | MCP programs, dashboard blocks |
+| `POST /api/projects/<p>/features`, `POST …/features/<k>/use-new` | add a feature, switch a tab to the new built-in version |
+| `GET /api/projects/<p>/overview`, `…/index`, `…/backlinks?feature=&id=` | overview, every linkable item, "mentioned in" |
+| `POST /api/examples` | add the example projects |
+| `POST /api/projects/<p>/archive`, `GET /api/archive`, `POST /api/archive/<slug>/restore` | archive and restore |
+| `GET/POST /api/projects/<p>/f/<feature>/items`, `GET/PUT/DELETE …/items/<id>` | items (delete = move to `.trash`) |
+| `POST …/upload?folder=&filename=[&map=1]`, `POST …/trash` | upload (raw body), move a file to trash |
+| `POST …/chat`, `GET …/chat/<id>`, `POST …/chat/<id>/stop`, `POST /api/chat-permission/<turn>[/<q>/answer]` | chat (SSE), live state, stop, permission questions |
+| `GET …/github?state=&refresh=` | issues (GitHub or Forgejo) |
+| `…/tickets…` | GLPI tickets (screen 7a) |
+| `…/comfyui/…`, `…/vcs/…` | ComfyUI and Version Control (§5b) |
+| `GET /api/help`, `/api/help/page/<name>`, `/api/help/search?q=`, `/help-img/<file>` | help inside the app |
+| `GET /api/fs/tree`, `GET/PUT /api/fs/file`, `POST /api/fs/mkdir`, `…/rename`, `…/trash`, `…/upload`, `GET /api/fs/raw`, `POST /api/fs/vscode` (all with `?scope=workspace` or `?scope=p/<project>` and `&path=`) | explorer, open in VS Code |
+| `GET /api/ide`, `POST /api/ide/start`, `GET /api/projects/<p>/ide`, `/ide/…` (HTTP + WebSockets) | in-app VS Code and its proxy |
+| `GET /api/due?days=` | what is due in all projects (home page, tray reminders) |
+| `GET /api/templates`, `POST /api/projects/<p>/template` | templates |
 | `GET/DELETE /api/secrets`, `PUT/DELETE /api/secrets/<name>` | secrets (names only are ever sent back) |
-| `GET /api/projects/<p>/f/<feature>/github?state=&refresh=` | GitHub issues feature |
 | `GET /api/update`, `POST /api/update/check`, `…/skip`, `…/later`, `…/apply` | updates (7b) |
-| `/ide/…` (HTTP and WebSockets) | reverse proxy to the in-app VS Code |
-| `GET /api/events` | live refresh (server-sent events from a recursive `fs.watch`) |
+| `POST /api/open-url` | open a link in the system browser (desktop window) |
+| `GET /api/events` | live refresh (server-sent events from a file watcher) |
 | `GET /files/<p>/<path>` | raw project files (images, downloads) |
 
 Safety:
@@ -303,7 +360,7 @@ Safety:
 
 ### User interface (`app/public/`)
 
-Vanilla JavaScript with no build step and no framework.
+Vanilla JavaScript with no build step and no framework. **The look is fixed:** new screens reuse the existing classes in `app.css` (`card`, `row`, `btn`, `chip`, `seg`, `split`/`ilist`/`pane`, `list-rows`/`lrow`, `empty`, `note`, …) — see `docs/LAYOUT-AND-DESIGN.md`.
 - `core.js`: helpers, icons, the Markdown renderer, modals and record forms.
 - `views.js`: one render function per layout.
 - `app.js`: sidebar, routing, home, project page, features, new project, search and live refresh.
@@ -311,7 +368,7 @@ Vanilla JavaScript with no build step and no framework.
 Screens (from the accepted mockup, issue #2):
 
 1. **Workspace home:** *Coming up in all projects* (overdue tasks first, next 14 days), project cards with feature chips and counts, archived projects, the Claude CLI command for the workspace MCP server.
-2. **Project page:** an **Overview** tab first (a tile per feature with its count, *coming up* in the next 30 days from every date field, open Kanban tasks with overdue ones marked, recently changed items; hide it with `overview: false` in project.yaml), then a tab per feature from `project.yaml`, a note saying which `features/*.yaml` defines it, and the `project.yaml` editor, opened from the gear (Manage) menu (#87; it shows as a tab only while open). A **Tabs** button hides tabs per project: `hide_tabs: [keys]` in project.yaml, a project setting like `overview:` (#89). Two layouts (#90), switched in the menu and kept in the browser's storage (`pw-layout`, like the theme): *menu left* (sidebar, feature tabs on top) and *menu top* (`html.layout-top`: the sidebar becomes a top bar with a project drop-down, the feature tabs become a list on the left that collapses to icons, `pw-ftabs`). Below 900 px both use the phone menu. Checked in Chromium and WebKit by `tests/ui/layout.test.js`.
+2. **Project page:** an **Overview** tab first (the project's **dashboard** on top — blocks of `what` (a feature), `show` number or list, `filter` (`field=value`, `field!=value` or a word), `count`, place `x`/`y` and size `w` 1–4 / `h` 1–3, edited with **Edit** (add, remove, drag to move, drag the corner to resize), saved under `dashboard:` in project.yaml; then a tile per feature with its count, *coming up* in the next 30 days from every date field, open Kanban tasks with overdue ones marked, recently changed items; hide it with `overview: false` in project.yaml), then a tab per feature from `project.yaml`, a note saying which `features/*.yaml` defines it, and the `project.yaml` editor, opened from the gear (Manage) menu (#87; it shows as a tab only while open). A **Tabs** button hides tabs per project: `hide_tabs: [keys]` in project.yaml, a project setting like `overview:` (#89). Two layouts (#90), switched in the menu and kept in the browser's storage (`pw-layout`, like the theme): *menu left* (sidebar, feature tabs on top) and *menu top* (`html.layout-top`: the sidebar becomes a top bar with a project drop-down, the feature tabs become a list on the left that collapses to icons, `pw-ftabs`). Below 900 px both use the phone menu. Checked in Chromium and WebKit by `tests/ui/layout.test.js`.
 3. **Features:** list, YAML editor with validation, a sketch of the layout, fields, and which projects use it.
 4. **New project:** name, *Start from* a template or blank, feature tick boxes, and a live `project.yaml` preview you can edit.
 5. **Search** across all projects.
@@ -320,6 +377,7 @@ Screens (from the accepted mockup, issue #2):
 5d. **Manage** (gear icon in the project header): the project folder (copy path, copy the Claude CLI command, open in VS Code), rename (optionally the folder too), remove features from the project (files stay), save as template (7f), archive (moves the folder to `projects/_archive/`, hidden from the list; *Archived projects* on the home page restores or deletes them), delete (type the name to confirm; deletes `projects/<slug>` only).
 6. **Explorer:** every project has an *Explorer* tab with the whole project folder as a tree (incl. `project.yaml`, `.claude/`, `.mcp.json`), and the sidebar has a workspace explorer (features + all projects). Text files open in the code editor (Markdown with preview, images shown); new file/folder, upload, rename/move, delete (to `.trash`), download. Saving a `project.yaml` or feature YAML is validated first.
 7a. **Ticket (GLPI, 1.0):** feature `stores: glpi`, layout `tickets` (`app/starter/features/ticketsystem.yaml`). `pw-server::glpi` talks to GLPI 11's REST API (`apirest.php`): per request it opens a session with the user token (+ app token), finds the ITIL category with the project's name or creates it, and works only on tickets of that category (others answer 404); then it closes the session. Settings `url`, `user`, `user_token`, `app_token` come from the feature in `project.yaml`, the tokens as `${secret:…}`. Addresses: `GET/POST /api/projects/{p}/f/{f}/tickets`, `GET/PATCH …/tickets/{id}`, `POST …/tickets/{id}/followups|solution`. Rich text from GLPI is shown as plain text. Tests: `tests/contract/tickets.test.js` (fake GLPI), plan check `docs/plans/checks/glpi-check.js` (real test server). Plan: [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md).
+7b. **Help** (route `#/help[/<page>]`): the wiki pages inside the app with a search (`pw-server::help`; pages from `app/help/pages`, in a development folder `docs/wiki`). Wiki links stay in the app, GitHub screenshot links are served from `/help-img/`. The **(i)** next to a feature shows its info line on hover and opens its page in a side panel (`helpPanel`).
 7. **VS Code tab (full VS Code in the app):** (values in `settings.yaml` are quoted: a value starting with `{` would be read as a YAML mapping; files from older versions are repaired on read) shows the browser version of VS Code, opened on the project folder, in an embedded frame. From 1.0 the tab starts it by itself when it is opened (no button; "VS Code is starting…" meanwhile), shows only the editor, and says "VS Code is not installed" with the download link when the `code` command is missing ([plans/VSCODE.md](plans/VSCODE.md)). By default the app starts the installed VS Code's own web server (`code serve-web --server-base-path /ide`, downloads its web part once) on `127.0.0.1:8740` with a random connection token (kept in `data/.ide-token`), and stops it when the app exits. Starting is safe against double clicks and timing (#104): a second start waits for the first; when the port is already taken (a VS Code still getting ready), no second one is started; the editor is shown only when VS Code's own page answers with the token (not just the port); and the open VS Code tab is not rebuilt when files in the project change. The browser never talks to that port directly: the app **reverse-proxies `/ide/…` (HTTP and WebSockets)** on its own address and removes frame-blocking headers, so the embedded VS Code is same-site and browsers don't block it (#30). Settings from v0.3.0 (direct `http://{host}:{port}` URLs) are upgraded automatically; code-server, which serves at its root, uses `strip_base: true`. The command, port and URL are set in `data/settings.yaml` (`ide:`), so code-server or OpenVSCode Server can be used instead. (Before 1.0 a row of buttons — Reload, Open in new window, Desktop VS Code, Stop — was shown above the editor; it was removed by decision.)
 8. **VS Code buttons:** *Open in VS Code* in Manage and on every file run the `code` command (`VSCODE_COMMAND` to override) to open the project folder in the installed VS Code and jump to the file. If `code` is not on the PATH the browser is asked to open a `vscode://file/…` link.
 
@@ -329,83 +387,39 @@ Screens (from the accepted mockup, issue #2):
 
 ## 7b. Updates
 
-Live installations never use git; they are updated from **GitHub Releases** (#26).
+Live installations never use git; they are updated from **GitHub Releases** (#26, `pw-server::updater`).
 
 - **Weekly check:** the server asks `https://api.github.com/repos/GFGMNET/Workspace/releases/latest` (public, no login, nothing sent about the client) at most once a week, and the UI shows the result. The last check, the latest release, *skip* and *later* are stored in `data/.workspace.json`. Turn checking off with `updates: check: false` in `data/settings.yaml`; `updates: repo:` points to another repository.
-- **Versions (1.0 and later, decided 2026-11-25):** a normal version (1.0.0, 1.0.1) is released by the release rule (CLAUDE.md); a serious bug gets an **urgent fix version with four numbers** (1.0.0.1, 1.0.1.1). The update check compares **all four numbers** (`updater.rs` `parse_v`, #123),
-  so 1.0.0.1 is newer than 1.0.0 and 1.0.1 is newer than every 1.0.0.x. Test betas are GitHub **pre-releases**, which
-  `releases/latest` never returns, so installed apps never get them; the betas for 1.0.1 are numbered 0.9.2.N.
-- **Banner:** *Version X is available* · **What's new** (the release notes) · **Update now** · **Later** (a week) · **Skip this version**. The sidebar shows the version and a dot when an update is waiting; *v… · Updates* opens the same dialog with *Check now*.
-- **Update now:**
-  1. downloads the release zip that fits the installation (`pickAsset`: Windows/Linux package for the desktop app, the plain zip for Node.js)
-  2. unpacks it with the app's own unzip (paths are checked, Unix file modes kept) and checks that it really is Project Workspace
-  3. moves the current program into `.update/backup-<version>-<time>/`, then copies the new program in (desktop app: the runtime only when its Electron version changes, 7c). `data/` is never touched
-  4. restarts
+- **Versions (decided 2026-11-25):** a normal version (1.0.1, 1.0.2) is released by the release rule (CLAUDE.md); a serious bug gets an **urgent fix version with four numbers** (1.0.0.1, 1.0.1.1). The update check compares **all four numbers** (`parse_v`, #123). Test betas are GitHub **pre-releases**, which `releases/latest` never returns, so installed apps never get them.
+- **Banner:** *Version X is available* · **What's new** (the *In short* part of the release notes, with "back up your data folder" first) · **Update now** · **Later** (a week) · **Skip this version**.
+- **Update now:** downloads the zip for this platform, checks it (Windows: the Authenticode signature must be the project's own certificate — fingerprint built in — and the file unchanged; Linux: SHA-256 from the release's `SHA256SUMS`), moves the current program into `.update/backup-<version>-<time>/`, and after the app has quit a small script puts the new program in place and starts it again. `data/`, `.update/` and `.git/` are never touched. If anything fails, the old program is put back.
+- **Releases** are made by `.github/workflows/build-rust.yml` (inputs `version`, `final`): it builds and tests on Windows and Linux, signs the Windows programs, builds the help pages, writes `SHA256SUMS` and build attestations, and publishes the release with the notes from `docs/releases/vX.Y.Z.md`. Without `final` it is a pre-release (beta).
 
-  If anything fails, the old program is put back.
-- **Restart:** the desktop app restarts itself (`app.relaunch`, or the runtime swap script). `start.bat` / `start.sh` run the server in a loop and start it again on exit code 75. A server started without them starts a new process itself, which waits for the port. The page reloads once the new version answers.
-- **Start scripts:** they are running while the update happens, so they are only replaced when unchanged; otherwise the new one is saved as `start.bat.new` / `start.sh.new`.
-- **Releases** are made by `.github/workflows/release.yml`: *Actions → Release → Run workflow* releases the version in `package.json`. It runs the tests, zips the program (`git archive`, so no client data), builds the Windows and Linux apps and publishes the release; the notes come from `docs/releases/vX.Y.Z.md` (else generated).
+## 7c. Desktop app (Windows 11 and Linux, `pw-app`, Tauri 2)
 
-## 7c. Desktop app (Windows and Linux)
+The desktop app runs the server in the same program and shows `http://localhost:<port>` in a window that uses the system's
+browser engine (WebView2 on Windows, WebKitGTK 4.1 on Linux). Nothing else to install.
 
-The release packages are a desktop app built with **Electron**: the workspace opens in its own window
-(not a browser tab), with Node.js and the browser engine included. Nothing to install.
-
-```
-ProjectWorkspace/                      (Linux: project-workspace/)
-  ProjectWorkspace.exe                 Electron runtime, renamed   (Linux: project-workspace-bin + start script project-workspace)
-  *.dll *.pak locales/ resources/ …    the rest of the runtime
-  resources/app/                       bootstrap: loads app/electron/main.js from the folder next to the exe
-  runtime.json                         Electron version, platform, arch, the runtime's file names
-  project-workspace-server             Linux only: the server without a window (for servers)
-  app/ docs/ tools/ README.md LICENSE package.json      the program
-  data/                                created on first start (Electron's own cache goes to data/.app)
-```
-
-- **app/electron/main.js** runs `app/server.js` inside the app and shows `http://localhost:<port>` in a window.
-  It keeps one instance (a second start focuses the window), remembers the window size (`data/.window.json`)
-  and uses a workspace that is already running on the port (e.g. from `start.bat`).
-  Pages of the workspace stay in the app ("Open in new window" opens an app window); other links
-  (wiki, GitHub, websites) open in the normal browser. Menu: *Open in browser*, *Open data folder*, zoom, DevTools.
-- **Options:** a port number, `--browser` (open a normal browser tab instead), `--version`, `--mcp`.
-- **MCP for Claude CLI:** the runtime can run as plain Node:
-  `claude mcp add project-workspace --scope user -e ELECTRON_RUN_AS_NODE=1 -- "<folder>\ProjectWorkspace.exe" "<folder>\app\mcp.js"`
-  (the app shows the exact command on the home page).
-- **Linux:** portable zips can't carry the setuid sandbox helper, and Chromium stops before any app code runs without it.
-  So `project-workspace` is a start script that runs `project-workspace-bin --no-sandbox` unless `chrome-sandbox`
-  is set up (owned by root, mode 4755); restarts go through the script too. The window only shows the local workspace.
-  `project-workspace-server` runs the server without a window (`ELECTRON_RUN_AS_NODE`), for machines without a desktop.
-- **Builds:** `.github/workflows/build-windows.yml` (x64) and `build-linux.yml` (x64 on `ubuntu-latest`, arm64 on
-  `ubuntu-24.04-arm`) download Electron (major version in `tools/electron/electron-version`, latest patch),
-  rename it, set icon and file details (`rcedit`, Windows), add the bootstrap and the program, and check on the runner
-  that the window renders the workspace (`PW_SMOKE_FILE`), that the MCP server answers and (Linux) the server mode.
-  Zips: `project-workspace-vX.Y.Z-windows-x64.zip`, `-linux-x64.zip`, `-linux-arm64.zip` (Unix file modes kept).
-- **Updates:** the updater picks the package for its platform and processor (`pickAsset`). Program files are replaced
-  right away. The runtime's files (from `runtime.json`) stay as they are when the Electron version is the same;
-  otherwise the new runtime is put in place by a small script after the app has quit (`runSwap`), which then starts it again.
-  The app restarts itself after an update (`app.relaunch`); the new instance waits for the port.
-- Keeping Electron current: a release picks up the newest patch of the Electron major in `electron-version`;
-  raise the major before it reaches its end of life (every Electron major is supported for about 6 months).
-- Until v0.5 the packages used Node's single executable application feature instead (one exe, opened the browser).
-- **Tray, reminders, autostart** (`app/electron/desktop.js`, settings in `data/.desktop.json`): a tray icon
-  (closing the window hides it while the tray is on); every 30 minutes `GET /api/due?days=1`, a notification per item due
-  today or overdue (once per item and date, `notified` in `.desktop.json`; more than 3 → one summary), click opens the item;
-  *Start with Windows* via `app.setLoginItemSettings` (`--hidden`), on Linux `~/.config/autostart/project-workspace.desktop`.
+- One instance (a second start focuses the window); window size in `data/.window.json`; the window's **X quits** the app.
+- Options: a port number, `--browser` (normal browser tab instead), `--hidden` (start in the tray), `--version`, `mcp`.
+- Workspace pages stay in the window; other links open in the system browser (`/api/open-url`). The page gets no Tauri commands (capabilities: none).
+- **Tray, reminders, autostart** (settings in `data/.desktop.json`): a tray icon with the due items (a click opens one); every 30 minutes `GET /api/due?days=1` and a notification for items due today or overdue (once per item and date); *Start with the computer*.
+- Linux without a desktop: `workspace-server` (no WebKitGTK needed).
 
 ## 7e. Secrets
 
-`app/lib/secrets.js`. `data/.secrets.json` holds `{ key, items: { name: { iv, tag, data, updated } } }`; each value is
-AES-256-GCM encrypted with a random 32-byte key. The key is encrypted with Electron `safeStorage` (DPAPI on Windows,
-Keychain on macOS, the keyring on Linux; `basic_text` counts as unprotected) when the server runs inside the desktop app
-(`global.pwSafeStorage`), otherwise stored as is (`protected: none`, shown in the dialog). A plain key is upgraded as soon as
-the app can protect it. A key that can't be decrypted (other computer/user) makes the secrets *locked*: they can be removed and entered again.
+`pw-core::secrets`. `data/.secrets.json` holds `{ key, items: { name: { iv, tag, data, updated } } }`; each value is
+AES-256-GCM encrypted with a random 32-byte key. The key is protected by the operating system when possible: Windows DPAPI
+(`protected: dpapi`, for this Windows user), Linux keyring through the desktop app (`protected: keyring`); otherwise it is kept as is
+(`protected: none`, shown in the dialog) and upgraded as soon as it can be. A key that can't be decrypted (other computer/user) makes
+the secrets *locked*: they can be removed and entered again. Keys of the 0.x app (Electron safeStorage) are taken over on Windows.
 
 - In YAML: `${secret:name}`. `writeMcpJson` turns it into `${PW_SECRET_NAME}` (Claude CLI expands environment
-  variables in `.mcp.json`); `chat.js` passes exactly the secrets referenced there as environment variables.
+  variables in `.mcp.json`); the chat passes exactly the secrets referenced there as environment variables.
+  Settings the app uses itself (GLPI tokens, Forgejo token, Version Control password/key) are resolved only while a request runs and never written anywhere.
   `settings.yaml` values the app uses itself (`github: token:`) are resolved directly (`secrets.resolve`).
 - API: `GET /api/secrets` (names only), `PUT /api/secrets/<name> {value}`, `DELETE /api/secrets/<name>`, `DELETE /api/secrets`.
-- `.secrets.json`, `.ide-token` and `.app/` are private: the explorer (`files.js`) neither lists nor opens them.
+- `.secrets.json`, `.ide-token` and `.app/` are private: the explorer (`pw-core::files`) neither lists nor opens them, and `/files/` never serves them.
 
 ## 7f. Templates and what's due
 
@@ -421,23 +435,25 @@ the app can protect it. A key that can't be decrypted (other computer/user) make
 **Attack surface.** The server listens on `127.0.0.1` only; requests must come from `localhost`/`127.0.0.1` (Host check, against DNS
 rebinding) and changing requests and WebSockets from a local origin (Origin check, against CSRF); file access is limited to the
 workspace and project folders (`safeJoin`, `rel2abs`); app-private files are never served (see 7e). The desktop window loads
-only the local workspace (sandbox, context isolation, no Node in the page); other links open in the system browser.
+only the local workspace and gets no Tauri commands; other links open in the system browser.
 
 **What we ship, and how it stays current**
 
 | Component | Source of CVEs | How it is kept current |
 |---|---|---|
-| Electron (Chromium + Node.js) | by far the most | `.github/workflows/security.yml`, weekly: newest patch of the major in `tools/electron/electron-version`; newer than the latest release (`electron-version.txt` asset, or `runtime.json` in the Windows zip) → patch release (+0.0.1) is committed and released automatically (together with whatever is already on main; notes collected in `docs/releases/vX.Y.Z.md` are kept); the apps install it with their weekly update. When the major is the oldest supported one → issue to move to the next. |
-| Bundled libraries (yaml, Mermaid, highlight.js) | few | `tools/vendor.json` lists the versions; the same workflow checks npm for newer versions and known advisories → issue (security: right away, plain updates: monthly). |
-| Our own code | logic mistakes | CodeQL (`.github/workflows/codeql.yml`: JavaScript + workflows, on every push and weekly); tests in `app/test/smoke.js`. |
-| Build workflows | supply chain | Dependabot (`.github/dependabot.yml`) for GitHub Actions. |
-| Node.js / browser (start.bat, start.sh) | the user's | not shipped; the user keeps them current. |
+| Browser engine | — | not shipped: WebView2 (Windows Update) and WebKitGTK (the Linux distribution) |
+| Rust crates | few | `rust/Cargo.lock` committed, builds `--locked`; `cargo-deny` (`.github/workflows/rust-security.yml`, `rust/deny.toml`) on every change and every Monday; a finding opens an issue `security-check`; fixed with *Rust lock update* |
+| Bundled JS libraries (Mermaid, highlight.js) | few | `tools/vendor.json`; `security.yml` (*Bundled libraries*) checks npm for newer versions and advisories → issue |
+| Our own code | logic mistakes | CodeQL (`codeql.yml`, every push and weekly); contract tests on Windows + Linux |
+| Build workflows | supply chain | Dependabot (`.github/dependabot.yml`) for GitHub Actions |
+
+**Security gate (decided 2026-11-24):** no release while the Rust security check or CodeQL is not green.
 
 **Reporting:** `SECURITY.md` — private reports through GitHub (*Security → Report a vulnerability*, switched on). Only the latest release gets fixes.
 Labels (2026-11-25): `security` only for a real security problem (one issue per problem); the automatic message of the Rust
 security check gets `security-check`. Public list: wiki *Known security issues*.
 
-**Not done yet:** signed updates and a code-signed exe (#49, #31). A first attempt (a signing key on the maintainer's PC, scripts to sign each release) was removed again on 2026-11-16 as too cumbersome; the new plan is [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md).
+**Signing:** Windows programs are signed with the project's own certificate (`signing/`, plans/SIGNING.md); the updater accepts only that fingerprint.
 
 ## 7a. Documentation
 
@@ -446,7 +462,8 @@ security check gets `security-check`. Public list: wiki *Known security issues*.
 | `README.md` | first look, start, update | repo root |
 | `docs/GETTING-STARTED.md` | new users: install, first project, first feature, Claude, VS Code, updating | repo + wiki *Getting-Started* |
 | `docs/wiki/*.md` | user guide: projects, features (all settings), **a page per starter feature** (`Feature-<Name>.md`: all its options, examples, what it stores), building blocks, Claude, VS Code & Explorer, data & updates, FAQ | GitHub wiki |
-| Help links in the app | *Help & wiki* in the sidebar; *Help* on every feature tab and in the feature editor opens that feature's wiki page; *Getting started* on the home page | `package.json` → `wiki` |
+| Help in the app | *Help* in the sidebar (all wiki pages, offline, with search); the (i) on every feature opens its page in a side panel | `app/help/pages` (from `docs/wiki` at release) |
+| `CLAUDE.md`, `AGENTS.md`, `docs/HANDOVER.md`, `docs/AGENT-GUIDE.md`, `docs/LAYOUT-AND-DESIGN.md`, `docs/SKILLS.md` | AI assistants and new developers: rules, decisions, where things stand, how to build, the fixed look | repo |
 | `docs/DESIGN.md` | developers: architecture and rebuild guide | repo + wiki *Design* |
 | `docs/REQUIREMENTS.md` | everyone: every requirement with status and issue | repo + wiki *Requirements* |
 
@@ -467,12 +484,11 @@ the idea list") gives the label `idea`; normal issues stay possible. The maintai
 
 **Workflow flowcharts:** made by the maintainer himself (2026-11-25).
 
-**Pages for coming versions** wait in `docs/wiki-next/` (1.0) and `docs/wiki-next/vX.Y.Z/` (e.g. the 1.0.1 FAQ with LM Studio);
-the release of that version moves them into `docs/wiki/`. The README after the next release is `docs/readme-next/README.md`.
+**Pages for coming versions** wait in `docs/wiki-next/vX.Y.Z/`; the release of that version moves them into `docs/wiki/`. The README after the next release is `docs/readme-next/README.md`.
 
 ## 7d. YAML
 
-All YAML (project.yaml, features, records, settings.yaml) is read with the bundled **yaml** library (eemeli/yaml 2.x, ISC licence, no dependencies, vendored by `tools/vendor-yaml.js`). It is full YAML 1.2 plus merge keys:
+All YAML (project.yaml, features, records, settings.yaml) is read by `pw-core::yaml` (`yaml-rust2`, plus our own code for merge keys and several documents) — the same results as the 0.x reader (eemeli/yaml), checked by the YAML corpus. It is full YAML 1.2 plus merge keys:
 - anchors and aliases
 - `<<:` merges
 - block (`|`, `>`) and flow styles
@@ -481,8 +497,8 @@ All YAML (project.yaml, features, records, settings.yaml) is read with the bundl
 
 Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text. Errors are reported as `Line X, column Y: …`.
 
-- **Lenient fallback:** a file that isn't valid YAML is tried once more with the app's original forgiving reader (`yaml-lenient.js`), so hand-written files like the original example (` wiki:` indented by one space) still open. The project page and the Features page then show a warning asking to fix the file.
-- **Comments stay:** saving a record from a form only rewrites the changed values (`updateMapping`), keeping its comments, key order and style. Adding a feature appends text to project.yaml, and renaming changes only the `name:` line.
+- **Lenient fallback:** a file that isn't valid YAML is tried once more with the forgiving reader (`pw-core::lenient`), so hand-written files like the original example (` wiki:` indented by one space) still open. The project page and the Features page then show a warning asking to fix the file.
+- **Comments stay:** saving a record from a form only rewrites the changed values (`update_mapping`), keeping its comments, key order and style. Adding a feature appends text to project.yaml, and renaming changes only the `name:` line.
 
 ## 8. Decisions
 
@@ -492,16 +508,16 @@ Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text
 | Project definition | `project.yaml` lists which features a project has |
 | Feature definition | YAML files in `features/` at the workspace root |
 | New feature types | Added as YAML, no code; new building blocks need an app change |
-| Building blocks | pages, cards, list, grid, files, table, kanban, calendar, orgchart, map, diagram, chat |
+| Building blocks | pages, cards, list, journal, book, notes, board, table, blog, grid, files, code, kanban, calendar, orgchart, map, diagram, chat, issues, tickets, comfyui, vcs |
 | Map | Offline image with pins |
 | Diagram | Mermaid text |
-| Chat | Claude CLI in the project folder; permissions per project |
+| Chat | Claude CLI (or LM Studio) in the project folder; permissions per project; MCP programs per project |
 | Theme | Light, dark, or follow the OS |
-| App format | Desktop app (Electron, own window) for Windows and Linux (x64, arm64), built by GitHub Actions; Node.js + browser also works (#1, #32, #36) |
+| App format | Rust + Tauri desktop app for Windows 11 x64 and Linux x64, built by GitHub Actions; `workspace-server` for machines without a desktop. No macOS, no arm64, no Windows 10 (#56, #64, #73) |
 | Licence | MIT (#13) |
 | Updates | Program and client data are separate (`data/`) (#17); weekly check of GitHub Releases with one-click update, backup and restart (#26) |
-| Dependencies | None to install: Mermaid, highlight.js and yaml are bundled |
-| Security | Weekly automatic Electron security releases, CodeQL, Dependabot (7g); v1.0 planned in Rust + Tauri to stop bundling a browser engine (10, #41) |
+| Dependencies | None to install: Mermaid and highlight.js are bundled; the browser engine is the system's |
+| Security | cargo-deny, CodeQL, Dependabot, own signing certificate; no bundled browser engine (7g, 10, #41) |
 | YAML | Full YAML 1.2 (bundled library) with a lenient fallback and a warning for non-standard files (#12) |
 | Documentation | Getting started guide + GitHub wiki generated from `docs/` (#25) |
 | Developing the tool | It can manage itself: the example project *Workspace (development)* uses `location: "{install}"` with docs, scripts, GitHub issues, chat and a *release* skill (#27–#29) |
@@ -510,27 +526,24 @@ Values follow YAML 1.2, so `2026-11-18`, `00:11:22:33:44:55` and `yes` stay text
 
 | What | Where | Runs |
 |---|---|---|
-| Unit checks (logic, YAML, updater, secrets, templates …) | `app/test/smoke.js` (`npm test`) | every push, every build |
+| Unit checks (0.x logic, screens' syntax, example data) | `app/test/smoke.js` (`npm test`) | every push |
+| Rust unit tests | `cargo test -p pw-core -p pw-server` | every push to `rust/`, every build |
 | API contract tests: every route, answers, errors, files on disk, security checks, chat stream with a fake Claude CLI, fakes for GitHub, updates and VS Code, the MCP server | `tests/contract/` (`npm run test:contract`) | every push, Linux + Windows |
 | YAML corpus: how each file is read (golden answers), comments kept on update | `tests/yaml-corpus/` (`npm run test:yaml`; regenerate with `tools/yaml-golden.js`) | every push |
-| Desktop app: window renders, MCP, server mode | build workflows (`PW_SMOKE_FILE`) | every build |
 | VS Code tab with the real `code serve-web` | *VS Code tab check* workflow | by hand |
 
-The contract tests and the corpus test any implementation: `PW_SERVER_CMD="… {port}"`, `PW_MCP_CMD`, `PW_YAML_CMD` (for the Rust version).
+The contract tests and the corpus test any implementation: `PW_SERVER_CMD="… {port}"`, `PW_MCP_CMD`, `PW_YAML_CMD` (set by `rust.yml` to the Rust binaries). Tests for features that only exist in Rust use `{ skip: !process.env.PW_SERVER_CMD }`. Rust can't be built in Claude's environment: push and read the GitHub job logs.
 
 ## 9. Rebuilding it
 
-You need Node.js 18 or newer. Nothing else is installed.
-
 ```
 git clone https://github.com/GFGMNET/Workspace
-cd Workspace
-node app/server.js --open   # or start.bat / ./start.sh (--open opens the browser once ready)
-npm test                # automated checks, incl. the MCP server
+cd Workspace/rust
+cargo build --release --locked           # needs Rust; on Linux also the WebKitGTK 4.1 development packages
+cd .. && PW_SERVER_CMD="rust/target/release/workspace-server {port}" npm run test:contract
 ```
 
-The desktop app is built by GitHub (*Build Windows app*, *Build Linux app*, 7c); to try it locally, install Electron
-(`npm i electron@45`) and run `npx electron tools/electron/bootstrap` from a folder laid out as in 7c.
+Or push to `main` and let `.github/workflows/rust.yml` build and test on Linux and Windows.
 
 To port it to another stack, keep these contracts:
 - **Folder layout** (section 2)
@@ -543,23 +556,15 @@ The UI can be rebuilt freely on top of the API in section 7.
 
 ## 9b. Planned features
 
-Order and dates: README "Upcoming changes" — 1.0 on 27 Nov 2026, then 1.0.1 with everything else (decided 2026-11-25). Each plan follows the maintainer's 8-part format; checks in [plans/checks/](plans/checks/).
+All plans up to 1.0.1 are built and released (README *Upcoming changes*, docs/plans/). New features follow the plan rules in
+CLAUDE.md (8-part plan → checks in `plans/checks/` → *Ready 2 Deploy* → next version).
 
 | Version | Feature | Plan | Issue |
 |---|---|---|---|
-| 1.0 | Ticket tab (GLPI 11; osTicket dropped) | [plans/TICKETSYSTEM.md](plans/TICKETSYSTEM.md) | #59 |
-| 1.0 | VS Code opens by itself | [plans/VSCODE.md](plans/VSCODE.md) | #105 |
-| 1.0 | Signing with the project's own certificate | [plans/SIGNING.md](plans/SIGNING.md) (history: [RELEASE-TRUST.md](plans/RELEASE-TRUST.md)) | #49 |
-| 1.0.1 | Built-in features: restore and update | [plans/BUILTIN.md](plans/BUILTIN.md) | #100 |
-| 1.0.1 | Versions (Git, then SVN; local, shared folder or own server) | [plans/VERSION-CONTROL.md](plans/VERSION-CONTROL.md) | #60 |
-| 1.0.1 | ComfyUI tab | [plans/COMFYUI.md](plans/COMFYUI.md) | #93 |
-| 1.0.1 | Forgejo in the Issues tab | [plans/FORGEJO.md](plans/FORGEJO.md) | #96 |
-| 1.0.1 | More layouts for text: journal, book, notes, board, table, blog | [plans/LAYOUTS.md](plans/LAYOUTS.md) | #116 |
-| 1.0.1 | MCPs: Blender, Unity, Unreal Engine | [BLENDER](plans/BLENDER.md), [UNITY](plans/UNITY.md), [UNREAL](plans/UNREAL.md) | #109–#111 |
-| 1.0.1 | LM Studio in the Chat | [plans/LMSTUDIO.md](plans/LMSTUDIO.md) | #94 |
-| 1.0.1 | Help & wiki inside the app | [plans/HELP.md](plans/HELP.md) | #95 |
-| 1.0.1 | MCPs: Godot, OpenSCAD, FreeCAD; Dashboard on the Overview | [GODOT](plans/GODOT.md), [OPENSCAD](plans/OPENSCAD.md), [FREECAD](plans/FREECAD.md), [DASHBOARD](plans/DASHBOARD.md) | #112–#115 |
+| 1.0 ✅ | Ticket tab (GLPI 11), VS Code opens by itself, own signing certificate | [TICKETSYSTEM](plans/TICKETSYSTEM.md), [VSCODE](plans/VSCODE.md), [SIGNING](plans/SIGNING.md) | #59, #105, #49 |
+| 1.0.1 ✅ | Built-in features, Version Control, ComfyUI, Forgejo, text layouts, MCPs (6), LM Studio, Help, Dashboard | [plans/](plans/) | #60, #93–#96, #100, #109–#116 |
 | later | VS Code tab: focused layout (editor + explorer) | | #62 |
+| later | Version Control: write and push (an upgrade, own plan) | | |
 | — | macOS app | ❌ not planned (2026-11-18) | #56 |
 | — | Feature requests from users | paused for a review (2026-11-23) | |
 
@@ -567,11 +572,10 @@ Order and dates: README "Upcoming changes" — 1.0 on 27 Nov 2026, then 1.0.1 wi
 
 The detailed plan (inventory, crates, phases with exit criteria, tests, risks, decisions) is in [MIGRATION-RUST.md](MIGRATION-RUST.md); milestone *v1.0 (Rust)*, issues #49–#55.
 
-**Status:** phases 0–3 ✅ — the Rust server passes the whole API contract suite (34/34, incl. chat, VS Code proxy, updates,
-GitHub issues, MCP server) and the YAML corpus (33/33) on Linux and Windows. Phase 4: betas **0.9.0.x** (pre-releases, unsigned,
-built by `.github/workflows/build-rust.yml`, Windows x64 + Linux x64) are being tested by the maintainer. 1.0 is built for **Windows 11 x64 and Linux x64** only:
+**Status:** all phases ✅ — 1.0.0 and 1.0.1 are released. The Rust server passes the whole API contract suite (incl. chat, VS Code proxy, updates,
+GitHub issues, MCP server) and the YAML corpus (33/33) on Linux and Windows. 1.0 is built for **Windows 11 x64 and Linux x64** only:
 no Windows 10 (#73), no arm64 (#64), no macOS (#56) — decided 2026-11-18.
-Then signing with the own certificate (0.9.1, [plans/SIGNING.md](plans/SIGNING.md)) and 1.0.0. The code is in `rust/`; the plan and status: [MIGRATION-RUST.md](MIGRATION-RUST.md).
+The code is in `rust/`; the plan and status: [MIGRATION-RUST.md](MIGRATION-RUST.md).
 
 **Name:** from 1.0 the app is called **Workspace** everywhere (window, tray, notifications, `Workspace.exe`, `workspace` on Linux,
 downloads `workspace-vX.Y.Z-…zip`); decided 2026-11-18 (#77). The MCP server keeps the name `project-workspace` (`workspace` is reserved
@@ -596,15 +600,17 @@ Side effects: downloads of about 10–20 MB instead of 120–157 MB, less memory
 
 ```
 crates/
-  pw-core     yaml (+ lenient reader, comment-keeping updates), workspace (features, projects), items (all storage
-              types, uploads, photo dates), files (explorer), links (search, backlinks, overview, due), projects
-              (create, rename, archive, templates), secrets (AES-256-GCM; key via Windows DPAPI or the Linux keyring)
-  pw-server   axum + tokio: the same routes as app/server.js; live refresh (notify); chat (Claude CLI, permission
-              helper `permission-mcp`); VS Code proxy incl. WebSockets (hyper); updater; GitHub issues;
-              the workspace MCP server (`mcp`). Binary: workspace-server (no window, no WebKitGTK needed)
+  pw-core     yaml (+ lenient reader, comment-keeping updates), workspace (features, projects, STORES, layouts, META_KEYS),
+              items (all storage types, uploads, photo dates, media), files (explorer), links (search, backlinks, overview, due),
+              projects (create, rename, archive, templates, programs, dashboard), secrets (AES-256-GCM; DPAPI / keyring),
+              builtin (restore and update built-in features), programs (the MCP programs)
+  pw-server   axum + tokio: routes (lib.rs); live refresh (live.rs); chat (Claude CLI + permission helper, LM Studio);
+              VS Code proxy incl. WebSockets (ide.rs); updater; GitHub + Forgejo issues (github.rs); GLPI (glpi.rs);
+              ComfyUI (comfyui.rs); Version Control (vcs.rs); help (help.rs); the workspace MCP server (mcp.rs).
+              Binary: workspace-server (no window, no WebKitGTK needed)
   pw-app      Tauri 2: window on http://localhost:<port>, tray, reminders, autostart, single instance, window size;
               no Tauri IPC commands for the page (capabilities: none). Binary: Workspace.exe / workspace
-app/public    unchanged screens, served by pw-server
+app/public    the screens, served by pw-server
 ```
 
 **Choices made in the prototype**
@@ -626,12 +632,7 @@ app/public    unchanged screens, served by pw-server
   unchanged file. Windows reports "not trusted" until the certificate is installed (wiki: Signing certificate).
 - The security check of 7g then watches crates and the bundled JS libraries; there is no browser engine of our own to patch.
 
-**Moving from 0.x** (#74, built, in the next 0.x release 0.6.3). The 0.x desktop app's updater recognises the 1.0 package
-(`Workspace.exe`/`workspace`, `workspace-server`, `app/public`, no `package.json`), checks it like 1.0 does (Windows: signature with the
-project's own certificate (fingerprint built in), unchanged file, product name *Workspace*; Linux: SHA-256 from `SHA256SUMS`), switches off its own "start with the computer"
-entry (1.0 makes its own from the same `data/.desktop.json`), and after it has quit a small script moves the old program files
-into `.update/backup-<version>-…`, moves 1.0 in and starts it. `data/`, `.update/` and `.git/` stay where they are. The Node.js
-package (start.bat/start.sh) isn't offered 1.0: download it by hand.
+**Moving from 0.x** (#74, shipped in 0.6.3): the 0.x updater recognises the 1.0 package, checks it like 1.0 does and swaps the program; `data/` stays. Wiki: *Moving to 1.0*.
 
 **Phases**
 0. ✅ **API contract tests:** move the HTTP-level checks into a test suite that runs against a server URL, and run it against today's
@@ -640,8 +641,6 @@ package (start.bat/start.sh) isn't offered 1.0: download it by hand.
    → Decision: go / no go.
 2. ✅ **Core:** everything in `pw-core` with the contract tests green.
 3. ✅ **The rest:** chat, VS Code proxy, MCP server, updater with signatures, secrets, desktop extras (tray, reminders, autostart).
-4. 🚧 **Beta** next to 0.x (separate download, same data folder after a backup; 0.x keeps getting security releases).
-5. **1.0**: the 0.x apps are offered the update.
-
-Effort: several weeks; most of it in phases 2–3. The screens are reused, which saves about half of the work.
+4. ✅ **Beta** (0.9.0.x – 0.9.1.x, tested by the maintainer).
+5. ✅ **1.0.0** (26 Nov 2026): the 0.x apps are offered the update. **1.0.1** followed the same day.
 

@@ -15,11 +15,13 @@ chat:
 
 | Mode | Behaviour |
 |---|---|
-| `ask` | When Claude wants to change something, the chat shows **Claude asked for permission → Allow and continue**. Allowed tools stay allowed in that chat |
+| `ask` | When Claude wants to change something, the chat asks: **Allow** · **Always allow in this chat** · **Don't allow** |
 | `auto` | Claude may change files directly |
 | `read-only` | Claude can only read |
 
 ![Chat](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/chat.png)
+
+Instead of Claude the chat can also use a local model in **LM Studio** (`engine: lmstudio`) — see [[Chat|Feature-Chat]].
 
 ## Skills and MCP
 
@@ -27,6 +29,7 @@ chat:
 - **MCP** feature: each connection is a record; the app writes them to `.mcp.json`, which Claude CLI loads.
   - A local server needs `command` + `args`. On Windows, `npx` usually needs command `cmd` and args `/c`, `npx`, …
   - A remote server needs a `url`.
+- **MCP programs:** Blender, Unity, Unreal Engine, Godot, OpenSCAD, FreeCAD — tick them under **Manage → MCP** (`programs:` in `project.yaml`). See [[MCP]].
 
 ![MCP](https://raw.githubusercontent.com/GFGMNET/Workspace/main/docs/screenshots/mcp.png)
 

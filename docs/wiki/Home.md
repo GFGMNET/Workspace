@@ -6,6 +6,8 @@ One workspace for very different projects. A project's `project.yaml` says **whi
 
 **Version 1.0** is here: a new program (Rust), small, signed with the project's own certificate, for **Windows 11** and **Linux (x64)**. Coming from 0.x? See [[Moving to 1.0|Moving-to-1.0]].
 
+**New in 1.0.1:** Version Control and ComfyUI tabs, Forgejo issues, six layouts for text, a dashboard on the Overview, the help inside the app, LM Studio in the chat and MCPs for six programs — [what's new](https://github.com/GFGMNET/Workspace/releases/tag/v1.0.1).
+
 ## Start here
 
 - **[[Getting Started|Getting-Started]]**: install, first project, first feature (10 minutes)
@@ -17,13 +19,15 @@ What a project can have. Every feature page starts with **what you need** for it
 - [[All features|Features]]: how features work, all settings, your own feature types
 - [[Wiki|Feature-Wiki]] · [[Knowledge|Feature-Knowledge]] · [[Gallery|Feature-Gallery]] · [[Files|Feature-Files]] · [[Scripts|Feature-Scripts]] · [[Diagrams|Feature-Diagrams]]
 - [[Tasks|Feature-Tasks]] · [[Calendar|Feature-Calendar]] · [[Team|Feature-Team]] · [[Map|Feature-Map]] · [[Contacts|Feature-Contacts]] · [[Devices|Feature-Devices]]
-- [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[Issues|Feature-Issues]] · [[Ticket (GLPI)|Feature-Ticket]]
+- [[Chat|Feature-Chat]] · [[Skills|Feature-Skills]] · [[Issues|Feature-Issues]] · [[Ticket (GLPI)|Feature-Ticket]] · [[ComfyUI|Feature-ComfyUI]] · [[Version Control|Feature-Version-Control]]
+- Layouts for text: [[Journal|Layout-Journal]] · [[Book|Layout-Book]] · [[Sticky notes|Layout-Sticky-notes]] · [[Board|Layout-Board]] · [[Table|Layout-Table]] · [[Blog|Layout-Blog]]
 
 ## MCP
 
 How Claude uses other programs. Every MCP page starts with **what you need** for it.
 
 - [[About MCP|MCP]] · [[MCP connections|Feature-MCP]]
+- Programs: [[Blender|MCP-Blender]] · [[Unity|MCP-Unity]] · [[Unreal Engine|MCP-Unreal]] · [[Godot|MCP-Godot]] · [[OpenSCAD|MCP-OpenSCAD]] · [[FreeCAD|MCP-FreeCAD]]
 
 ## More
 
@@ -35,7 +39,7 @@ How Claude uses other programs. Every MCP page starts with **what you need** for
 - [[Security]] · [[Signing certificate|Signing-certificate]]: what protects you, how to trust the program
 - [[Data and Updates|Data-and-Updates]]: where your data lives, how to update
 - [[Backup]] · [[Import and Export|Import-and-Export]]: what to back up; bringing files in and out
-- [[FAQ]]
+- [[Help inside the app|Help]] · [[FAQ]]
 - **[[Requirements]]**: everything the workspace should do, with status (done, planned, open) and the GitHub issue for each
 
 ## For developers
