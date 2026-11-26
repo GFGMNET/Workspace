@@ -18,6 +18,6 @@ flowchart LR
 STA --> CLE
 CLE <--> |NO|COM
 CLE --> |YES|FIX
-FIX --> |NO|WAU
+FIX <--> |NO|WAU
 FIX --> |YES|REL
 ``` 
