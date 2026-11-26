@@ -13,7 +13,8 @@ flowchart TD
   DEP[Deploy]
   BET{Between RELEASE}
   ISEC{Is an Security ISSUE}
-  WAU@{ shape: hourglass, label: "5 Days Without ERROR" }
+  WAU[Wait 5 Days Without ERROR]
+  DEL[Delay next Release 5 days]
  end
   
  
@@ -30,7 +31,9 @@ flowchart TD
  VOT --> CHE 
  CHE --> ISEC
  ISEC --> |Yes|BET
- BET --> Deploy
+ ISEC --> |NO|DEP
+ BET --> DEP 
+ DEP --> DEL
  
  
  ```
