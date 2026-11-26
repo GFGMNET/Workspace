@@ -15,7 +15,7 @@ flowchart TD
   BET{Between RELEASE}
   BIT{Between RELEASE}
   ISEC{Is an Security ISSUE}
-  WAU[Wait 5 Days Without ERROR]
+  WAU{Wait 5 Days Without ERROR}
   DEL[Delay next Release 5 days]
   TES{In Testing Period}
   PLAN[Plan new Release]
@@ -42,4 +42,8 @@ flowchart TD
  BIT --> |Yes|TES
  TES --> |YES| DEP
  TES --> |NO| PLAN
+ PLAN --> WAU
+ WAU --> |YES|DEL
+ 
+ 
  ```
