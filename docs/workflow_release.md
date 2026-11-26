@@ -43,7 +43,8 @@ flowchart TD
  TES --> |YES| DEP
  TES --> |NO| PLAN
  PLAN --> WAU
- WAU --> |YES|DEL
+ WAU --> |NO|DEL
+ WAU --> |YES|DIF
  
  
  ```
