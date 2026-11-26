@@ -1,6 +1,7 @@
 ```mermaid
-flowchart TB
+flowchart LR
  subgraph Maintainer
+  direction TB
   STA@{ shape: circle, label: "Start" }
   DEA[Serious]
   BUG[BUG]
