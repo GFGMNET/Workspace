@@ -1,6 +1,6 @@
 # Migration plan: version 1.0 in Rust + Tauri
 
-Issue: #41 · Design summary: [DESIGN.md](DESIGN.md), section 10 · Status: **planned**
+Issue: #41 · Design summary: [DESIGN.md](DESIGN.md), section 10 · Status: **done — 1.0.0 released 2026-11-26**
 
 ## 1. Goal and scope
 
@@ -106,7 +106,7 @@ Rules for our crates: `#![forbid(unsafe_code)]` (only the DPAPI module may use `
 | 2 | The core | ✅ done (2026-11-16) |
 | 3 | Chat, VS Code, updater, MCP, desktop extras | ✅ done (2026-11-16) |
 | 4 | Beta next to 0.x | 0.9.0 tested 2026-11-17 → fixes #65–#69 → 0.9.0.5 tested → fixes #70, #71 → 0.9.0.6 ✅ test OK (2026-11-18) · **Windows 1.0 on hold: no signing yet** (RELEASE-TRUST.md §6) |
-| 5 | Release 1.0 | |
+| 5 | Release 1.0 | ✅ 1.0.0 released 2026-11-26 |
 
 **Order (decided 2026-11-16):** build everything first (phases 2 and 3 without stopping), then one test round by the maintainer (beta), signing last, just before 1.0 (since 2026-11-19: own certificate, [plans/SIGNING.md](plans/SIGNING.md)).
 

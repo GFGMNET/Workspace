@@ -105,7 +105,7 @@ This is every requirement for Project Workspace, in the order it was raised. It 
 | D18 | The app restarts by itself after an update | ✅ | #35 |
 | D19 | Desktop app in its own window instead of the browser (Electron, Windows and Linux) | ✅ v0.6.0 · to test on Windows | #36 |
 | D20 | Security: weekly check of Electron and bundled libraries, automatic security releases, CodeQL, Dependabot, SECURITY.md | ✅ | |
-| D21 | Version 1.0: core in Rust with Tauri, no bundled browser engine (fewer CVEs) — plan: [MIGRATION-RUST.md](MIGRATION-RUST.md) | 🚧 signed beta 0.9.1; 0.6.3 (move from 0.x) released 2026-11-19; 1.0 on 27 Nov 2026 (pre-flight 26 Nov 12:00, then code freeze) | #41, #49–#55 |
+| D21 | Version 1.0: core in Rust with Tauri, no bundled browser engine (fewer CVEs) — plan: [MIGRATION-RUST.md](MIGRATION-RUST.md) | ✅ 1.0.0 released 2026-11-26 (0.6.3 moves 0.x users over) | #41, #49–#55 |
 | D23 | Platforms of 1.0: Windows 11 x64 and Linux x64 (no Windows 10, no arm64, no macOS); Linux needs glibc 2.39+ (Ubuntu 24.04, Debian 13, Fedora 40 …, list in the FAQ) | ✅ decided 2026-11-18 · glibc noted 2026-11-25 | #73, #64, #56 |
 | D22 | Trusted releases: account protection, signing with the project's own certificate (plan: [plans/SIGNING.md](plans/SIGNING.md); history: [plans/RELEASE-TRUST.md](plans/RELEASE-TRUST.md)), updater checks | 🚧 account protection ✅, build attestations ✅, own certificate: plan approved 2026-11-19, built; first signed release 0.9.1 | #49, #31 |
 | D24 | Urgent fix versions with four numbers (1.0.0.1, 1.0.1.1); the update check compares all four; betas for 1.0.1 are 0.9.2.N | ✅ decided 2026-11-25 · fixed in 1.0 | #123 |
