@@ -15,7 +15,6 @@ flowchart LR
   direction TB
   SET[PRIO]
   PLAN[Release Workflow]
-  END@{ shape: circle, label: "END" }
  end
  
  STA --> CLE
@@ -26,7 +25,7 @@ flowchart LR
  DEA --> SET
  BUG --> SET
  SET --> PLAN
- PLAN --> END
+
 
  
 ```
