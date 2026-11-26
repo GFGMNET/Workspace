@@ -1,8 +1,8 @@
 # Issues
 
-The issues of a repository on **github.com** — bugs and ideas — with open/closed/all, label filters, search and the full text when you click one. **New issue** and **Issues** open GitHub.
+The issues of a repository — bugs and ideas — with open/closed/all, label filters, search and the full text when you click one. **New issue** and **Issues** open the repository's website.
 
-**For GitHub online only** (github.com). It does not work with GitHub Enterprise Server or with other bug trackers.
+Works with **github.com** and with your own **Forgejo** server (see *Forgejo* below). Not with GitHub Enterprise Server or other bug trackers.
 
 ## What you need
 
@@ -38,8 +38,8 @@ issue:                     # the name of the tab — "issue" needs nothing more
 This is the starter definition. Change it under **Features** in the app, or in the file, and every project that uses it follows.
 
 ```yaml
-# Issues of a repository (bugs and ideas). In 1.0: GitHub online (github.com) only — the self-hosted Forgejo
-# comes with 1.0.1 (docs/plans/FORGEJO.md). Set the repository in each project:
+# Issues of a repository (bugs and ideas): GitHub online (github.com) or your own Forgejo server
+# (engine: forgejo, url:, token: — docs/plans/FORGEJO.md). Set the repository in each project:
 #   issue: { repo: owner/name }
 # Private repositories need a token in data/settings.yaml:  github: { token: ... }
 # Older projects that say "feature: github_issue" or "feature: github" still work (aliases).
@@ -78,8 +78,22 @@ A token written directly (`token: ghp_...`) works too, but stays readable in the
 
 or set the `GITHUB_TOKEN` environment variable. Results are cached for 5 minutes; **Refresh** reloads.
 
+## Forgejo
+
+For a repository on your own [Forgejo](https://forgejo.org/) server (on this PC or in your network):
+
+```yaml
+issue:
+  engine: forgejo
+  url: https://192.168.1.20:3000     # the address of the Forgejo server
+  repo: team/app                     # owner/name on that server
+  token: ${secret:forgejo-token}     # only for private repositories
+```
+
+The token is made in Forgejo under *Settings → Applications* (read access to issues is enough) and saved under **Secrets**. Self-made certificates on your own server are accepted. Pull requests are not shown.
+
 ## Tips
 
-- Nothing is stored in the project: the issues are read from GitHub.
+- Nothing is stored in the project: the issues are read from GitHub or Forgejo.
 
 See also: [[Features]] · [[Building Blocks|Building-Blocks]] · [[Projects]]

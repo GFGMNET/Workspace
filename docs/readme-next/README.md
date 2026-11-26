@@ -24,13 +24,7 @@ Download the zip for your system from the [latest release](https://github.com/GF
 
 ## Upcoming changes
 
-| Version | Planned for | What's new |
-|---|---|---|
-| **1.0.1** | 5 days after the complete beta (building starts 27 Nov) | • [Restore and update built-in features](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/BUILTIN.md)<br>• [Version Control tab (Git, SVN)](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/VERSION-CONTROL.md)<br>• [ComfyUI tab](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/COMFYUI.md)<br>• [Forgejo in the Issues tab](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/FORGEJO.md)<br>• [6 new layouts for text: journal, book, sticky notes, board, table, blog](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/LAYOUTS.md)<br>• MCPs: [Blender](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/BLENDER.md), [Unity](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/UNITY.md), [Unreal Engine](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/UNREAL.md), [Godot](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/GODOT.md), [OpenSCAD](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/OPENSCAD.md), [FreeCAD](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/FREECAD.md)<br>• [LM Studio in the Chat](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/LMSTUDIO.md)<br>• [Help & wiki inside the app](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/HELP.md)<br>• [Dashboard on the Overview](https://github.com/GFGMNET/Workspace/blob/main/docs/plans/DASHBOARD.md) |
-
-Details of each feature: [docs/plans/](docs/plans/). MCPs are switched on per project; what Claude makes with them is saved in the project (in `blender/`, `unity/`, …). Each one comes with a wiki article on how to connect the program.
-
-**How releases are timed:** everything planned after 1.0 comes together in 1.0.1 (betas in between for testers). When everything is built, a complete beta starts 5 test days; without a bug report 1.0.1 comes on day 5. If a bug is reported in those days, it comes 5 days later (only once) with all fixes; bugs found in the extra days go into the next version.
+Nothing is planned yet. Ideas you can vote for: [Vote for features](https://github.com/GFGMNET/Workspace/wiki/Vote-for-features). What came with each version: [releases](https://github.com/GFGMNET/Workspace/releases).
 
 ## How it works
 
@@ -55,13 +49,13 @@ search: true
 
 Each feature key becomes a tab on the project page. The content lives in the project folder (`projects/test/wiki/a-wiki-page.md`, …), so you can edit it in any editor or have Claude edit it.
 
-**Building blocks:** pages · cards · list · picture grid · files · scripts (code editor) · table · kanban · calendar · org chart · offline map (your own image with pins) · Mermaid diagrams · chat with Claude CLI.
+**Building blocks:** pages · cards · list · journal · book · sticky notes · board · blog · picture and video grid · files · scripts (code editor) · table · kanban · calendar · org chart · offline map (your own image with pins) · Mermaid diagrams · chat with Claude CLI or LM Studio · ComfyUI · Version Control (Git, SVN).
 
-Every project also has an **Overview**, an **Explorer** with all its files, and the full **VS Code** in a tab. The gear icon (**Manage**) holds the project folder (copy path, Claude CLI command, open in the installed VS Code), rename, features, templates, archive and delete. Tabs that don't fit go into **More**. A project can live in an existing folder (`location:`), so the workspace can even manage itself: see the example *Workspace (development)*.
+Every project also has an **Overview** (with its own dashboard), an **Explorer** with all its files, and the full **VS Code** in a tab. The gear icon (**Manage**) holds the project folder (copy path, Claude CLI command, open in the installed VS Code), rename, features, templates, archive and delete. Tabs that don't fit go into **More**. A project can live in an existing folder (`location:`), so the workspace can even manage itself: see the example *Workspace (development)*.
 
 **Also:** projects can be renamed, archived and saved as **templates**; the home page shows what's **coming up in all projects**; API keys and passwords are kept as encrypted **secrets** (`${secret:name}` in YAML); the desktop app has a **tray icon, reminders** and can start with the computer.
 
-**Starter features:** wiki, knowledge, gallery, files, scripts, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices, issue (GitHub issues; older projects may say `github`); ticketsystem (GLPI 11). You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
+**Starter features:** wiki, knowledge, gallery, files, scripts, skills, mcp, chat, tasks, calendar, team, map, diagrams, contacts, devices, issue (GitHub or Forgejo issues; older projects may say `github`); ticketsystem (GLPI 11); comfyui; version-control. Deleted ones come back with *Features → Restore built-in features*. You can add your own under *Features → New feature*, by copying a YAML file, or by asking Claude.
 
 | | |
 |---|---|
@@ -77,6 +71,8 @@ Every project also has an **Overview**, an **Explorer** with all its files, and 
     permissions: ask    # ask | auto | read-only
   ```
 - **Skills** are written to `.claude/skills/<name>/SKILL.md` and **MCP connections** to `.mcp.json`. Claude CLI picks both up when started in the project folder (*Manage → Copy Claude CLI command*).
+- **MCPs for programs:** Blender, Unity, Unreal Engine, Godot, OpenSCAD and FreeCAD — tick them under *Manage → MCP* (or `programs: [blender]` in `project.yaml`); what Claude makes with them is saved in the project ([MCP](https://github.com/GFGMNET/Workspace/wiki/MCP)).
+- **LM Studio:** the chat can also use a local model (`chat: { engine: lmstudio }`) — [Chat](https://github.com/GFGMNET/Workspace/wiki/Feature-Chat).
 - **Workspace MCP server:** lets Claude list, create and edit projects from anywhere. The program is its own MCP server; the home page shows the exact command for your folder, e.g.:
   ```
   claude mcp add project-workspace --scope user -- "C:\path\to\Workspace.exe" mcp

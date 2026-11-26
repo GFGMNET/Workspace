@@ -27,6 +27,8 @@ new_item: Task
 
 Every starter feature has its own page with all its settings, examples and what it stores on disk:
 
+**Built-in features** come with the app. If you deleted one, **Features → Restore built-in features** brings it back. When an update brings a new version of a built-in feature, a tab that was set up for the old version shows **Use the new version** — its own settings stay when you switch.
+
 | Feature | Layout | Page |
 |---|---|---|
 | Wiki | pages | [[Feature-Wiki]] |
@@ -44,8 +46,10 @@ Every starter feature has its own page with all its settings, examples and what 
 | Diagrams | diagram | [[Feature-Diagrams]] |
 | Contacts | table | [[Feature-Contacts]] |
 | Devices | table | [[Feature-Devices]] |
-| Issues (`issue`) | issues (github.com; Forgejo from 1.0.1) | [[Feature-Issues]] |
+| Issues (`issue`) | issues (github.com or Forgejo) | [[Feature-Issues]] |
 | Ticket (`ticketsystem`) | tickets (GLPI 11) | [[Feature-Ticket]] |
+| ComfyUI | comfyui | [[Feature-ComfyUI]] |
+| Version Control | vcs (Git, SVN, read only) | [[Feature-Version-Control]] |
 
 ## Three ways to add one
 
@@ -94,7 +98,7 @@ tasks:
   below. It can't bring its own screen or program code.
 - **No connections to other programs or services.** A feature you make yourself only works with the files in the
   project. It can't connect to Home Assistant, a database, a shop or any other service. Only the connections built into
-  the app talk to other servers: **Issues** (GitHub; Forgejo from 1.0.1) and **Ticket** (GLPI) — later also ComfyUI.
+  the app talk to other servers: **Issues** (GitHub or Forgejo), **Ticket** (GLPI), **ComfyUI** and **Version Control** (Git, SVN).
   A new connection needs a new version of the app.
 - **Layout and storage must fit together** (e.g. *kanban* only with *records*). The app refuses a wrong combination and
   says which layouts fit.
@@ -106,7 +110,7 @@ tasks:
 - **One definition for all projects.** Changing the feature file changes it in every project that uses it (per-project
   changes go into `project.yaml`, see above).
 - **A feature that a project still uses can't be deleted** — the app says which projects use it.
-- **Issues and Ticket need their server** (GitHub / GLPI) and the network; all other features work offline.
+- **Issues, Ticket, ComfyUI and Version Control need their server** (GitHub or Forgejo / GLPI / ComfyUI / Git or SVN); all other features work offline.
 - **One person at a time:** everything is files; don't edit the same project on two computers at the same moment.
 
 ## All settings
@@ -115,9 +119,9 @@ tasks:
 |---|---|---|
 | `name` | display name | the key |
 | `icon` | book, lightbulb, image, folder, puzzle, plug, chat, kanban, calendar, users, map, diagram, contact, server, table, list, cards, file, terminal | by layout |
-| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github`, `glpi` | `markdown` |
+| `stores` | `markdown`, `images`, `files`, `records`, `diagram`, `chat`, `github`, `glpi`, `comfyui`, `vcs` | `markdown` |
 | `repo` | github: `owner/name` of the repository | none |
-| `layout` | markdown → `pages`, `cards`, `list` · records → `table`, `list`, `cards`, `kanban`, `calendar`, `orgchart`, `map` · images → `grid` · files → `files`, `code` · diagram → `diagram` · chat → `chat` · github → `issues` · glpi → `tickets` | first one |
+| `layout` | markdown → `pages`, `cards`, `list`, `journal`, `book`, `notes`, `board`, `table`, `blog` · records → `table`, `list`, `cards`, `kanban`, `calendar`, `orgchart`, `map` · images → `grid` · files → `files`, `code` · diagram → `diagram` · chat → `chat` · github → `issues` · glpi → `tickets` · comfyui → `comfyui` · vcs → `vcs` | first one |
 | `folder` | where the content goes in a project | the key |
 | `search` | `true` / `false` | true for text and records — a search bar in *pages*, *cards* and *list* (titles and words inside the pages); `false` hides it |
 | `new_item` | label of the **+ New** button | by store |

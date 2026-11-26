@@ -12,5 +12,4 @@ is **not released yet** wait here, so they don't go online too early (maintainer
 
 Edit wiki text for a coming version here, not in `docs/wiki/`.
 
-Note: `v1.0.1/FAQ.md` is the 1.0 FAQ (now `docs/wiki/FAQ.md`, live since 26 Nov 2026) plus the LM Studio questions.
-A change to `docs/wiki/FAQ.md` must also go into `v1.0.1/FAQ.md` until 1.0.1 is out.
+1.0.1 is out (26 Nov 2026): its pages are in `docs/wiki/`. There are no waiting pages now.

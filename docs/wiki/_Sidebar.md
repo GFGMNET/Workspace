@@ -23,16 +23,34 @@
 - [[Skills|Feature-Skills]]
 - [[Issues|Feature-Issues]]
 - [[Ticket (GLPI)|Feature-Ticket]]
+- [[ComfyUI|Feature-ComfyUI]]
+- [[Version Control|Feature-Version-Control]]
+
+**Layouts for text**
+
+- [[Journal|Layout-Journal]]
+- [[Book|Layout-Book]]
+- [[Sticky notes|Layout-Sticky-notes]]
+- [[Board|Layout-Board]]
+- [[Table|Layout-Table]]
+- [[Blog|Layout-Blog]]
 
 **MCP**
 
 - [[About MCP|MCP]]
 - [[MCP connections|Feature-MCP]]
+- [[Blender|MCP-Blender]]
+- [[Unity|MCP-Unity]]
+- [[Unreal Engine|MCP-Unreal]]
+- [[Godot|MCP-Godot]]
+- [[OpenSCAD|MCP-OpenSCAD]]
+- [[FreeCAD|MCP-FreeCAD]]
 
 **More**
 
 - [[Projects]]
 - [[Building Blocks|Building-Blocks]]
+- [[Help inside the app|Help]]
 - [[Claude]]
 - [[VS Code and Explorer|VS-Code-and-Explorer]]
 - [[Desktop App|Desktop-App]]

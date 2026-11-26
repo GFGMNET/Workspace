@@ -66,6 +66,7 @@ Templates are folders in `data/templates/`, so you can copy them to another work
 - **The folder is the truth.** Files you put into a feature folder show up even if they are not listed in `project.yaml`.
 - **Unknown features:** a key without a definition shows a notice with a button to create it. The original typos `knowlege` and `skils` are accepted as aliases.
 - **Built-in tabs:** every project also has **Overview**, **Explorer**, **VS Code** and **project.yaml**.
+- **Dashboard:** on the **Overview**, click **Edit** to add blocks: what (a feature of the project), shown as a number or a list, with an optional filter (e.g. `state=open`, or just a word) and how many entries. Drag a block onto another one to move it, drag its corner to change the size, then **Save**. It is saved in `project.yaml` under `dashboard:`; each project has its own. (A feature of your own called `dashboard` can no longer be a tab — rename it.)
 - **Tabs:** click **Tabs** (the eye, next to **+** in the tab row) and untick the tabs you don't want to see in this project. It is saved in `project.yaml` as `hide_tabs: [diagrams, map]` (feature keys, plus `overview`, `explorer`, `vscode`). **Show all** brings them back. The open tab is always shown.
 - **Editing:** edit `project.yaml` with the gear (⚙) next to the project name → **project.yaml**. It is checked before saving, and errors name the line. Adding a feature with **+ Feature** only appends to the file, so your comments stay.
 

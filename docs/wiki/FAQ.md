@@ -88,7 +88,9 @@ Yes. Start it with a port number: `Workspace.exe 4322` (Windows) or `./workspace
 ## Chat
 
 ### What do I need for the chat?
-[Claude CLI](https://docs.claude.com/en/docs/claude-code), installed and signed in once (type `claude` in a terminal), and an internet connection. The chat shows the Claude CLI version, or *Claude CLI not found*.
+One of the two:
+- **Claude** (default): [Claude CLI](https://docs.claude.com/en/docs/claude-code), installed and signed in once (type `claude` in a terminal), and an internet connection. The chat shows the Claude CLI version, or *Claude CLI not found*.
+- **LM Studio** (a model on your own PC or in your network): only [LM Studio](https://lmstudio.ai) with a loaded model — no Claude CLI, no internet. See the questions about LM Studio below.
 
 ### The chat says "Claude CLI not found"
 Install Claude CLI and run `claude` once in a terminal to sign in. If it's installed somewhere unusual, set `CLAUDE_COMMAND` to its full path.
@@ -114,6 +116,30 @@ Yes, with `model:` under `chat:`, e.g. `model: sonnet`. Without it, the Claude C
 Yes. Register the workspace once in a terminal:
 `claude mcp add project-workspace --scope user -- "C:\Workspace\Workspace.exe" mcp`
 (Linux: `-- /path/to/workspace-server mcp`). Then you can ask Claude e.g. *"create a project Office Move with a wiki, tasks and contacts"*. More: [[Claude]].
+
+### Can I use a local model with LM Studio instead of Claude?
+Yes. In the project's `project.yaml`:
+
+```yaml
+chat:
+  engine: lmstudio                # claude (default) or lmstudio
+  url: http://127.0.0.1:1234      # where LM Studio runs
+  model: qwen/qwen3-coder-30b     # the model in LM Studio
+  permissions: ask                # as with Claude
+```
+
+The model can read, create, change and delete files and run commands in the project, with the same `permissions:` as Claude. Skills and MCP connections work only with Claude for now.
+
+### Which LM Studio model should I use?
+One with **tool support** (the hammer symbol in LM Studio), e.g. a Qwen Coder model. Small models sometimes don't use the tools and just answer with text. On a weak PC, answers can be slow.
+
+### The chat says LM Studio can't be reached or the model isn't loaded
+1. Start LM Studio and turn on its server (Developer → Start server).
+2. Load the model named in `model:`.
+3. Check `url:` — the default is `http://127.0.0.1:1234`.
+
+### Can I use LM Studio on another computer in my network?
+Yes: put that computer's address in `url:` (e.g. `http://192.168.1.20:1234`). LM Studio has **no password** — do this only in your own network.
 
 ## VS Code
 
@@ -163,7 +189,7 @@ Your secrets are never in the project folder (only placeholders like `${PW_SECRE
 # Workspace project — what should not go to Git
 chats/                        # your Claude conversations
 .trash/                       # deleted items
-.version-control/             # local Git/SVN copy (from 1.0.1)
+.version-control/             # local Git copy of the Version Control tab
 .claude/settings.local.json   # personal Claude CLI settings
 # system junk
 Thumbs.db
