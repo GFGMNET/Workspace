@@ -14,7 +14,7 @@ flowchart LR
  subgraph ACTION
   direction TB
   SET[PRIO]
-  PLAN[Scedule the Release]
+  PLAN[Release Workflow]
   END@{ shape: circle, label: "END" }
  end
  
