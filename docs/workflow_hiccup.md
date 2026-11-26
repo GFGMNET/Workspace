@@ -11,7 +11,7 @@ flowchart LR
  subgraph Action
   direction TB
    ADD[to Wikipage]
-   END@{ shape: circle, label: "reviewed Monthly]}
+   END@{ shape: circle, label: "reviewed Monthly"}
  end
 
  
