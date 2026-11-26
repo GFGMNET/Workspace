@@ -420,7 +420,7 @@ VIEWS.grid = async ctx => {
   const save = () => { try { localStorage.setItem(key, JSON.stringify(st)); } catch {} };
   const all = st.all && !folder;
   const data = await api(itemsUrl(ctx, `?folder=${enc(folder)}${all ? '&all=1' : ''}`));
-  const imgs = galSort(data.files.filter(f => f.image), st.sort);
+  const imgs = galSort(data.files.filter(f => f.image || f.media), st.sort);   // pictures, and videos / sounds (plan COMFYUI)
   if (st.group === 'album' && !all) st.group = 'none';
   const groupOf = f => st.group === 'album' ? (f.album || 'Not in an album') : st.group === 'month' ? f.date.slice(0, 7) : st.group === 'year' ? f.date.slice(0, 4) : '';
   const groupTitle = g => { if (st.group === 'month') { const d = new Date(g + '-01T00:00:00'); return isNaN(d) ? g : d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); } return g; };
@@ -432,12 +432,12 @@ VIEWS.grid = async ctx => {
   const crumbs = folder ? folder.split('/').map((p, i, a) => `<span class="faint">/</span><a href="${ctx.href(a.slice(0, i + 1).join('/'))}">${esc(p)}</a>`).join('') : '';
   const sel = (name, opts, cur, label) => `<label class="gsel"><span class="faint small">${label}</span><select data-${name} aria-label="${label}">${Object.entries(opts).map(([v, t]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`;
   const groupOpts = all ? GAL_GROUPS : { none: GAL_GROUPS.none, month: GAL_GROUPS.month, year: GAL_GROUPS.year };
-  const figure = f => { const i = order.indexOf(f); return `<figure><button type="button" class="ph" data-i="${i}" aria-label="Open ${esc(f.name)}"><img loading="lazy" src="${fileUrl(ctx, f.path)}" alt=""></button><figcaption title="${esc(f.name)}${f.taken ? ' · taken ' + esc(fmtDay(f.taken)) : ''}">${esc(f.name)}<span>${esc(fmtDay(f.date))}${all && f.album && st.group !== 'album' ? ' · ' + esc(f.album) : ''}</span></figcaption></figure>`; };
+  const figure = f => { const i = order.indexOf(f); return `<figure><button type="button" class="ph" data-i="${i}" aria-label="Open ${esc(f.name)}">${mediaThumb(fileUrl(ctx, f.path), f.media)}</button><figcaption title="${esc(f.name)}${f.taken ? ' · taken ' + esc(fmtDay(f.taken)) : ''}">${esc(f.name)}<span>${esc(fmtDay(f.date))}${all && f.album && st.group !== 'album' ? ' · ' + esc(f.album) : ''}</span></figcaption></figure>`; };
   ctx.el.innerHTML = `<div class="row" style="margin-bottom:12px"><div class="crumbs"><a href="${ctx.href('')}">${esc(def.name)}</a>${crumbs}</div><span class="sp"></span>
       ${sel('sort', GAL_SORTS, st.sort, 'Sort')}${sel('group', groupOpts, st.group, 'Group')}
       ${!folder && data.folders.length ? `<label class="row small" style="gap:6px;cursor:pointer"><input type="checkbox" data-all ${all ? 'checked' : ''}> All albums</label>` : ''}
       ${def.albums !== false ? `<button class="btn" type="button" data-new>${icon('plus', 14)} New album</button>` : ''}
-      <label class="btn primary">${icon('upload', 14)} Add pictures<input type="file" accept="image/*" multiple hidden data-up></label></div>
+      <label class="btn primary">${icon('upload', 14)} Add pictures<input type="file" accept="image/*,video/*,audio/*" multiple hidden data-up></label></div>
     ${albums.length && !all ? `<div class="albums">${albums.map(a => `<a class="album" href="${ctx.href(a.id)}"><span class="cov">${a.cover ? `<img loading="lazy" src="${fileUrl(ctx, a.cover)}" alt="">` : icon('folder', 28)}</span>
         <span class="meta"><b>${esc(a.title)}</b><span>${a.count} picture${a.count === 1 ? '' : 's'}${a.first ? ' · ' + esc(fmtRange(a.first, a.latest)) : ''}</span></span></a>`).join('')}</div>` : ''}
     <label class="drop" data-drop>Drop pictures here — saved to <span class="mono">${esc(ctx.p.slug)}/${esc(def.folder)}${folder ? '/' + esc(folder) : ''}/</span><input type="file" accept="image/*" multiple hidden data-up></label>
@@ -449,8 +449,14 @@ VIEWS.grid = async ctx => {
   $('[data-sort]', ctx.el).onchange = e => { st.sort = e.target.value; save(); VIEWS.grid(ctx); };
   $('[data-group]', ctx.el).onchange = e => { st.group = e.target.value; save(); VIEWS.grid(ctx); };
   const allBox = $('[data-all]', ctx.el); if (allBox) allBox.onchange = () => { st.all = allBox.checked; if (!st.all && st.group === 'album') st.group = 'none'; save(); VIEWS.grid(ctx); };
-  $$('.ph', ctx.el).forEach(b => b.onclick = () => lightbox(order.map(f => ({ src: fileUrl(ctx, f.path), name: f.name + (f.taken ? ' · ' + fmtDay(f.taken) : ''), path: f.path })), +b.dataset.i, ctx));
+  $$('.ph', ctx.el).forEach(b => b.onclick = () => lightbox(order.map(f => ({ src: fileUrl(ctx, f.path), name: f.name + (f.taken ? ' · ' + fmtDay(f.taken) : ''), path: f.path, media: f.media })), +b.dataset.i, ctx));
 };
+// a gallery tile: picture, video (first picture with a play button) or sound (speaker symbol) — plan COMFYUI, decision 12
+function mediaThumb(src, media) {
+  if (media === 'video') return `<span class="vthumb"><video src="${src}#t=0.1" preload="metadata" muted playsinline></video><span class="play">▶</span></span>`;
+  if (media === 'audio') return `<span class="athumb">${icon('audio', 34)}</span>`;
+  return `<img loading="lazy" src="${src}" alt="">`;
+}
 function wireUpload(ctx, folder) {
   const up = async files => {
     let n = 0;
@@ -465,7 +471,7 @@ function wireUpload(ctx, folder) {
 }
 function lightbox(list, i, ctx) {
   const box = document.createElement('div'); box.className = 'lb'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Picture');
-  const show = () => box.innerHTML = `<img src="${list[i].src}" alt="${esc(list[i].name)}"><div class="cap">${esc(list[i].name)} · ${i + 1} / ${list.length} · ← → to browse · Del to remove · Esc to close</div>`;
+  const show = () => box.innerHTML = `${list[i].media === 'video' ? `<video src="${list[i].src}" controls autoplay onclick="event.stopPropagation()"></video>` : list[i].media === 'audio' ? `<div class="lb-audio" onclick="event.stopPropagation()">${icon('audio', 64)}<audio src="${list[i].src}" controls autoplay></audio></div>` : `<img src="${list[i].src}" alt="${esc(list[i].name)}">`}<div class="cap">${esc(list[i].name)} · ${i + 1} / ${list.length} · ← → to browse · Del to remove · Esc to close</div>`;
   show(); document.body.appendChild(box);
   const close = () => { box.remove(); removeEventListener('keydown', key); };
   const key = async e => {
@@ -1017,4 +1023,63 @@ VIEWS.blog = async ctx => {
   const q = $('[data-q]', ctx.el);
   if (q) wireLayoutSearch(ctx, '.bentry');
   if (q) q.addEventListener('input', () => setTimeout(() => $$('.bpost', ctx.el).forEach(p => { const e = $(`.bentry[data-id="${CSS.escape(p.dataset.id)}"]`, ctx.el); p.style.display = e && e.style.display === 'none' ? 'none' : ''; }), 400));
+};
+
+// ---------- ComfyUI (plan docs/plans/COMFYUI.md): workflows, the text boxes found in them, Run, results ----------
+const COMFY_LABEL = { picture: '🖼️', video: '🎬', audio: '🔊' };
+VIEWS.comfyui = async ctx => {
+  const base = `/api/projects/${enc(ctx.p.slug)}/f/${enc(ctx.f.key)}/comfyui`;
+  let data; try { data = await api(`${base}/workflows`); } catch (e) { ctx.el.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  if (!data.url) {
+    ctx.el.innerHTML = `<div class="card" style="max-width:680px"><h2>${icon('warn')} ComfyUI's address is missing</h2><p class="muted">Add it to this project's project.yaml — ComfyUI on this PC or in your network:</p>
+      <pre class="code">${esc(ctx.f.key)}:\n  url: http://127.0.0.1:8188</pre><a class="btn" href="${projectHref('_yaml')}">Open project.yaml</a> ${helpLink('Feature-ComfyUI', 'How to set up ComfyUI')}</div>`;
+    fillIcons(ctx.el); return;
+  }
+  const sk = `pw-comfy-${ctx.p.slug}-${ctx.f.key}`;
+  let sel = ctx.sub || (() => { try { return sessionStorage.getItem(sk); } catch { return null; } })();
+  if (!data.workflows.some(w => w.name === sel)) sel = data.workflows[0] && data.workflows[0].name;
+  const wf = data.workflows.find(w => w.name === sel);
+  const nice = n => n.replace(/\.json$/i, '');
+  ctx.el.innerHTML = `<div class="split">
+    <div class="ilist"><div class="hd"><b>Workflows</b><label class="btn ghost sm" title="Upload a workflow (saved in ComfyUI with Export (API))">${icon('plus', 14)}<input type="file" accept=".json,application/json" hidden data-wup></label></div>
+      ${data.workflows.map(w => `<a class="it ${w.name === sel ? 'active' : ''}" href="${ctx.href(w.name)}"><span>${COMFY_LABEL[w.label] || ''} ${esc(nice(w.name))}</span><span class="snip">${esc(w.label)}${w.error ? ' · ⚠' : ''}</span></a>`).join('') || '<div class="faint small" style="padding:8px">No workflows yet — upload one with +.</div>'}
+      <p class="faint small" style="padding:8px">In <span class="mono">${esc(ctx.f.def.folder)}/workflows/</span>, saved in ComfyUI with <b>Export (API)</b>.</p></div>
+    <div><div class="card" data-wf style="margin-bottom:16px"></div><div class="row" style="margin-bottom:10px"><b>Results</b><span class="faint small" data-rin></span></div><div class="grid" data-results></div></div></div>`;
+  const pane = $('[data-wf]', ctx.el);
+  if (!wf) pane.innerHTML = `<div class="empty">Upload a workflow with <b>+</b> (saved in ComfyUI with Export (API)).</div>`;
+  else if (wf.error) pane.innerHTML = `<div class="err">${esc(wf.error)}</div>`;
+  else {
+    pane.innerHTML = `<div class="row"><b style="flex:1">${esc(nice(wf.name))}</b><select data-label aria-label="Label">${['picture', 'video', 'audio'].map(l => `<option value="${l}" ${l === wf.label ? 'selected' : ''}>${COMFY_LABEL[l]} ${l}</option>`).join('')}</select>
+        <span class="faint small">ComfyUI · ${esc(data.url)} · ${data.reachable ? '<span style="color:var(--ok)">● reachable</span>' : '<span style="color:var(--err)">● not reachable</span>'}</span></div>
+      <p class="faint small">${wf.fields.length} text box${wf.fields.length === 1 ? '' : 'es'} found in this workflow — each starts with the text saved in the workflow.</p>
+      ${wf.fields.map(f => `<div class="field"><label>${esc(f.title)} <span class="chip ${f.role === 'negative' ? 'warn' : f.role === 'positive' ? 'ok' : ''}">${esc(f.role)}</span></label><textarea rows="3" data-field="${esc(f.id)}">${esc(f.text)}</textarea></div>`).join('')}
+      <div class="row" data-runbar><button class="btn primary" type="button" data-run>▶ Run</button><button class="btn ghost" type="button" data-reset>Reset to the workflow's text</button></div>`;
+    $('[data-label]', pane).onchange = async e => { await api(`${base}/workflows/${enc(wf.name)}/label`, { method: 'PUT', body: { label: e.target.value } }); App.rerender(); };
+    $('[data-reset]', pane).onclick = () => wf.fields.forEach(f => { $(`[data-field="${CSS.escape(f.id)}"]`, pane).value = f.text; });
+    $('[data-run]', pane).onclick = async () => {
+      const fields = Object.fromEntries($$('[data-field]', pane).map(t => [t.dataset.field, t.value]));
+      const bar = $('[data-runbar]', pane);
+      let run; try { run = await api(`${base}/run`, { body: { workflow: wf.name, fields } }); } catch (e) { toast(e.message); return; }
+      const t0 = Date.now(); let stop = false;
+      bar.innerHTML = `<span class="chip accent" data-state>Running…</span><span class="faint small" data-secs></span><button class="btn ghost" type="button" data-cancel>Cancel</button>`;
+      $('[data-cancel]', bar).onclick = async () => { stop = true; await api(`${base}/run/${enc(run.id)}/cancel`, { body: {} }).catch(() => {}); toast('Cancelled'); App.rerender(); };
+      // ComfyUI is asked every few seconds; the screen stays usable
+      while (!stop && document.body.contains(bar)) {
+        await new Promise(r => setTimeout(r, 2000));
+        let st; try { st = await api(`${base}/run/${enc(run.id)}`); } catch (e) { toast(e.message); break; }
+        const s = $('[data-secs]', bar); if (s) s.textContent = `${Math.round((Date.now() - t0) / 1000)} s${st.state === 'waiting' ? ' · waiting in ComfyUI\'s queue' : ''}`;
+        if (st.done) { if (st.error) { bar.innerHTML = `<div class="err" style="flex:1">${esc(st.error)}</div>`; } else if (!st.cancelled) { toast(`${st.files.length} result${st.files.length === 1 ? '' : 's'} saved`); App.rerender(); } break; }
+      }
+    };
+  }
+  try { sessionStorage.setItem(sk, sel || ''); } catch {}
+  const up = $('[data-wup]', ctx.el);
+  up.onchange = async () => { for (const file of up.files) { try { const r = await api(`${base}/workflows?filename=${enc(file.name)}`, { body: file }); toast('Uploaded'); location.hash = ctx.href(r.name); } catch (e) { toast(file.name + ': ' + e.message); } } };
+  // results: pictures, video, audio — kept once (Gallery → KI_Pictures, or comfyui/results/)
+  const res = await api(`${base}/results`);
+  $('[data-rin]', ctx.el).textContent = '· saved in ' + res.in;
+  $('[data-results]', ctx.el).innerHTML = res.results.map(r => `<div class="card cres"><div class="cmedia">${r.kind === 'video' ? `<video src="${fileUrl(ctx, r.path)}" controls preload="metadata"></video>` : r.kind === 'audio' ? `<audio src="${fileUrl(ctx, r.path)}" controls></audio>` : `<a href="${fileUrl(ctx, r.path)}" target="_blank" rel="noopener"><img loading="lazy" src="${fileUrl(ctx, r.path)}" alt=""></a>`}</div>
+      <div class="row small"><span style="flex:1;overflow-wrap:anywhere">${esc(r.name)}</span><button class="btn ghost sm" type="button" data-rdel="${esc(r.path)}" aria-label="Delete ${esc(r.name)}">${icon('trash', 14)}</button></div></div>`).join('') || '<div class="faint small">No results yet.</div>';
+  $$('[data-rdel]', ctx.el).forEach(b => b.onclick = async () => { if (!confirm('Delete this result? It is moved to the project\'s .trash folder (also from the Gallery).')) return; await api(`${base}/results/delete`, { body: { path: b.dataset.rdel } }); App.rerender(); });
+  fillIcons(ctx.el);
 };

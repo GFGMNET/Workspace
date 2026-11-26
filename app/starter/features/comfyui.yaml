@@ -1,0 +1,9 @@
+# ComfyUI: run the project's workflows (comfyui/workflows/, saved in ComfyUI with Export (API)) and keep the results
+# (plan docs/plans/COMFYUI.md). Set the address of ComfyUI in each project's project.yaml:
+#   comfyui:
+#     url: http://127.0.0.1:8188      # or http://<address in your network>:8188
+# Results go into the Gallery's album KI_Pictures when the project has a Gallery, otherwise into comfyui/results/.
+name: ComfyUI
+icon: image
+stores: comfyui
+layout: comfyui

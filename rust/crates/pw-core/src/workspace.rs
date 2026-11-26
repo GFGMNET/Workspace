@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
-pub const STORES: [&str; 8] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi"];
+pub const STORES: [&str; 9] = ["markdown", "images", "files", "records", "diagram", "chat", "github", "glpi", "comfyui"];
 pub const FIELD_TYPES: [&str; 13] = ["text", "longtext", "number", "date", "datetime", "select", "bool", "url", "email", "tags", "list", "keyvalue", "link"];
 // `programs` (MCPs of programs like Blender) is a project setting, not a feature (plans BLENDER … FREECAD, decision 11)
 // `dashboard` (the Overview's blocks) is a project setting too (plan DASHBOARD, decision 10)
@@ -16,13 +16,13 @@ pub fn layouts() -> Value {
     json!({
         "markdown": ["pages", "cards", "list", "journal", "book", "notes", "board", "table", "blog"], "images": ["grid"], "files": ["files", "code"],
         "records": ["table", "list", "cards", "kanban", "calendar", "orgchart", "map"],
-        "diagram": ["diagram"], "chat": ["chat"], "github": ["issues"], "glpi": ["tickets"]
+        "diagram": ["diagram"], "chat": ["chat"], "github": ["issues"], "glpi": ["tickets"], "comfyui": ["comfyui"]
     })
 }
 fn default_layout(stores: &str) -> &'static str {
     match stores {
         "images" => "grid", "files" => "files", "records" => "table", "diagram" => "diagram",
-        "chat" => "chat", "github" => "issues", "glpi" => "tickets", _ => "pages",
+        "chat" => "chat", "github" => "issues", "glpi" => "tickets", "comfyui" => "comfyui", _ => "pages",
     }
 }
 

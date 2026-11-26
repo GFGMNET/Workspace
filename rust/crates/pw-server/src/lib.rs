@@ -20,6 +20,7 @@ type Q = Query<HashMap<String, String>>;
 use tokio_stream::StreamExt;
 
 pub mod chat;
+pub mod comfyui;
 pub mod github;
 pub mod glpi;
 pub mod help;
@@ -77,6 +78,17 @@ pub fn router(ws: Workspace) -> Router {
         .route("/api/projects/{p}/features", post(project_add_feature))
         .route("/api/projects/{p}/features/{k}", axum::routing::delete(project_remove_feature))
         .route("/api/projects/{p}/programs", put(project_programs))
+        .route("/api/projects/{p}/f/{f}/comfyui/workflows", get(|State(ws): S, Path((p, f)): Path<(String, String)>| async move { comfyui::workflows(&ws, &p, &f).await.map(Json).map_err(ApiError::from) })
+            .post(|State(ws): S, Path((p, f)): Path<(String, String)>, Query(q): Q, b: Bytes| async move { comfyui::upload(&ws, &p, &f, qs(&q, "filename"), &b).map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/comfyui/workflows/{name}/label", put(|State(ws): S, Path((p, f, n)): Path<(String, String, String)>, b: Bytes| async move {
+            let v: Value = serde_json::from_slice(&b).unwrap_or(json!({})); comfyui::set_label(&ws, &p, &f, &n, v["label"].as_str().unwrap_or("")).map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/comfyui/run", post(|State(ws): S, Path((p, f)): Path<(String, String)>, b: Bytes| async move {
+            let v: Value = serde_json::from_slice(&b).unwrap_or(json!({})); comfyui::run(&ws, &p, &f, &v).await.map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/comfyui/run/{id}", get(|State(ws): S, Path((p, f, id)): Path<(String, String, String)>| async move { comfyui::status(&ws, &p, &f, &id).await.map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/comfyui/run/{id}/cancel", post(|State(ws): S, Path((p, f, id)): Path<(String, String, String)>| async move { comfyui::cancel(&ws, &p, &f, &id).await.map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/comfyui/results", get(|State(ws): S, Path((p, f)): Path<(String, String)>| async move { comfyui::results(&ws, &p, &f).map(Json).map_err(ApiError::from) }))
+        .route("/api/projects/{p}/f/{f}/comfyui/results/delete", post(|State(ws): S, Path((p, f)): Path<(String, String)>, b: Bytes| async move {
+            let v: Value = serde_json::from_slice(&b).unwrap_or(json!({})); comfyui::delete_result(&ws, &p, &f, v["path"].as_str().unwrap_or("")).map(Json).map_err(ApiError::from) }))
         .route("/api/help", get(|State(ws): S| async move { Json(help::index(&ws)) }))
         .route("/api/help/page/{name}", get(|State(ws): S, Path(n): Path<String>| async move { help::page(&ws, &n).map(Json).map_err(ApiError::from) }))
         .route("/api/help/search", get(|State(ws): S, Query(q): Q| async move { Json(help::search(&ws, qs(&q, "q"))) }))

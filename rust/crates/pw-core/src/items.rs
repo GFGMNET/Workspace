@@ -13,6 +13,13 @@ pub fn is_image(name: &str) -> bool {
     let n = name.to_lowercase();
     [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".avif"].iter().any(|e| n.ends_with(e))
 }
+/// Video and audio in the gallery (plan COMFYUI, decision 12): "video", "audio" or None.
+pub fn media_kind(name: &str) -> Option<&'static str> {
+    let n = name.to_lowercase();
+    if [".mp4", ".webm", ".mov", ".m4v"].iter().any(|e| n.ends_with(e)) { return Some("video"); }
+    if [".mp3", ".flac", ".wav", ".ogg", ".opus", ".m4a"].iter().any(|e| n.ends_with(e)) { return Some("audio"); }
+    None
+}
 fn hidden(n: &str) -> bool { n.starts_with('.') || n.starts_with('_') }
 fn now_ms() -> u128 { SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0) }
 pub fn now_iso() -> String {
@@ -167,7 +174,7 @@ fn file_entry(folder: &str, full: &Path, rel: &str, name: &str, album: &str) -> 
     let taken = if is_image(name) { date_taken(full) } else { None };
     let date = taken.clone().unwrap_or_else(|| iso_from_ms(mt));
     json!({ "name": name, "path": format!("{folder}/{rel}"), "album": album, "size": md.map(|m| m.len()).unwrap_or(0), "modified": mt,
-        "taken": taken, "date": date, "image": is_image(name) })
+        "taken": taken, "date": date, "image": is_image(name), "media": media_kind(name) })
 }
 pub fn list_folder(p: &Project, f: &ProjectFeature, sub: &str, all: bool) -> Result<Value> {
     let base = feature_dir(p, f)?;
@@ -182,7 +189,7 @@ pub fn list_folder(p: &Project, f: &ProjectFeature, sub: &str, all: bool) -> Res
             if hidden(&n) { continue; }
             let rel = if rel_dir.is_empty() { n.clone() } else { format!("{rel_dir}/{n}") };
             if e.path().is_dir() { if deep { out.extend(walk(&e.path(), &rel, true, images_only, folder)); } }
-            else if !images_only || is_image(&n) { out.push(file_entry(folder, &e.path(), &rel, &n, rel_dir)); }
+            else if !images_only || is_image(&n) || media_kind(&n).is_some() { out.push(file_entry(folder, &e.path(), &rel, &n, rel_dir)); }
         }
         out
     }
@@ -354,8 +361,8 @@ impl Workspace {
             }
             let ext = Path::new(&clean).extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
             clean = format!("_map.{ext}"); d = base.clone();
-        } else if stores(f) == "images" && !is_image(&clean) {
-            return Err(err(400, format!("Only images can go into {}", def(f)["name"].as_str().unwrap_or(key))));
+        } else if stores(f) == "images" && !is_image(&clean) && media_kind(&clean).is_none() {
+            return Err(err(400, format!("Only pictures, videos and sounds can go into {}", def(f)["name"].as_str().unwrap_or(key))));
         }
         let (stem, ext) = match clean.rfind('.') { Some(i) if i > 0 => (clean[..i].to_string(), clean[i..].to_string()), _ => (clean.clone(), String::new()) };
         let mut name = clean.clone(); let mut n = 2;
