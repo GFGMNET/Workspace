@@ -289,6 +289,13 @@ pub fn run_turn(ws: Arc<Workspace>, slug: &str, key: &str, body: &Value) -> Resu
         if !folders.is_empty() { prompt = format!("(Workspace note: this project keeps its main content in {} — look there first when relevant.)\n\n{prompt}", folders.join(", ")); }
         if let Some(i) = def["instructions"].as_str().filter(|i| !i.trim().is_empty()) { prompt = format!("(Project instructions: {})\n\n{prompt}", i.trim()); }
     }
+    // engine: lmstudio — a model in LM Studio answers instead of Claude CLI (plan LMSTUDIO)
+    if def["engine"].as_str().map(|e| e.trim().eq_ignore_ascii_case("lmstudio")).unwrap_or(false) {
+        let first = cf.lock().unwrap().chat["lmHistory"].as_array().map(|a| a.is_empty()).unwrap_or(true);
+        let text = if first { prompt } else { message.clone() };
+        tokio::spawn(lm_turn(p.dir.clone(), def.clone(), id.clone(), mode.clone(), text, cf.clone(), tx.clone(), stop_rx));
+        return Ok(rx);
+    }
     let mut args: Vec<String> = ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"].iter().map(|s| s.to_string()).collect();
     if let Some(s) = &session { args.extend(["--resume".into(), s.clone()]); }
     if let Some(m) = def["model"].as_str().filter(|m| !m.is_empty()) { args.extend(["--model".into(), m.chars().filter(|c| c.is_alphanumeric() || "_.-".contains(*c)).collect()]); }
@@ -535,4 +542,208 @@ fn dechunk(s: &str) -> String {
         out.push_str(&after[..n]); rest = after[n..].trim_start_matches("\r\n");
     }
     out
+}
+
+
+// ---------- engine: lmstudio (plan LMSTUDIO) ----------
+// The chat talks to LM Studio's OpenAI-compatible API (/v1/chat/completions, streamed). The model gets the app's own tools:
+// read, create/change, delete and list files inside the project folder, and run commands there. `permissions:` works as for
+// Claude: ask (Allow · Always allow in this chat · Don't allow), auto (files without asking, commands ask), read-only.
+
+/// (tool name for the model, name shown in the chat and used for "Always allow")
+const LM_TOOLS: [(&str, &str); 5] = [("read_file", "Read"), ("write_file", "Write"), ("delete_file", "Delete"), ("list_files", "LS"), ("run_command", "Bash")];
+
+fn lm_tool_defs() -> Value {
+    let f = |name: &str, desc: &str, props: Value, req: Vec<&str>| json!({ "type": "function", "function": { "name": name, "description": desc,
+        "parameters": { "type": "object", "properties": props, "required": req } } });
+    json!([
+        f("read_file", "Read a text file of the project. The path is relative to the project folder.", json!({ "path": { "type": "string" } }), vec!["path"]),
+        f("write_file", "Create a file or replace its whole content. The path is relative to the project folder; missing folders are created.",
+            json!({ "path": { "type": "string" }, "content": { "type": "string" } }), vec!["path", "content"]),
+        f("delete_file", "Delete a file or folder of the project (it is moved to the project's .trash folder).", json!({ "path": { "type": "string" } }), vec!["path"]),
+        f("list_files", "List the files and folders in a folder of the project (\".\" is the project folder).", json!({ "path": { "type": "string" } }), vec![]),
+        f("run_command", "Run a shell command in the project folder and get its output.", json!({ "command": { "type": "string" } }), vec!["command"]),
+    ])
+}
+
+fn lm_path(dir: &Path, rel: &str) -> Result<PathBuf, String> {
+    let rel = rel.trim();
+    let rel = if rel.is_empty() || rel == "." || rel == "./" { "" } else { rel };
+    if Path::new(rel).is_absolute() || rel.starts_with('/') || rel.starts_with('\\') || rel.contains(':') { return Err("Use a path relative to the project folder".into()); }
+    pw_core::workspace::safe_join(dir, rel).map_err(|_| "That path is outside the project folder".to_string())
+}
+
+async fn lm_run_tool(dir: &Path, name: &str, a: &Value) -> (bool, String) {
+    let s = |k: &str| a[k].as_str().unwrap_or("").to_string();
+    match name {
+        "read_file" => match lm_path(dir, &s("path")) {
+            Ok(p) if p.is_dir() => (false, "That is a folder; use list_files".into()),
+            Ok(p) => match std::fs::read(&p) {
+                Ok(b) => { let t = String::from_utf8_lossy(&b).to_string(); let n = t.chars().count(); (true, if n > 100_000 { t.chars().take(100_000).collect::<String>() + "\n…(cut)" } else { t }) }
+                Err(e) => (false, format!("Can't read it: {e}")),
+            },
+            Err(e) => (false, e),
+        },
+        "write_file" => match lm_path(dir, &s("path")) {
+            Ok(p) if s("path").trim().is_empty() || p.is_dir() => (false, "Give a file path".into()),
+            Ok(p) => {
+                if let Some(parent) = p.parent() { let _ = std::fs::create_dir_all(parent); }
+                let c = s("content");
+                match std::fs::write(&p, &c) { Ok(_) => (true, format!("Saved {} ({} bytes)", s("path"), c.len())), Err(e) => (false, format!("Can't save it: {e}")) }
+            }
+            Err(e) => (false, e),
+        },
+        "delete_file" => match lm_path(dir, &s("path")) {
+            Ok(p) if p == dir => (false, "The project folder itself can't be deleted".into()),
+            Ok(p) if !p.exists() => (false, "Not found".into()),
+            Ok(p) => {
+                let trash = dir.join(".trash"); let _ = std::fs::create_dir_all(&trash);
+                let base = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "item".into());
+                let mut target = trash.join(&base); let mut n = 2;
+                while target.exists() { target = trash.join(format!("{base}-{n}")); n += 1; }
+                match std::fs::rename(&p, &target) { Ok(_) => (true, format!("Deleted {} (moved to .trash)", s("path"))), Err(e) => (false, format!("Can't delete it: {e}")) }
+            }
+            Err(e) => (false, e),
+        },
+        "list_files" => match lm_path(dir, &s("path")) {
+            Ok(p) => match std::fs::read_dir(&p) {
+                Ok(rd) => {
+                    let mut v: Vec<String> = rd.flatten().map(|e| { let n = e.file_name().to_string_lossy().to_string(); if e.path().is_dir() { n + "/" } else { n } }).collect();
+                    v.sort(); v.truncate(500);
+                    (true, if v.is_empty() { "(empty)".into() } else { v.join("\n") })
+                }
+                Err(e) => (false, format!("Can't list it: {e}")),
+            },
+            Err(e) => (false, e),
+        },
+        "run_command" => {
+            let cmdline = s("command");
+            if cmdline.trim().is_empty() { return (false, "No command".into()); }
+            let env = current_env();
+            let mut c = if cfg!(windows) { let mut c = command(Path::new("cmd")); c.arg("/C").arg(&cmdline); c } else { let mut c = command(Path::new("sh")); c.arg("-c").arg(&cmdline); c };
+            c.current_dir(dir).env_clear().envs(env).stdin(Stdio::null()).kill_on_drop(true);
+            match tokio::time::timeout(Duration::from_secs(120), c.output()).await {
+                Ok(Ok(o)) => {
+                    let mut t = String::from_utf8_lossy(&o.stdout).to_string() + &String::from_utf8_lossy(&o.stderr);
+                    if t.chars().count() > 20_000 { t = t.chars().take(20_000).collect::<String>() + "\n…(cut)"; }
+                    (o.status.success(), format!("exit code {}\n{}", o.status.code().unwrap_or(-1), t))
+                }
+                Ok(Err(e)) => (false, format!("Can't run it: {e}")),
+                Err(_) => (false, "Stopped after 120 seconds".into()),
+            }
+        }
+        _ => (false, format!("Unknown tool \"{name}\"")),
+    }
+}
+
+async fn lm_turn(dir: PathBuf, def: Value, id: String, mode: String, text: String, cf: Arc<Mutex<ChatFile>>, tx: Emitter, mut stop_rx: oneshot::Receiver<()>) {
+    let url = def["url"].as_str().map(|u| u.trim().trim_end_matches('/').to_string()).filter(|u| !u.is_empty()).unwrap_or_else(|| "http://127.0.0.1:1234".into());
+    let url = url.trim_end_matches("/v1").to_string();
+    let model = def["model"].as_str().unwrap_or("").trim().to_string();
+    let mut reply = json!({ "role": "assistant", "text": "", "tools": [], "time": now_iso() });
+    let push_text = |reply: &mut Value, t: &str| { let s = reply["text"].as_str().unwrap_or("").to_string() + t; reply["text"] = json!(s); };
+    let mut history: Vec<Value> = cf.lock().unwrap().chat["lmHistory"].as_array().cloned().unwrap_or_default();
+    if history.is_empty() {
+        history.push(json!({ "role": "system", "content": "You work in a project folder of the app Workspace. Use the tools to read, create, change and delete the project's files and to run commands; paths are relative to the project folder. Answer in the language of the user, clearly and briefly." }));
+    }
+    history.push(json!({ "role": "user", "content": text }));
+    // permission questions use the same way as for Claude (POST /api/chat-permission/<turn>/<req>/answer)
+    let (turn_id, token) = (hex(8), hex(16));
+    turns().lock().unwrap().insert(turn_id.clone(), Turn { token: token.clone(), tx: tx.clone(), pending: HashMap::new(), chat: cf.clone() });
+    let (mut error, mut stopped) = (Value::Null, false);
+    let _ = tx.send(json!({ "type": "status", "text": "LM Studio is working…", "model": model }));
+    if model.is_empty() { error = json!("Set the LM Studio model in project.yaml: model: under the chat (e.g. model: qwen/qwen3-coder-30b)."); }
+    let tools = lm_tool_defs();
+    let client = reqwest::Client::builder().connect_timeout(Duration::from_secs(10)).build().unwrap_or_else(|_| reqwest::Client::new());
+    'turn: for _step in 0..30 {
+        if !error.is_null() { break; }
+        let req = client.post(format!("{url}/v1/chat/completions")).json(&json!({ "model": model, "messages": history, "tools": tools, "stream": true })).send();
+        let resp = tokio::select! { r = req => r, _ = &mut stop_rx => { stopped = true; break 'turn; } };
+        let mut resp = match resp {
+            Err(e) => { error = json!(format!("LM Studio can't be reached at {url}. Start LM Studio and turn on its server (Developer → Start server), and check url: in project.yaml. ({e})")); break; }
+            Ok(r) if !r.status().is_success() => {
+                let code = r.status().as_u16(); let body = r.text().await.unwrap_or_default();
+                let msg = serde_json::from_str::<Value>(&body).ok().and_then(|v| v["error"]["message"].as_str().or(v["error"].as_str()).map(|s| s.to_string())).unwrap_or(body);
+                let low = msg.to_lowercase();
+                error = json!(if low.contains("model") && (low.contains("not") || low.contains("load") || low.contains("found")) {
+                    format!("The model \"{model}\" is not loaded in LM Studio. Load it in LM Studio (or fix model: in project.yaml) and try again. LM Studio says: {msg}")
+                } else { format!("LM Studio answered with an error ({code}): {msg}") });
+                break;
+            }
+            Ok(r) => r,
+        };
+        let (mut buf, mut content) = (String::new(), String::new());
+        let mut calls: Vec<(String, String, String)> = vec![];
+        loop {
+            let chunk = tokio::select! { c = resp.chunk() => c, _ = &mut stop_rx => { stopped = true; break 'turn; } };
+            match chunk { Ok(Some(b)) => buf.push_str(&String::from_utf8_lossy(&b)), _ => break }
+            while let Some(i) = buf.find('\n') {
+                let line = buf[..i].trim().to_string(); buf = buf[i + 1..].to_string();
+                let Some(d) = line.strip_prefix("data:") else { continue };
+                let d = d.trim(); if d == "[DONE]" || d.is_empty() { continue; }
+                let Ok(v) = serde_json::from_str::<Value>(d) else { continue };
+                if let Some(m) = v["error"]["message"].as_str().or(v["error"].as_str()) { error = json!(format!("LM Studio: {m}")); break 'turn; }
+                let delta = &v["choices"][0]["delta"];
+                if let Some(t) = delta["content"].as_str().filter(|t| !t.is_empty()) { content.push_str(t); push_text(&mut reply, t); let _ = tx.send(json!({ "type": "text", "delta": t })); }
+                for tc in delta["tool_calls"].as_array().cloned().unwrap_or_default() {
+                    let i = tc["index"].as_u64().unwrap_or(calls.len() as u64) as usize;
+                    while calls.len() <= i { calls.push((String::new(), String::new(), String::new())); }
+                    if let Some(x) = tc["id"].as_str() { calls[i].0 = x.to_string(); }
+                    if let Some(x) = tc["function"]["name"].as_str() { calls[i].1.push_str(x); }
+                    if let Some(x) = tc["function"]["arguments"].as_str() { calls[i].2.push_str(x); }
+                }
+            }
+        }
+        calls.retain(|c| !c.1.is_empty());
+        for (n, c) in calls.iter_mut().enumerate() { if c.0.is_empty() { c.0 = format!("call_{}_{n}", hex(4)); } }
+        let mut msg = json!({ "role": "assistant", "content": if content.is_empty() { Value::Null } else { json!(content) } });
+        if !calls.is_empty() { msg["tool_calls"] = json!(calls.iter().map(|(i, n, a)| json!({ "id": i, "type": "function", "function": { "name": n, "arguments": a } })).collect::<Vec<_>>()); }
+        history.push(msg);
+        if calls.is_empty() { break; }
+        if !content.is_empty() && !content.ends_with('\n') { push_text(&mut reply, "\n\n"); let _ = tx.send(json!({ "type": "text", "delta": "\n\n" })); }
+        for (cid, name, raw) in calls {
+            let shown = LM_TOOLS.iter().find(|(t, _)| *t == name).map(|(_, s)| *s).unwrap_or(name.as_str()).to_string();
+            let args: Value = serde_json::from_str(if raw.trim().is_empty() { "{}" } else { &raw }).unwrap_or(Value::Null);
+            let t = json!({ "id": cid, "name": shown, "input": summarize(&args) });
+            reply["tools"].as_array_mut().unwrap().push(t.clone());
+            let mut e = t; e["type"] = json!("tool"); let _ = tx.send(e);
+            let (ok, out) = if args.is_null() { (false, "The arguments are not valid JSON".to_string()) } else {
+                // None = allowed, Some(false) = refused by permissions:, Some(true) = ask
+                let ask: Option<bool> = match shown.as_str() {
+                    "Read" | "LS" => None,
+                    "Write" | "Delete" => if mode == "read-only" { Some(false) } else if mode == "auto" { None } else { Some(true) },
+                    _ => if mode == "read-only" { Some(false) } else { Some(true) },
+                };
+                let allowed = match ask {
+                    None => Ok(()),
+                    Some(false) => Err("Not allowed: this chat can only read (permissions: read-only).".to_string()),
+                    Some(true) => {
+                        let ans = tokio::select! { a = request_permission(&turn_id, &token, &json!({ "tool": shown, "input": args })) => a, _ = &mut stop_rx => { stopped = true; break 'turn; } };
+                        if ans["allow"] == true { Ok(()) } else { Err(ans["message"].as_str().unwrap_or("Not allowed.").to_string()) }
+                    }
+                };
+                match allowed { Ok(()) => lm_run_tool(&dir, &name, &args).await, Err(m) => (false, m) }
+            };
+            if let Some(x) = reply["tools"].as_array_mut().unwrap().iter_mut().find(|x| x["id"] == cid.as_str()) { x["error"] = json!(!ok); x["done"] = json!(true); }
+            let _ = tx.send(json!({ "type": "tool_result", "id": cid, "error": !ok }));
+            history.push(json!({ "role": "tool", "tool_call_id": cid, "content": out }));
+        }
+    }
+    if let Some(t) = turns().lock().unwrap().remove(&turn_id) {
+        for (_, (_, s)) in t.pending { let _ = s.send(json!({ "allow": false, "message": "The chat turn ended." })); }
+    }
+    let t = reply["text"].as_str().unwrap_or("").trim_end_matches('\n').to_string(); reply["text"] = json!(t);
+    if !error.is_null() { reply["error"] = error.clone(); }
+    if stopped { reply["stopped"] = json!(true); }
+    {
+        let mut c = cf.lock().unwrap();
+        let keep = reply["text"] != "" || reply["tools"].as_array().map(|a| !a.is_empty()).unwrap_or(false) || !error.is_null() || stopped;
+        if keep { c.chat["messages"].as_array_mut().unwrap().push(reply.clone()); }
+        // keep the conversation for the next turn (the system message and the last 200 messages)
+        if history.len() > 201 { let sys = history[0].clone(); let tail = history.split_off(history.len() - 200); history = std::iter::once(sys).chain(tail).collect(); }
+        c.chat["lmHistory"] = json!(history);
+        c.chat["engine"] = json!("lmstudio");
+        c.save();
+    }
+    let _ = tx.send(json!({ "type": "done", "id": id, "error": error, "stopped": stopped, "mode": mode }));
 }

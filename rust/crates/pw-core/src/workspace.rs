@@ -198,6 +198,9 @@ pub fn normalize_feature(key: &str, raw: &Map<String, Value>) -> Value {
         d.insert("permissions".into(), json!(p));
         let at: Vec<Value> = d.get("allowed_tools").and_then(|a| a.as_array()).map(|a| a.iter().map(|x| json!(x.as_str().map(|s| s.to_string()).unwrap_or_else(|| x.to_string()))).collect()).unwrap_or_default();
         d.insert("allowed_tools".into(), json!(at));
+        // who answers: claude (default) or lmstudio (plan LMSTUDIO)
+        let e = s(&d, "engine").map(|e| e.trim().to_lowercase()).filter(|e| e == "lmstudio").unwrap_or_else(|| "claude".into());
+        d.insert("engine".into(), json!(e));
     }
     if stores == "images" && !d.contains_key("albums") { d.insert("albums".into(), json!(true)); }
     if stores == "github" {

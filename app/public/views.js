@@ -540,10 +540,12 @@ VIEWS.chat = async ctx => {
         <span class="chip" data-cli>checking Claude CLI…</span>
         ${id ? `<button class="btn ghost sm danger" type="button" data-del aria-label="Delete chat">${icon('trash', 14)}</button>` : ''}</div>
       <div class="cmsgs" data-msgs aria-live="polite"></div>
-      <form class="ccompose" data-form><textarea rows="1" placeholder="Ask Claude about this project…  (Enter to send, Shift+Enter for a new line)" aria-label="Message"></textarea>
+      <form class="ccompose" data-form><textarea rows="1" placeholder="${String(def.engine || '').toLowerCase() === 'lmstudio' ? 'Ask the model' : 'Ask Claude'} about this project…  (Enter to send, Shift+Enter for a new line)" aria-label="Message"></textarea>
         <button class="btn primary" type="submit" data-send>${icon('send', 14)} Send</button></form></div></div>`;
   const msgs = $('[data-msgs]', ctx.el), ta = $('textarea', ctx.el), form = $('[data-form]', ctx.el), sendBtn = $('[data-send]', ctx.el);
-  api('/api/claude').then(v => { const c = $('[data-cli]', ctx.el); if (!c) return; c.textContent = v.ok ? v.version : 'Claude CLI not found'; c.className = 'chip ' + (v.ok ? 'ok' : 'err'); c.title = v.ok ? 'Runs in ' + ctx.p.path : (v.error || '') + ' — install Claude CLI and sign in (claude in a terminal), or set CLAUDE_COMMAND.'; }).catch(() => {});
+  const lm = String(def.engine || '').toLowerCase() === 'lmstudio';
+  if (lm) { const c = $('[data-cli]', ctx.el); c.textContent = 'LM Studio' + (def.model ? ' · ' + def.model : ''); c.className = 'chip ok'; c.title = 'Answers come from LM Studio at ' + (def.url || 'http://127.0.0.1:1234') + ' — runs in ' + ctx.p.path; }
+  else api('/api/claude').then(v => { const c = $('[data-cli]', ctx.el); if (!c) return; c.textContent = v.ok ? v.version : 'Claude CLI not found'; c.className = 'chip ' + (v.ok ? 'ok' : 'err'); c.title = v.ok ? 'Runs in ' + ctx.p.path : (v.error || '') + ' — install Claude CLI and sign in (claude in a terminal), or set CLAUDE_COMMAND.'; }).catch(() => {});
   const del = $('[data-del]', ctx.el); if (del) del.onclick = async () => { if (!confirm('Delete this chat? It is moved to the project\'s .trash folder.')) return; await api(itemsUrl(ctx, '/' + enc(id)), { method: 'DELETE' }); location.hash = ctx.href(''); };
   const renderMsg = m => {
     if (m.role === 'user') return `<div class="msg user">${esc(m.text)}</div>`;
