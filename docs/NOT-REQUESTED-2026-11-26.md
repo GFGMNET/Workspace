@@ -23,3 +23,5 @@ rules or the release train, nothing added. While doing the steps, Claude did the
 
 Until he has answered a point, treat the guidance in points 10 and 11 as **suggestions, not his rules**. `CLAUDE.md` is
 what he decided.
+
+What was forgotten or couldn't be finished: [FORGOTTEN-2026-11-26.md](FORGOTTEN-2026-11-26.md).

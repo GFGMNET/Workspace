@@ -19,6 +19,8 @@ rules and the maintainer's decisions. Then **[AGENT-GUIDE.md](AGENT-GUIDE.md)** 
 
 On 26 Nov 2026 Claude did some things beyond the maintainer's steps. They are listed in
 **[NOT-REQUESTED-2026-11-26.md](NOT-REQUESTED-2026-11-26.md)**. Ask him about each point (keep or undo) before other work.
+What was forgotten or couldn't be finished (release texts on GitHub, screenshots, help in the installed app) is in
+**[FORGOTTEN-2026-11-26.md](FORGOTTEN-2026-11-26.md)**.
 
 ## Where things stand
 
